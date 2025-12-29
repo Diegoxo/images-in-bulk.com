@@ -44,8 +44,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             let hasHistory = false;
 
             storedImages.forEach(img => {
-                const card = createPlaceholder(img.fileName);
-                updateCard(card, URL.createObjectURL(img.blob), 'Almacenado', false, img.fileName);
+                const card = createPlaceholder(img.fileName, img.prompt);
+                updateCard(card, URL.createObjectURL(img.blob), 'Almacenado', false, img.fileName, img.prompt);
 
                 if (img.isArchived === true) {
                     historyGrid.prepend(card);
@@ -158,11 +158,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 break;
             }
 
-            const currentPrompt = style ? `${prompts[i]}. ${style}` : prompts[i];
+            const originalPrompt = prompts[i];
+            const fullPrompt = style ? `${originalPrompt}. ${style}` : originalPrompt;
             const currentName = filenames[i] ? `${filenames[i]}.${format}` : `image_${i + 1}.${format}`;
 
             // Create placeholder in results grid
-            const card = createPlaceholder(currentName);
+            const card = createPlaceholder(currentName, originalPrompt);
             imageGrid.prepend(card);
 
             try {
@@ -171,7 +172,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        prompt: currentPrompt,
+                        prompt: fullPrompt,
                         model: model,
                         resolution: resolution,
                         format: format,
@@ -188,21 +189,21 @@ document.addEventListener('DOMContentLoaded', async () => {
                         const blob = await directRes.blob();
 
                         // Save to IndexedDB (will be saved as isArchived: false)
-                        await ImageStorage.saveImage(blob, currentName, currentPrompt);
+                        await ImageStorage.saveImage(blob, currentName, originalPrompt);
 
-                        updateCard(card, URL.createObjectURL(blob), 'Completado', false, currentName);
+                        updateCard(card, URL.createObjectURL(blob), 'Completado', false, currentName, originalPrompt);
                     } catch (corsErr) {
                         const proxyRes = await fetch(`api/proxy_image.php?url=${encodeURIComponent(data.image_url)}`);
                         const blob = await proxyRes.blob();
 
-                        await ImageStorage.saveImage(blob, currentName, currentPrompt);
-                        updateCard(card, URL.createObjectURL(blob), 'Completado', false, currentName);
+                        await ImageStorage.saveImage(blob, currentName, originalPrompt);
+                        updateCard(card, URL.createObjectURL(blob), 'Completado', false, currentName, originalPrompt);
                     }
                 } else {
-                    updateCard(card, null, 'Error: ' + (data.error || 'Unknown'), true);
+                    updateCard(card, null, 'Error: ' + (data.error || 'Unknown'), true, currentName, originalPrompt);
                 }
             } catch (err) {
-                updateCard(card, null, 'Error de red', true);
+                updateCard(card, null, 'Error de red', true, currentName, originalPrompt);
             }
 
             completed++;
@@ -252,7 +253,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         link.click();
     });
 
-    function createPlaceholder(name) {
+    function createPlaceholder(name, prompt) {
         const div = document.createElement('div');
         div.className = 'image-card glass';
         div.innerHTML = `
@@ -262,12 +263,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                 </div>
                 <div class="status">Generando...</div>
             </div>
-            <div class="image-name-tag">${name}</div>
+            <div class="card-info">
+                <div class="image-name-tag">${name}</div>
+                <div class="image-prompt-tag">${prompt}</div>
+            </div>
         `;
         return div;
     }
 
-    function updateCard(card, imgUrl, statusText, isError = false, fileName = '') {
+    function updateCard(card, imgUrl, statusText, isError = false, fileName = '', prompt = '') {
         if (isError) {
             card.classList.add('status-error-border');
             card.innerHTML = `
@@ -277,7 +281,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <p class="placeholder-name" style="color: var(--accent)">Error</p>
                     </div>
                 </div>
-                <div class="image-name-tag">${fileName || 'Error'}</div>
+                <div class="card-info">
+                    <div class="image-name-tag">${fileName || 'Error'}</div>
+                    <div class="image-prompt-tag">${prompt}</div>
+                </div>
             `;
             return;
         }
@@ -290,7 +297,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 </button>
                 <img src="${imgUrl}" alt="Generated Image">
             </div>
-            <div class="image-name-tag" title="${fileName}">${fileName}</div>
+            <div class="card-info">
+                <div class="image-name-tag" title="${fileName}">${fileName}</div>
+                <div class="image-prompt-tag" title="${prompt}">${prompt}</div>
+            </div>
         `;
 
         const downloadBtn = card.querySelector('.btn-download-single');
