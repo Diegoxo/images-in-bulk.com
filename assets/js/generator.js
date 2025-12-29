@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const updateLineCount = (input, counter) => {
         const lines = input.value.split('\n').filter(line => line.trim() !== '').length;
-        counter.textContent = `${lines} ${lines === 1 ? 'línea' : 'líneas'}`;
+        counter.textContent = `${lines} ${lines === 1 ? 'line' : 'lines'}`;
     };
 
     promptsInput.addEventListener('input', () => updateLineCount(promptsInput, promptsCounter));
@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             storedImages.forEach(img => {
                 const card = createPlaceholder(img.fileName, img.prompt);
-                updateCard(card, URL.createObjectURL(img.blob), 'Almacenado', false, img.fileName, img.prompt);
+                updateCard(card, URL.createObjectURL(img.blob), 'Stored', false, img.fileName, img.prompt);
 
                 if (img.isArchived === true) {
                     historyGrid.append(card);
@@ -68,10 +68,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (hasCurrentResults) {
                 // Empty state is already replaced by innerHTML = ''
             } else {
-                imageGrid.innerHTML = '<div class="empty-state">Las imágenes generadas aparecerán aquí.</div>';
+                imageGrid.innerHTML = '<div class="empty-state">Your generated images will appear here.</div>';
             }
         } else {
-            imageGrid.innerHTML = '<div class="empty-state">Las imágenes generadas aparecerán aquí.</div>';
+            imageGrid.innerHTML = '<div class="empty-state">Your generated images will appear here.</div>';
         }
     };
 
@@ -81,7 +81,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         await ImageStorage.clear();
 
         // Clean Results
-        imageGrid.innerHTML = '<div class="empty-state">Las imágenes generadas aparecerán aquí.</div>';
+        imageGrid.innerHTML = '<div class="empty-state">Your generated images will appear here.</div>';
         progressContainer.style.display = 'none';
         progressBar.style.width = '0%';
         generationCounter.style.display = 'none';
@@ -102,7 +102,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     stopBtn.addEventListener('click', () => {
         isStopping = true;
         stopBtn.disabled = true;
-        stopBtn.textContent = 'Deteniendo...';
+        stopBtn.textContent = 'Stopping...';
     });
 
     form.addEventListener('submit', async (e) => {
@@ -117,7 +117,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const quality = 'standard';
         const style_choice = 'vivid';
 
-        if (prompts.length === 0) return alert('Ingresa al menos un prompt');
+        if (prompts.length === 0) return alert('Please enter at least one prompt');
 
         // IMPORTANT: Move current results to history in DB and UI ONLY on Start
         try {
@@ -154,11 +154,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         downloadBtn.classList.add('hidden-btn');
         stopBtn.style.display = 'block';
         stopBtn.disabled = false;
-        stopBtn.textContent = 'Detener';
+        stopBtn.textContent = 'Stop';
 
         // Button state during generation
         generateBtn.disabled = true;
-        generateBtn.textContent = 'Generando...';
+        generateBtn.textContent = 'Generating...';
 
         const total = prompts.length;
         let completed = 0;
@@ -171,7 +171,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 cancelMsg.style.textAlign = 'center';
                 cancelMsg.style.color = 'var(--accent)';
                 cancelMsg.style.gridColumn = '1/-1';
-                cancelMsg.textContent = 'Generación detenida por el usuario.';
+                cancelMsg.textContent = 'Generation stopped by user.';
                 imageGrid.append(cancelMsg);
                 break;
             }
@@ -207,7 +207,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                         // CREATE AND SHOW CARD ONLY WHEN READY
                         const card = createPlaceholder(currentName, originalPrompt);
-                        updateCard(card, URL.createObjectURL(blob), 'Completado', false, currentName, originalPrompt);
+                        updateCard(card, URL.createObjectURL(blob), 'Completed', false, currentName, originalPrompt);
                         imageGrid.append(card);
 
                     } catch (corsErr) {
@@ -217,7 +217,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         await ImageStorage.saveImage(blob, currentName, originalPrompt);
 
                         const card = createPlaceholder(currentName, originalPrompt);
-                        updateCard(card, URL.createObjectURL(blob), 'Completado', false, currentName, originalPrompt);
+                        updateCard(card, URL.createObjectURL(blob), 'Completed', false, currentName, originalPrompt);
                         imageGrid.append(card);
                     }
                 } else {
@@ -227,7 +227,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             } catch (err) {
                 const card = createPlaceholder(currentName, originalPrompt);
-                updateCard(card, null, 'Error de red', true, currentName, originalPrompt);
+                updateCard(card, null, 'Network error', true, currentName, originalPrompt);
                 imageGrid.append(card);
             }
 
@@ -241,7 +241,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Reset button and hide progress
         generateBtn.disabled = false;
-        generateBtn.innerHTML = 'Empezar Generación';
+        generateBtn.innerHTML = 'Start Generation';
         progressContainer.style.display = 'none';
 
         // Remove spinner
@@ -274,7 +274,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Only download images that ARE archived
         const historyImages = images.filter(img => img.isArchived === true);
 
-        if (historyImages.length === 0) return alert('No hay imágenes en el historial');
+        if (historyImages.length === 0) return alert('No images in history');
 
         historyImages.forEach((img) => {
             zip.file(img.fileName, img.blob);
@@ -295,7 +295,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <div class="placeholder-content">
                     <div class="spinner"></div>
                 </div>
-                <div class="status">Generando...</div>
+                <div class="status">Generating...</div>
             </div>
             <div class="card-info">
                 <div class="image-name-tag">${name}</div>
@@ -326,7 +326,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Si no hay error, renderizamos la imagen limpia con el botón de descarga y su etiqueta de nombre
         card.innerHTML = `
             <div class="img-wrapper">
-                <button class="btn-download-single" title="Descargar imagen">
+                <button class="btn-download-single" title="Download image">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                 </button>
                 <img src="${imgUrl}" alt="Generated Image" class="fade-img">
