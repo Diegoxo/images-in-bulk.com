@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             storedImages.forEach(img => {
                 const card = createPlaceholder(img.fileName);
-                updateCard(card, URL.createObjectURL(img.blob), 'Almacenado');
+                updateCard(card, URL.createObjectURL(img.blob), 'Almacenado', false, img.fileName);
 
                 if (img.isArchived === true) {
                     historyGrid.prepend(card);
@@ -184,13 +184,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                         // Save to IndexedDB (will be saved as isArchived: false)
                         await ImageStorage.saveImage(blob, currentName, currentPrompt);
 
-                        updateCard(card, URL.createObjectURL(blob), 'Completado');
+                        updateCard(card, URL.createObjectURL(blob), 'Completado', false, currentName);
                     } catch (corsErr) {
                         const proxyRes = await fetch(`api/proxy_image.php?url=${encodeURIComponent(data.image_url)}`);
                         const blob = await proxyRes.blob();
 
                         await ImageStorage.saveImage(blob, currentName, currentPrompt);
-                        updateCard(card, URL.createObjectURL(blob), 'Completado');
+                        updateCard(card, URL.createObjectURL(blob), 'Completado', false, currentName);
                     }
                 } else {
                     updateCard(card, null, 'Error: ' + (data.error || 'Unknown'), true);
@@ -238,7 +238,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         return div;
     }
 
-    function updateCard(card, imgUrl, statusText, isError = false) {
+    function updateCard(card, imgUrl, statusText, isError = false, fileName = '') {
         if (isError) {
             card.classList.add('status-error-border');
             const status = card.querySelector('.status');
@@ -248,8 +248,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         card.innerHTML = `
+            <button class="btn-download-single" title="Descargar imagen">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            </button>
             <img src="${imgUrl}" alt="Generated Image">
             <div class="status">${statusText}</div>
         `;
+
+        const downloadBtn = card.querySelector('.btn-download-single');
+        downloadBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const link = document.createElement('a');
+            link.href = imgUrl;
+            link.download = fileName || 'generated-image';
+            link.click();
+        });
     }
 });
