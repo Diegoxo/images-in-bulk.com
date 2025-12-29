@@ -3,7 +3,7 @@
  */
 const ImageStorage = {
     dbName: 'ImagesInBulkDB',
-    dbVersion: 1,
+    dbVersion: 4, // Inc for safety
     storeName: 'generated_images',
     db: null,
 
@@ -13,8 +13,16 @@ const ImageStorage = {
 
             request.onupgradeneeded = (event) => {
                 const db = event.target.result;
+                let store;
+
                 if (!db.objectStoreNames.contains(this.storeName)) {
-                    db.createObjectStore(this.storeName, { keyPath: 'id', autoIncrement: true });
+                    store = db.createObjectStore(this.storeName, { keyPath: 'id', autoIncrement: true });
+                } else {
+                    store = event.currentTarget.transaction.objectStore(this.storeName);
+                }
+
+                if (!store.indexNames.contains('isArchived')) {
+                    store.createIndex('isArchived', 'isArchived', { unique: false });
                 }
             };
 
@@ -24,14 +32,12 @@ const ImageStorage = {
             };
 
             request.onerror = (event) => {
-                reject('Error opening IndexedDB: ' + event.target.errorCode);
+                console.error('IDB Error:', event.target.error);
+                reject('Error opening IndexedDB');
             };
         });
     },
 
-    /**
-     * Store an image (blob) with metadata
-     */
     async saveImage(blob, fileName, prompt) {
         if (!this.db) await this.init();
 
@@ -43,7 +49,8 @@ const ImageStorage = {
                 blob: blob,
                 fileName: fileName,
                 prompt: prompt,
-                timestamp: new Date().getTime()
+                timestamp: new Date().getTime(),
+                isArchived: false // New images always start in Results
             };
 
             const request = store.add(record);
@@ -52,15 +59,39 @@ const ImageStorage = {
         });
     },
 
-    /**
-     * Get all images for the current session or overall
-     */
+    async archiveAll() {
+        if (!this.db) await this.init();
+
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction([this.storeName], 'readwrite');
+            const store = transaction.objectStore(this.storeName);
+            const request = store.openCursor();
+
+            request.onsuccess = (event) => {
+                const cursor = event.target.result;
+                if (cursor) {
+                    const updateData = cursor.value;
+                    // Any image that is not explicitly archived, mark it as archived
+                    if (updateData.isArchived !== true) {
+                        updateData.isArchived = true;
+                        cursor.update(updateData);
+                    }
+                    cursor.continue();
+                } else {
+                    resolve();
+                }
+            };
+            request.onerror = () => reject('Error archiving images');
+        });
+    },
+
     async getAllImages() {
         if (!this.db) await this.init();
 
         return new Promise((resolve, reject) => {
             const transaction = this.db.transaction([this.storeName], 'readonly');
             const store = transaction.objectStore(this.storeName);
+            // Get images by ID order
             const request = store.getAll();
 
             request.onsuccess = () => resolve(request.result);
@@ -68,12 +99,13 @@ const ImageStorage = {
         });
     },
 
-    /**
-     * Clear all stored images
-     */
     async clear() {
         if (!this.db) await this.init();
         const transaction = this.db.transaction([this.storeName], 'readwrite');
-        transaction.objectStore(this.storeName).clear();
+        const store = transaction.objectStore(this.storeName);
+        return new Promise((resolve) => {
+            const request = store.clear();
+            request.onsuccess = () => resolve();
+        });
     }
 };

@@ -1,9 +1,3 @@
-<?php
-require_once 'includes/config.php';
-
-// Simple login check placeholder
-$is_logged_in = isset($_SESSION['user_id']);
-?>
 <!DOCTYPE html>
 <html lang="es">
 
@@ -11,7 +5,6 @@ $is_logged_in = isset($_SESSION['user_id']);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Images-In-Bulk | IA Image Batch Generator</title>
-    <meta name="description" content="Genera imágenes por lote usando IA de forma rápida y sencilla.">
     <link rel="stylesheet" href="assets/css/style.css">
 </head>
 
@@ -19,12 +12,8 @@ $is_logged_in = isset($_SESSION['user_id']);
     <nav>
         <div class="logo">images-in-bulk</div>
         <div class="nav-links">
-            <?php if ($is_logged_in): ?>
-                <span>Hola, <?= htmlspecialchars($_SESSION['user_name']) ?></span>
-                <a href="auth/logout.php" class="btn-auth">Salir</a>
-            <?php else: ?>
-                <a href="auth/google.php" class="btn-auth btn-primary">Iniciar con Google</a>
-            <?php endif; ?>
+            <a href="#" class="btn-auth glass">Login</a>
+            <a href="#" class="btn-auth btn-primary">Sign up</a>
         </div>
     </nav>
 
@@ -36,28 +25,34 @@ $is_logged_in = isset($_SESSION['user_id']);
 
             <form id="generator-form">
                 <div class="form-group">
-                    <label for="prompts">Lista de Prompts (uno por línea)*</label>
+                    <div class="label-with-counter">
+                        <label for="prompts">Lista de Prompts (uno por línea)*</label>
+                        <span id="prompts-count" class="line-counter">0 líneas</span>
+                    </div>
                     <textarea id="prompts" placeholder="Ej: Un gato espacial con casco neón..." required></textarea>
                 </div>
 
                 <div class="form-group">
-                    <label for="filenames">Nombres de Imagen (uno por línea - opcional)</label>
+                    <div class="label-with-counter">
+                        <label for="filenames">Nombres de Imagen (uno por línea - opcional)</label>
+                        <span id="filenames-count" class="line-counter">0 líneas</span>
+                    </div>
                     <textarea id="filenames" placeholder="Ej: gato_01..."></textarea>
                 </div>
 
                 <div class="form-group">
                     <label for="custom_style">Estilo Personalizado / Modificadores</label>
-                    <input type="text" id="custom_style" placeholder="Ej: Estilo Cyberpunk, hyperrealistic, 8k">
+                    <textarea id="custom_style"
+                        placeholder="Ej: Estilo Cyberpunk, hyperrealistic, 8k, bokeh effect"></textarea>
                 </div>
 
                 <div class="config-grid">
                     <div class="form-group">
                         <label>Modelo</label>
                         <select id="model">
-                            <option value="gpt-image-1.5">GPT Image 1.5 (Latest)</option>
                             <option value="dall-e-3" selected>DALL-E 3</option>
-                            <option value="gpt-image-1-mini">GPT Image 1 Mini</option>
-                            <option value="dall-e-2">DALL-E 2</option>
+                            <option value="gpt-image-1.5">GPT Image 1.5</option>
+                            <option value="gpt-image-1-mini">GPT Image 1.0 (Mini)</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -67,18 +62,17 @@ $is_logged_in = isset($_SESSION['user_id']);
                             <option value="jpg">JPG</option>
                         </select>
                     </div>
+                    <div class="form-group">
+                        <label>Resolución</label>
+                        <select id="resolution">
+                            <option value="1:1">1:1 (Cuadrado)</option>
+                            <option value="16:9">16:9 (Horizontal)</option>
+                            <option value="9:16">9:16 (Vertical)</option>
+                        </select>
+                    </div>
                 </div>
 
-                <div class="form-group">
-                    <label>Resolución</label>
-                    <select id="resolution">
-                        <option value="1024x1024">1:1 (Cuadrado - 1024x1024)</option>
-                        <option value="1792x1024">16:9 (Horizontal - 1792x1024)</option>
-                        <option value="1024x1792">9:16 (Vertical - 1024x1792)</option>
-                    </select>
-                </div>
-
-                <div class="btn-group">
+                <div class="btn-group-vertical">
                     <button type="submit" id="generate-btn" class="btn-auth btn-primary generate-main-btn">
                         Empezar Generación
                     </button>
@@ -99,7 +93,6 @@ $is_logged_in = isset($_SESSION['user_id']);
                     </div>
                     <div class="header-right">
                         <button id="clear-gallery" class="btn-auth glass btn-clear">Limpiar Historial</button>
-                        <button id="download-zip" class="btn-auth glass">Descargar ZIP</button>
                     </div>
                 </div>
 
@@ -112,6 +105,24 @@ $is_logged_in = isset($_SESSION['user_id']);
                     <div class="empty-state">
                         Las imágenes generadas aparecerán aquí.
                     </div>
+                </div>
+
+                <div class="btn-group download-area">
+                    <button id="download-zip" class="btn-auth btn-primary hidden-btn">
+                        Descargar Lote Completo (ZIP)
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- History Section -->
+        <section id="history-section" class="preview-area hidden-btn">
+            <div class="glass animate-fade section-card">
+                <div class="results-header">
+                    <h2 style="font-size: 1.5rem;">Generaciones Anteriores</h2>
+                </div>
+                <div id="history-grid" class="image-grid">
+                    <!-- Past images will be moved here -->
                 </div>
             </div>
         </section>
