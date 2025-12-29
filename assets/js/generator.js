@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const filenamesCounter = document.getElementById('filenames-count');
     const generationCounter = document.getElementById('generation-counter');
     const clearGalleryBtn = document.getElementById('clear-gallery');
+    const generateBtn = document.getElementById('generate-btn');
 
     let isStopping = false;
 
@@ -85,6 +86,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         progressBar.style.width = '0%';
         generationCounter.style.display = 'none';
         generationCounter.textContent = '0 / 0';
+        const clearSpinner = document.getElementById('main-spinner');
+        if (clearSpinner) clearSpinner.remove();
 
         // Clean History
         historyGrid.innerHTML = '';
@@ -137,10 +140,25 @@ document.addEventListener('DOMContentLoaded', async () => {
         progressBar.style.width = '0%';
         generationCounter.style.display = 'inline-block';
         generationCounter.textContent = `0 / ${prompts.length}`;
+
+        // Remove existing spinner if any
+        const existingSpinner = document.getElementById('main-spinner');
+        if (existingSpinner) existingSpinner.remove();
+
+        // Add spinner next to counter
+        const spinner = document.createElement('div');
+        spinner.id = 'main-spinner';
+        spinner.className = 'btn-spinner';
+        spinner.style.margin = '0 0 0 10px'; // Reset margin for correct alignment
+        generationCounter.after(spinner);
         downloadBtn.classList.add('hidden-btn');
         stopBtn.style.display = 'block';
         stopBtn.disabled = false;
         stopBtn.textContent = 'Detener';
+
+        // Button state during generation
+        generateBtn.disabled = true;
+        generateBtn.textContent = 'Generando...';
 
         const total = prompts.length;
         let completed = 0;
@@ -220,6 +238,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         stopBtn.style.display = 'none';
         downloadBtn.classList.remove('hidden-btn');
+
+        // Reset button and hide progress
+        generateBtn.disabled = false;
+        generateBtn.innerHTML = 'Empezar Generación';
+        progressContainer.style.display = 'none';
+
+        // Remove spinner
+        const finalSpinner = document.getElementById('main-spinner');
+        if (finalSpinner) finalSpinner.remove();
     });
 
     // ZIP Download Logic
