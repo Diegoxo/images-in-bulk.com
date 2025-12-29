@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const progressBar = document.getElementById('progress-bar');
     const progressContainer = document.getElementById('progress-bar-container');
     const downloadBtn = document.getElementById('download-zip');
+    const downloadHistoryBtn = document.getElementById('download-zip-history');
     const stopBtn = document.getElementById('stop-btn');
     const promptsInput = document.getElementById('prompts');
     const filenamesInput = document.getElementById('filenames');
@@ -56,7 +57,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
 
             // Restore visibility based on content
-            if (hasHistory) historySection.classList.remove('hidden-btn');
+            if (hasHistory) {
+                historySection.classList.remove('hidden-btn');
+                downloadHistoryBtn.classList.remove('hidden-btn');
+            }
             if (hasCurrentResults) downloadBtn.classList.remove('hidden-btn');
 
             // Clean empty state if we have results
@@ -88,6 +92,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Reset Buttons
         downloadBtn.classList.add('hidden-btn');
+        downloadHistoryBtn.classList.add('hidden-btn');
         stopBtn.style.display = 'none';
     });
 
@@ -122,6 +127,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (currentCards.length > 0) {
             currentCards.forEach(card => historyGrid.prepend(card));
             historySection.classList.remove('hidden-btn');
+            downloadHistoryBtn.classList.remove('hidden-btn');
         }
 
         // Reset Results area for new generation
@@ -225,15 +231,38 @@ document.addEventListener('DOMContentLoaded', async () => {
         link.click();
     });
 
+    // ZIP Download History Logic
+    downloadHistoryBtn.addEventListener('click', async () => {
+        const zip = new JSZip();
+        const images = await ImageStorage.getAllImages();
+
+        // Only download images that ARE archived
+        const historyImages = images.filter(img => img.isArchived === true);
+
+        if (historyImages.length === 0) return alert('No hay imágenes en el historial');
+
+        historyImages.forEach((img) => {
+            zip.file(img.fileName, img.blob);
+        });
+
+        const content = await zip.generateAsync({ type: 'blob' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(content);
+        link.download = 'history_images_bulk.zip';
+        link.click();
+    });
+
     function createPlaceholder(name) {
         const div = document.createElement('div');
         div.className = 'image-card glass';
         div.innerHTML = `
-            <div class="placeholder-content">
-                <div class="spinner"></div>
-                <p class="placeholder-name">${name}</p>
+            <div class="img-wrapper">
+                <div class="placeholder-content">
+                    <div class="spinner"></div>
+                </div>
+                <div class="status">Generando...</div>
             </div>
-            <div class="status">Generando...</div>
+            <div class="image-name-tag">${name}</div>
         `;
         return div;
     }
@@ -241,18 +270,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     function updateCard(card, imgUrl, statusText, isError = false, fileName = '') {
         if (isError) {
             card.classList.add('status-error-border');
-            const status = card.querySelector('.status');
-            status.textContent = statusText;
-            status.classList.add('status-error');
+            card.innerHTML = `
+                <div class="img-wrapper">
+                    <div class="status status-error">${statusText}</div>
+                    <div class="placeholder-content">
+                        <p class="placeholder-name" style="color: var(--accent)">Error</p>
+                    </div>
+                </div>
+                <div class="image-name-tag">${fileName || 'Error'}</div>
+            `;
             return;
         }
 
+        // Si no hay error, renderizamos la imagen limpia con el botón de descarga y su etiqueta de nombre
         card.innerHTML = `
-            <button class="btn-download-single" title="Descargar imagen">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-            </button>
-            <img src="${imgUrl}" alt="Generated Image">
-            <div class="status">${statusText}</div>
+            <div class="img-wrapper">
+                <button class="btn-download-single" title="Descargar imagen">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                </button>
+                <img src="${imgUrl}" alt="Generated Image">
+            </div>
+            <div class="image-name-tag" title="${fileName}">${fileName}</div>
         `;
 
         const downloadBtn = card.querySelector('.btn-download-single');

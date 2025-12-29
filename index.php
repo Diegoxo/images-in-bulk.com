@@ -124,6 +124,11 @@
                 <div id="history-grid" class="image-grid">
                     <!-- Past images will be moved here -->
                 </div>
+                <div class="btn-group download-area">
+                    <button id="download-zip-history" class="btn-auth btn-primary hidden-btn">
+                        Descargar Historial Completo (ZIP)
+                    </button>
+                </div>
             </div>
         </section>
     </main>
