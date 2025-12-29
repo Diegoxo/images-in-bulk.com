@@ -48,10 +48,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 updateCard(card, URL.createObjectURL(img.blob), 'Almacenado', false, img.fileName, img.prompt);
 
                 if (img.isArchived === true) {
-                    historyGrid.prepend(card);
+                    historyGrid.append(card);
                     hasHistory = true;
                 } else {
-                    imageGrid.prepend(card);
+                    imageGrid.append(card);
                     hasCurrentResults = true;
                 }
             });
@@ -125,7 +125,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const currentCards = Array.from(imageGrid.querySelectorAll('.image-card'));
         if (currentCards.length > 0) {
-            currentCards.forEach(card => historyGrid.prepend(card));
+            currentCards.forEach(card => historyGrid.append(card));
             historySection.classList.remove('hidden-btn');
             downloadHistoryBtn.classList.remove('hidden-btn');
         }
@@ -154,17 +154,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 cancelMsg.style.color = 'var(--accent)';
                 cancelMsg.style.gridColumn = '1/-1';
                 cancelMsg.textContent = 'Generación detenida por el usuario.';
-                imageGrid.prepend(cancelMsg);
+                imageGrid.append(cancelMsg);
                 break;
             }
 
             const originalPrompt = prompts[i];
             const fullPrompt = style ? `${originalPrompt}. ${style}` : originalPrompt;
             const currentName = filenames[i] ? `${filenames[i]}.${format}` : `image_${i + 1}.${format}`;
-
-            // Create placeholder in results grid
-            const card = createPlaceholder(currentName, originalPrompt);
-            imageGrid.prepend(card);
 
             try {
                 // Call Backend
@@ -191,19 +187,30 @@ document.addEventListener('DOMContentLoaded', async () => {
                         // Save to IndexedDB (will be saved as isArchived: false)
                         await ImageStorage.saveImage(blob, currentName, originalPrompt);
 
+                        // CREATE AND SHOW CARD ONLY WHEN READY
+                        const card = createPlaceholder(currentName, originalPrompt);
                         updateCard(card, URL.createObjectURL(blob), 'Completado', false, currentName, originalPrompt);
+                        imageGrid.append(card);
+
                     } catch (corsErr) {
                         const proxyRes = await fetch(`api/proxy_image.php?url=${encodeURIComponent(data.image_url)}`);
                         const blob = await proxyRes.blob();
 
                         await ImageStorage.saveImage(blob, currentName, originalPrompt);
+
+                        const card = createPlaceholder(currentName, originalPrompt);
                         updateCard(card, URL.createObjectURL(blob), 'Completado', false, currentName, originalPrompt);
+                        imageGrid.append(card);
                     }
                 } else {
+                    const card = createPlaceholder(currentName, originalPrompt);
                     updateCard(card, null, 'Error: ' + (data.error || 'Unknown'), true, currentName, originalPrompt);
+                    imageGrid.append(card);
                 }
             } catch (err) {
+                const card = createPlaceholder(currentName, originalPrompt);
                 updateCard(card, null, 'Error de red', true, currentName, originalPrompt);
+                imageGrid.append(card);
             }
 
             completed++;
@@ -295,13 +302,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <button class="btn-download-single" title="Descargar imagen">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                 </button>
-                <img src="${imgUrl}" alt="Generated Image">
+                <img src="${imgUrl}" alt="Generated Image" class="fade-img">
             </div>
             <div class="card-info">
                 <div class="image-name-tag" title="${fileName}">${fileName}</div>
                 <div class="image-prompt-tag" title="${prompt}">${prompt}</div>
             </div>
         `;
+
+        const img = card.querySelector('img');
+        img.onload = () => {
+            setTimeout(() => {
+                img.classList.add('loaded');
+            }, 50);
+        };
 
         const downloadBtn = card.querySelector('.btn-download-single');
         downloadBtn.addEventListener('click', (e) => {
