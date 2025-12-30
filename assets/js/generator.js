@@ -19,15 +19,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     const clearGalleryBtn = document.getElementById('clear-gallery');
     const generateBtn = document.getElementById('generate-btn');
 
+    const clearPromptsBtn = document.getElementById('clear-prompts');
+    const clearFilenamesBtn = document.getElementById('clear-filenames');
+
     let isStopping = false;
 
-    const updateLineCount = (input, counter) => {
+    const updateLineCount = (input, counter, suffix) => {
         const lines = input.value.split('\n').filter(line => line.trim() !== '').length;
-        counter.textContent = `${lines} ${lines === 1 ? 'line' : 'lines'}`;
+        counter.textContent = `${lines} ${suffix}`;
     };
 
-    promptsInput.addEventListener('input', () => updateLineCount(promptsInput, promptsCounter));
-    filenamesInput.addEventListener('input', () => updateLineCount(filenamesInput, filenamesCounter));
+    promptsInput.addEventListener('input', () => updateLineCount(promptsInput, promptsCounter, 'Prompts'));
+    filenamesInput.addEventListener('input', () => updateLineCount(filenamesInput, filenamesCounter, 'Names'));
+
+    clearPromptsBtn.addEventListener('click', () => {
+        promptsInput.value = '';
+        updateLineCount(promptsInput, promptsCounter, 'Prompts');
+    });
+
+    clearFilenamesBtn.addEventListener('click', () => {
+        filenamesInput.value = '';
+        updateLineCount(filenamesInput, filenamesCounter, 'Names');
+    });
 
     // Initialize Storage
     await ImageStorage.init();

@@ -1,11 +1,11 @@
-<?php include 'includes/pages-config/app-config.php'; ?>
+<?php include 'includes/pages-config/generator-config.php'; ?>
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo $pageTitle; ?> | Images-In-Bulk</title>
+    <title><?php echo $pageTitle; ?> | Images In Bulk</title>
     <link rel="icon" type="image/x-icon" href="assets/img/favicon.ico">
     <link rel="stylesheet" href="assets/css/style.css">
 </head>
@@ -27,6 +27,9 @@
                         <span id="prompts-count" class="line-counter">0 Prompts</span>
                     </div>
                     <textarea id="prompts" placeholder="e.g.: A space cat with a neon helmet..." required></textarea>
+                    <div class="field-actions">
+                        <button type="button" id="clear-prompts" class="btn-text-action">Clear Prompts</button>
+                    </div>
                 </div>
 
                 <div class="form-group">
@@ -35,6 +38,9 @@
                         <span id="filenames-count" class="line-counter">0 Names</span>
                     </div>
                     <textarea id="filenames" placeholder="e.g.: cat_01..."></textarea>
+                    <div class="field-actions">
+                        <button type="button" id="clear-filenames" class="btn-text-action">Clear Names</button>
+                    </div>
                 </div>
 
                 <div class="form-group">

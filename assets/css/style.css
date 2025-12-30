@@ -140,6 +140,15 @@ body {
     width: 100%;
 }
 
+.user-greeting {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.user-greeting strong {
+    color: var(--primary);
+}
+
 nav {
     max-width: 1200px;
     margin: 0 auto;
@@ -250,6 +259,31 @@ nav {
 .btn-stop:hover {
     background: rgba(var(--accent-rgb), 0.1);
     transform: translateY(-2px);
+}
+
+.field-actions {
+    display: flex;
+    justify-content: flex-start;
+    margin-top: 0.2rem;
+}
+
+.btn-text-action {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: var(--transition-base);
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+
+.btn-text-action:hover {
+    color: var(--accent);
+    background: rgba(var(--accent-rgb), 0.1);
 }
 
 .btn-clear {

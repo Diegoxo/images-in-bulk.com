@@ -12,6 +12,19 @@ define('OPENAI_API_KEY', 'sk-proj-3y9F7IN5YtnL36gzPnCGg33hPDhaOhIKOVMUTi0yyUlPDd
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
+// Load Composer Autoloader
+require_once dirname(__DIR__) . '/vendor/autoload.php';
+
+// Auth Configuration (Placeholders for USER to fill)
+define('GOOGLE_CLIENT_ID', 'YOUR_GOOGLE_CLIENT_ID');
+define('GOOGLE_CLIENT_SECRET', 'YOUR_GOOGLE_CLIENT_SECRET');
+
+define('MICROSOFT_CLIENT_ID', 'YOUR_MICROSOFT_CLIENT_ID');
+define('MICROSOFT_CLIENT_SECRET', 'YOUR_MICROSOFT_CLIENT_SECRET');
+
+// Redirect URLs
+define('AUTH_CALLBACK_URL', 'http://localhost/images-in-bulk.com/auth/callback.php');
+
 // Start session
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
