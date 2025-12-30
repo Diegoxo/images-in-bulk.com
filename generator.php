@@ -1,4 +1,8 @@
-<?php include 'includes/pages-config/generator-config.php'; ?>
+<?php
+require_once 'includes/auth-check.php';
+checkAuth();
+include 'includes/pages-config/generator-config.php';
+?>
 <!DOCTYPE html>
 <html lang="en">
 

@@ -30,6 +30,10 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+// Temporary login hack for development
+$_SESSION['user_id'] = 1;
+$_SESSION['user_name'] = 'Diego';
+
 /**
  * Database connection helper using PDO
  */

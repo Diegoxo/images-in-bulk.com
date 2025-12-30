@@ -1,73 +1,61 @@
-<?php
-$pageTitle = "Login";
-include 'includes/layouts/header.php';
-?>
+<?php include 'includes/pages-config/login-config.php'; ?>
+<!DOCTYPE html>
+<html lang="en">
 
-<main class="container">
-    <section class="glass animate-fade section-card auth-card">
-        <h1 class="section-title">Welcome back</h1>
-        <p class="subtitle">Sign in to start creating magic with AI.</p>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?php echo $pageTitle; ?> | Images In Bulk</title>
+    <link rel="icon" type="image/x-icon" href="assets/img/favicon.ico">
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
 
-        <div class="auth-options">
-            <a href="auth/callback.php?provider=Google" class="btn-auth btn-google">
-                <img src="https://www.google.com/favicon.ico" alt="Google" width="18">
-                Sign in with Google
-            </a>
+<body>
+    <!-- Main Header Section -->
+    <?php include 'includes/layouts/header.php'; ?>
 
-            <a href="auth/callback.php?provider=MicrosoftGraph" class="btn-auth btn-microsoft">
-                <img src="https://www.microsoft.com/favicon.ico" alt="Microsoft" width="18">
-                Sign in with Microsoft
-            </a>
-        </div>
+    <main class="container">
+        <?php
+        $isSignUp = isset($_GET['mode']) && $_GET['mode'] === 'signup';
+        $title = $isSignUp ? "Create your account" : "Welcome back";
+        $subtitle = $isSignUp ? "Join us and start generating images in bulk." : "Sign in to start creating magic with AI.";
+        $footerText = $isSignUp ? "Already have an account?" : "Don't have an account?";
+        $footerLink = $isSignUp ? "login.php" : "login.php?mode=signup";
+        $footerAction = $isSignUp ? "Login here" : "Sign up here";
+        ?>
+        <section class="glass animate-fade section-card auth-card">
+            <h1 class="section-title"><?php echo $title; ?></h1>
+            <p class="subtitle"><?php echo $subtitle; ?></p>
 
-        <p class="auth-footer">
-            By signing in, you agree to our <a href="terms.php">Terms</a> and <a href="privacy.php">Privacy Policy</a>.
-        </p>
-    </section>
-</main>
+            <div class="auth-options">
+                <a href="auth/callback.php?provider=Google" class="btn-auth btn-google">
+                    <img src="https://www.google.com/favicon.ico" alt="Google" width="18">
+                    Sign in with Google
+                </a>
 
-<style>
-    .auth-card {
-        max-width: 450px !important;
-        margin: 4rem auto;
-        text-align: center;
-    }
+                <a href="auth/callback.php?provider=MicrosoftGraph" class="btn-auth btn-microsoft">
+                    <img src="https://www.microsoft.com/favicon.ico" alt="Microsoft" width="18">
+                    Sign in with Microsoft
+                </a>
+            </div>
 
-    .auth-options {
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-        margin: 2rem 0;
-    }
+            <p class="auth-footer">
+                <?php echo $footerText; ?> <a
+                    href="<?php echo $footerLink; ?>"><strong><?php echo $footerAction; ?></strong></a>
+            </p>
 
-    .btn-google,
-    .btn-microsoft {
-        background: white !important;
-        color: #1e293b !important;
-        border: 1px solid #e2e8f0 !important;
-        justify-content: center;
-        gap: 12px;
-        padding: 0.8rem !important;
-        font-size: 1rem !important;
-    }
+            <p class="auth-footer" style="margin-top: 1rem; opacity: 0.7;">
+                By continuing, you agree to our <a href="terms.php">Terms</a> and <a href="privacy.php">Privacy
+                    Policy</a>.
+            </p>
+        </section>
+    </main>
 
-    .btn-google:hover,
-    .btn-microsoft:hover {
-        background: #f8fafc !important;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    }
+    <!-- Main Footer Section -->
+    <?php include 'includes/layouts/footer.php'; ?>
 
-    .auth-footer {
-        font-size: 0.85rem;
-        color: var(--text-muted);
-        margin-top: 1.5rem;
-    }
+    <!-- Modular Script Injection -->
+    <?php include 'includes/layouts/main-scripts.php'; ?>
+</body>
 
-    .auth-footer a {
-        color: var(--primary);
-        text-decoration: none;
-    }
-</style>
-
-<?php include 'includes/layouts/footer.php'; ?>
+</html>
