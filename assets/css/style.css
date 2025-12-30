@@ -145,8 +145,39 @@ nav {
 
 .nav-links {
     display: flex;
-    gap: 2rem;
+    gap: 1rem;
+    /* Reducido para evitar overflow */
     align-items: center;
+}
+
+@media (max-width: 600px) {
+    nav {
+        padding: 1rem 1.5rem;
+        flex-direction: column;
+        gap: 1rem;
+        position: relative;
+        /* Evitar overflow por sticky si hay mucho contenido */
+    }
+
+    .logo {
+        font-size: 1.2rem;
+    }
+
+    .logo img {
+        height: 28px;
+    }
+
+    .nav-links {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .btn-auth {
+        flex: 1;
+        /* Los dos botones crecen igual */
+        padding: 0.6rem 0.5rem;
+        font-size: 0.85rem;
+    }
 }
 
 /* -------------------------------------------------------------------------- */
@@ -154,22 +185,30 @@ nav {
 /* -------------------------------------------------------------------------- */
 
 .btn-auth {
-    padding: 0.6rem 1.5rem;
+    padding: 0.6rem 1.2rem;
+    /* Más compacto */
     border-radius: var(--radius-md);
     font-weight: 600;
     cursor: pointer;
     transition: var(--transition-base);
     border: none;
     text-decoration: none;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
 }
 
 .btn-primary {
     background: var(--primary);
     color: white !important;
+}
+
+.generate-main-btn {
     min-width: 250px;
-    width: auto;
     padding: 1rem 2rem;
+    font-size: 1rem;
 }
 
 .btn-primary:hover {

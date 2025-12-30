@@ -30,16 +30,16 @@
             <form id="generator-form">
                 <div class="form-group">
                     <div class="label-with-counter">
-                        <label for="prompts">Prompts List (one per line)*</label>
-                        <span id="prompts-count" class="line-counter">0 lines</span>
+                        <label for="prompts">Prompts List*</label>
+                        <span id="prompts-count" class="line-counter">0 Prompts</span>
                     </div>
                     <textarea id="prompts" placeholder="e.g.: A space cat with a neon helmet..." required></textarea>
                 </div>
 
                 <div class="form-group">
                     <div class="label-with-counter">
-                        <label for="filenames">Image Names (one per line - optional)</label>
-                        <span id="filenames-count" class="line-counter">0 lines</span>
+                        <label for="filenames">Image Names (Optional)</label>
+                        <span id="filenames-count" class="line-counter">0 Names</span>
                     </div>
                     <textarea id="filenames" placeholder="e.g.: cat_01..."></textarea>
                 </div>
