@@ -1,0 +1,14 @@
+# Error Handling
+ErrorDocument 404 /error.php
+
+# Protect sensitive files
+<Files config.php>
+    Order Deny,Allow
+    Deny from all
+</Files>
+
+# Clean URLs (optional, but good for SEO)
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^([a-zA-Z0-9-]+)$ $1.php [L]

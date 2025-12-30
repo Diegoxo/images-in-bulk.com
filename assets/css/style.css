@@ -131,22 +131,27 @@ body {
 /* 5. NAVIGATION                                                             */
 /* -------------------------------------------------------------------------- */
 
-nav {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1.5rem 5%;
+.main-header {
     position: sticky;
     top: 0;
     z-index: 100;
     background: rgba(15, 23, 42, 0.8);
     backdrop-filter: blur(8px);
+    width: 100%;
+}
+
+nav {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 5%;
 }
 
 .nav-links {
     display: flex;
     gap: 1rem;
-    /* Reducido para evitar overflow */
     align-items: center;
 }
 
@@ -155,8 +160,10 @@ nav {
         padding: 1rem 1.5rem;
         flex-direction: column;
         gap: 1rem;
+    }
+
+    .main-header {
         position: relative;
-        /* Evitar overflow por sticky si hay mucho contenido */
     }
 
     .logo {
@@ -174,7 +181,6 @@ nav {
 
     .btn-auth {
         flex: 1;
-        /* Los dos botones crecen igual */
         padding: 0.6rem 0.5rem;
         font-size: 0.85rem;
     }
