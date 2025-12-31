@@ -14,7 +14,7 @@
     <!-- Main Header Section -->
     <?php include 'includes/layouts/header.php'; ?>
 
-    <main class="container">
+    <main class="container auth-page-main">
         <?php
         $isSignUp = isset($_GET['mode']) && $_GET['mode'] === 'signup';
         $title = $isSignUp ? "Create your account" : "Welcome back";

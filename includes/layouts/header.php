@@ -6,10 +6,11 @@
         </a>
         <div class="nav-links">
             <a href="index.php" class="btn-auth glass">Home</a>
+            <a href="generator.php" class="btn-auth glass">Generator</a>
+            <a href="pricing.php" class="btn-auth glass">Pricing</a>
             <?php if (isset($_SESSION['user_id'])): ?>
                 <span class="user-greeting">Hi,
                     <strong><?php echo explode(' ', $_SESSION['user_name'])[0]; ?></strong></span>
-                <a href="generator.php" class="btn-auth btn-primary">Generator</a>
                 <a href="logout.php" class="btn-auth glass">Logout</a>
             <?php else: ?>
                 <a href="login.php" class="btn-auth glass">Login</a>

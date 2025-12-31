@@ -1,4 +1,7 @@
-<?php include 'includes/pages-config/pricing-config.php'; ?>
+<?php
+require_once 'includes/config.php';
+include 'includes/pages-config/pricing-config.php';
+?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -45,7 +48,32 @@
                         <li>Premium Support</li>
                         <li>Advanced Style Modifiers</li>
                     </ul>
-                    <a href="login.php" class="btn-auth btn-primary full-width">Subscribe Now</a>
+                    <?php
+                    if (isset($_SESSION['user_id'])):
+                        // Limpieza extrema de variables
+                        $pubKey = trim(WOMPI_PUBLIC_KEY);
+                        $secret = trim(WOMPI_INTEGRITY_SECRET);
+                        $cents = 2000000; // 20.000 COP
+                        $curr = 'COP';
+                        // Referencia súper simple para evitar errores de caracteres
+                        $ref = 'REF' . $_SESSION['user_id'] . 'T' . time();
+
+                        // Firma SHA256 (Referencia + Centavos + Moneda + Secreto)
+                        $signature = hash('sha256', $ref . $cents . $curr . $secret);
+                        ?>
+                        <div class="payment-box"
+                            style="margin-top: 2rem; border: 1px solid var(--primary); padding: 1rem; border-radius: 12px;">
+                            <p style="margin-bottom: 1rem; font-size: 0.8rem; opacity: 0.8;">Secure Payment by Wompi</p>
+                            <form>
+                                <script src="https://checkout.wompi.co/widget.js" data-render="button"
+                                    data-public-key="<?php echo $pubKey; ?>" data-currency="<?php echo $curr; ?>"
+                                    data-amount-in-cents="<?php echo $cents; ?>" data-reference="<?php echo $ref; ?>"
+                                    data-signature:integrity="<?php echo $signature; ?>"></script>
+                            </form>
+                        </div>
+                    <?php else: ?>
+                        <a href="login.php?mode=signup" class="btn-auth btn-primary full-width">Sign up to buy</a>
+                    <?php endif; ?>
                 </div>
             </div>
         </section>

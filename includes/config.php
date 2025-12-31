@@ -22,6 +22,10 @@ define('GOOGLE_CLIENT_SECRET', 'YOUR_GOOGLE_CLIENT_SECRET');
 define('MICROSOFT_CLIENT_ID', 'YOUR_MICROSOFT_CLIENT_ID');
 define('MICROSOFT_CLIENT_SECRET', 'YOUR_MICROSOFT_CLIENT_SECRET');
 
+// Wompi Configuration (Placeholders for USER to fill)
+define('WOMPI_PUBLIC_KEY', 'pub_test_LeIVGZlLS7OylHnwFTA2N5UAVNSXpn9N');
+define('WOMPI_INTEGRITY_SECRET', 'test_integrity_pyVnUdqtCgQN0rjWv3nUGt8rb2wPB3CI');
+
 // Redirect URLs
 define('AUTH_CALLBACK_URL', 'http://localhost/images-in-bulk.com/auth/callback.php');
 
