@@ -16,8 +16,8 @@ ini_set('display_errors', 1);
 require_once dirname(__DIR__) . '/vendor/autoload.php';
 
 // Auth Configuration (Placeholders for USER to fill)
-define('GOOGLE_CLIENT_ID', 'YOUR_GOOGLE_CLIENT_ID');
-define('GOOGLE_CLIENT_SECRET', 'YOUR_GOOGLE_CLIENT_SECRET');
+define('GOOGLE_CLIENT_ID', '76050295586-8br8il909i5k4m5gr4orcsi221qncdt4.apps.googleusercontent.com');
+define('GOOGLE_CLIENT_SECRET', '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');
 
 define('MICROSOFT_CLIENT_ID', 'YOUR_MICROSOFT_CLIENT_ID');
 define('MICROSOFT_CLIENT_SECRET', 'YOUR_MICROSOFT_CLIENT_SECRET');
@@ -35,8 +35,8 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 // Temporary login hack for development
-$_SESSION['user_id'] = 1;
-$_SESSION['user_name'] = 'Diego';
+// $_SESSION['user_id'] = 1;
+// $_SESSION['user_name'] = 'Diego';
 
 /**
  * Database connection helper using PDO

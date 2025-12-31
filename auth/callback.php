@@ -1,44 +1,51 @@
 <?php
+/**
+ * HybridAuth Callback & Auth Handler
+ */
 require_once '../includes/config.php';
 
 use Hybridauth\Hybridauth;
+use Hybridauth\HttpClient;
 
-if (isset($_GET['provider'])) {
-    $provider = $_GET['provider'];
+$provider = isset($_GET['provider']) ? $_GET['provider'] : 'Google';
 
-    $config = [
-        'callback' => AUTH_CALLBACK_URL . '?provider=' . $provider,
-        'providers' => [
-            'Google' => [
-                'enabled' => true,
-                'keys' => [
-                    'id' => GOOGLE_CLIENT_ID,
-                    'secret' => GOOGLE_CLIENT_SECRET,
-                ],
-            ],
-            'MicrosoftGraph' => [
-                'enabled' => true,
-                'keys' => [
-                    'id' => MICROSOFT_CLIENT_ID,
-                    'secret' => MICROSOFT_CLIENT_SECRET,
-                ],
+// Configuration for HybridAuth
+$config = [
+    'callback' => 'http://localhost/images-in-bulk.com/auth/callback.php?provider=' . $provider,
+    'providers' => [
+        'Google' => [
+            'enabled' => true,
+            'keys' => [
+                'id' => GOOGLE_CLIENT_ID,
+                'secret' => GOOGLE_CLIENT_SECRET,
             ],
         ],
-    ];
+        'MicrosoftGraph' => [
+            'enabled' => true,
+            'keys' => [
+                'id' => MICROSOFT_CLIENT_ID,
+                'secret' => MICROSOFT_CLIENT_SECRET,
+            ],
+        ],
+    ],
+];
 
-    try {
-        $hybridauth = new Hybridauth($config);
-        $adapter = $hybridauth->authenticate($provider);
+try {
+    $hybridauth = new Hybridauth($config);
+    $adapter = $hybridauth->authenticate($provider);
+    $userProfile = $adapter->getUserProfile();
+    $adapter->disconnect();
 
-        $userProfile = $adapter->getUserProfile();
-
-        // Database logic to find or create user
+    if ($userProfile && $userProfile->identifier) {
         $db = getDB();
-        $stmt = $db->prepare("SELECT * FROM users WHERE email = ?");
-        $stmt->execute([$userProfile->email]);
+
+        // 1. Check if user exists
+        $stmt = $db->prepare("SELECT id, full_name, email FROM users WHERE provider_id = ? AND auth_provider = ?");
+        $stmt->execute([$userProfile->identifier, $provider]);
         $user = $stmt->fetch();
 
         if (!$user) {
+            // Register new user
             $stmt = $db->prepare("INSERT INTO users (email, full_name, auth_provider, provider_id, avatar_url) VALUES (?, ?, ?, ?, ?)");
             $stmt->execute([
                 $userProfile->email,
@@ -48,22 +55,21 @@ if (isset($_GET['provider'])) {
                 $userProfile->photoURL
             ]);
             $userId = $db->lastInsertId();
+            $userName = $userProfile->displayName;
         } else {
             $userId = $user['id'];
+            $userName = $user['full_name'];
         }
 
-        // Store user in session
+        // 2. Set session
         $_SESSION['user_id'] = $userId;
-        $_SESSION['user_email'] = $userProfile->email;
-        $_SESSION['user_name'] = $userProfile->displayName;
+        $_SESSION['user_name'] = $userName;
 
-        $adapter->disconnect();
-
-        header('Location: ../generator.php');
+        // 3. Redirect back to home or generator
+        header('Location: ../generator.php?login=success');
         exit;
-
-    } catch (\Exception $e) {
-        die("Auth Error: " . $e->getMessage());
     }
+
+} catch (\Exception $e) {
+    echo "¡Error de autenticación!: " . $e->getMessage();
 }
-?>
