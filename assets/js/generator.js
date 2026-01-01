@@ -23,6 +23,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     const clearFilenamesBtn = document.getElementById('clear-filenames');
 
     let isStopping = false;
+    let isGenerating = false;
+
+    // Prevent accidental navigation
+    window.addEventListener('beforeunload', (e) => {
+        if (isGenerating) {
+            e.preventDefault();
+            e.returnValue = ''; // Chrome requires this to show the prompt
+        }
+    });
 
     const updateLineCount = (input, counter, suffix) => {
         const lines = input.value.split('\n').filter(line => line.trim() !== '').length;
@@ -148,6 +157,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Reset Results area for new generation
         isStopping = false;
+        isGenerating = true;
+
         imageGrid.innerHTML = '';
         progressContainer.style.display = 'block';
         progressBar.style.width = '0%';
@@ -215,7 +226,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         const directRes = await fetch(data.image_url);
                         const blob = await directRes.blob();
 
-                        // Save to IndexedDB (will be saved as isArchived: false)
+                        // Save to IndexedDB
                         await ImageStorage.saveImage(blob, currentName, originalPrompt);
 
                         // CREATE AND SHOW CARD ONLY WHEN READY
@@ -253,6 +264,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         downloadBtn.classList.remove('hidden-btn');
 
         // Reset button and hide progress
+        isGenerating = false;
         generateBtn.disabled = false;
         generateBtn.innerHTML = 'Start Generation';
         progressContainer.style.display = 'none';

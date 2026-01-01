@@ -9,9 +9,10 @@ USE images_in_bulk;
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     email VARCHAR(255) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NULL, -- Null for social login users
     full_name VARCHAR(255),
-    auth_provider VARCHAR(50) NOT NULL, -- 'google' or 'microsoft'
-    provider_id VARCHAR(255) NOT NULL,
+    auth_provider VARCHAR(50) DEFAULT 'local', -- 'local', 'google', 'microsoft'
+    provider_id VARCHAR(255) NULL, -- Null for local users
     avatar_url TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

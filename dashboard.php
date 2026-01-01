@@ -84,24 +84,67 @@ $isPro = ($planType === 'pro' && $planStatus === 'active');
             align-items: center;
             gap: 1.5rem;
             margin-bottom: 2rem;
+            flex-wrap: wrap;
+            /* Allow wrapping */
         }
 
-        .profile-avatar {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            border: 2px solid var(--primary);
-            padding: 2px;
-            object-fit: cover;
+        .profile-info {
+            flex: 1;
+            /* Take remaining space */
+            min-width: 0;
+            /* Crucial for text-overflow to work in flex children */
+            display: flex;
+            /* Para mejor control */
+            flex-direction: column;
+            justify-content: center;
         }
 
         .profile-info h1 {
             font-size: 2rem;
             margin-bottom: 0.25rem;
+            word-wrap: break-word;
+            /* Wrap long names */
+            line-height: 1.2;
         }
 
         .profile-info p {
             color: var(--text-secondary);
+            word-break: break-all;
+            /* Break long emails on mobile */
+            font-size: 0.95rem;
+        }
+
+        @media (max-width: 600px) {
+            .profile-header {
+                flex-direction: column;
+                text-align: center;
+                gap: 1rem;
+            }
+
+            .profile-info {
+                width: 100%;
+                align-items: center;
+                /* Center content in column mode */
+            }
+
+            .profile-info h1 {
+                font-size: 1.5rem;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 0.5rem;
+            }
+
+            .profile-info p {
+                font-size: 0.8rem !important;
+                /* Smaller email on mobile */
+                opacity: 0.8;
+            }
+
+            .badge {
+                margin-left: 0;
+                /* Remove left margin in stack mode */
+            }
         }
 
         .badge {
@@ -188,27 +231,134 @@ $isPro = ($planType === 'pro' && $planStatus === 'active');
                 <?php endif; ?>
             </div>
 
-            <!-- Stats -->
+            <!-- Stats (Compact) -->
             <div class="glass stat-card" style="border-radius: 20px;">
                 <div class="stat-value">
                     <?php echo number_format($stats['total_images']); ?>
                 </div>
-                <div class="stat-label">Images Generated</div>
+                <div class="stat-label">Total Images Generated</div>
             </div>
 
-            <!-- Actions -->
+            <!-- Quick Actions -->
             <div class="glass"
                 style="padding: 2rem; border-radius: 20px; display: flex; flex-direction: column; justify-content: center;">
                 <h3 class="section-title" style="font-size: 1.5rem; margin-bottom: 1.5rem;">Quick Actions</h3>
-                <a href="generator.php" class="btn-auth btn-primary full-width" style="margin-bottom: 1rem;">
+                <a href="generator" class="btn-auth btn-primary full-width" style="margin-bottom: 1rem;">
                     Go to Generator ✨
                 </a>
-                <a href="pricing.php" class="btn-auth glass full-width">
-                    View Usage Limits
+                <a href="pricing" class="btn-auth glass full-width">
+                    View Pricing
                 </a>
             </div>
 
         </div>
+
+        <!-- Gallery Section -->
+        <section class="glass animate-fade" style="margin-top: 2rem; padding: 2rem; border-radius: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h2 class="section-title" style="margin: 0;">Your Gallery</h2>
+                <button id="download-all-btn" class="btn-auth glass">
+                    Download All (.zip) 📥
+                </button>
+            </div>
+
+            <div id="dashboard-gallery-grid"
+                style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem;">
+                <!-- Images will be loaded here via JS -->
+                <p style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 2rem;">Loading your
+                    images...</p>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Scripts for Gallery -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script>
+        const CURRENT_USER_ID = <?php echo isset($_SESSION['user_id']) ? $_SESSION['user_id'] : "'guest'"; ?>;
+    </script>
+    <script src="assets/js/storage.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const galleryGrid = document.getElementById('dashboard-gallery-grid');
+            const downloadBtn = document.getElementById('download-all-btn');
+
+            try {
+                // Initialize Storage
+                const images = await ImageStorage.getAllImages();
+
+                // Note: ImageStorage.getAllImages() already filters by CURRENT_USER_ID if updated properly,
+                // otherwise strictly filter here just in case:
+                const myImages = images.filter(img => img.userId == CURRENT_USER_ID);
+
+                galleryGrid.innerHTML = '';
+
+                if (myImages.length === 0) {
+                    galleryGrid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 2rem;">No images found in this browser.</p>';
+                    downloadBtn.style.display = 'none';
+                    return;
+                }
+
+                downloadBtn.style.display = 'block';
+
+                // Render Images
+                myImages.forEach(img => {
+                    const url = URL.createObjectURL(img.blob);
+
+                    const div = document.createElement('div');
+                    div.style.cssText = 'position: relative; aspect-ratio: 1; border-radius: 12px; overflow: hidden; border: 1px solid var(--glass-border);';
+
+                    const imageEl = document.createElement('img');
+                    imageEl.src = url;
+                    imageEl.style.cssText = 'width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s;';
+                    imageEl.onmouseover = () => imageEl.style.transform = 'scale(1.1)';
+                    imageEl.onmouseout = () => imageEl.style.transform = 'scale(1)';
+
+                    div.appendChild(imageEl);
+                    galleryGrid.appendChild(div);
+                });
+
+                // Handle Download All
+                downloadBtn.addEventListener('click', async () => {
+                    const originalText = downloadBtn.innerText;
+                    downloadBtn.innerText = 'Zipping... ⏳';
+                    downloadBtn.disabled = true;
+
+                    try {
+                        const zip = new JSZip();
+                        const folder = zip.folder("my_images_bulk");
+
+                        myImages.forEach((img, index) => {
+                            const name = img.fileName || `image_${index + 1}.png`;
+                            folder.file(name, img.blob);
+                        });
+
+                        const content = await zip.generateAsync({ type: "blob" });
+
+                        // Trigger Download
+                        const a = document.createElement("a");
+                        a.href = URL.createObjectURL(content);
+                        a.download = "my_images_bulk.zip";
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+
+                    } catch (err) {
+                        alert('Error creating zip: ' + err);
+                    } finally {
+                        downloadBtn.innerText = originalText;
+                        downloadBtn.disabled = false;
+                    }
+                });
+
+            } catch (err) {
+                console.error(err);
+                galleryGrid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #ef4444;">Error loading gallery.</p>';
+            }
+        });
+    </script>
+
+    </div>
     </main>
 
     <!-- Main Footer Section -->

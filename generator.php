@@ -4,13 +4,25 @@ include 'includes/pages-config/generator-config.php';
 
 // Verificamos el estado del usuario (sin bloquear acceso)
 $isPro = false;
+$freeImagesCount = 0;
+$freeLimit = 3;
+
 if (isset($_SESSION['user_id'])) {
     $db = getDB();
+
+    // Check Subscription
     $stmt = $db->prepare("SELECT plan_type, status FROM subscriptions WHERE user_id = ? AND status = 'active'");
     $stmt->execute([$_SESSION['user_id']]);
     $sub = $stmt->fetch();
     if ($sub && $sub['plan_type'] === 'pro') {
         $isPro = true;
+    }
+
+    // Count Generated Images (for free users)
+    if (!$isPro) {
+        $stmtCount = $db->prepare("SELECT COUNT(*) FROM generations WHERE user_id = ?");
+        $stmtCount->execute([$_SESSION['user_id']]);
+        $freeImagesCount = $stmtCount->fetchColumn();
     }
 }
 ?>
@@ -99,18 +111,37 @@ if (isset($_SESSION['user_id'])) {
                             Stop
                         </button>
                     <?php elseif (isset($_SESSION['user_id'])): ?>
-                        <!-- Usuario Logueado pero Free -->
-                        <div class="locked-feature glass"
-                            style="padding: 1rem; text-align: center; border: 1px solid var(--primary); border-radius: 12px; background: rgba(0,0,0,0.2);">
-                            <p style="margin-bottom: 0.5rem; font-size: 0.9rem;">🔒 PRO Feature Only</p>
-                            <a href="pricing.php" class="btn-auth btn-primary full-width">Upgrade to Generate</a>
-                        </div>
+                        <!-- Usuario Logueado (Free) -->
+                        <?php if ($freeImagesCount < $freeLimit): ?>
+                            <div class="free-limit-info" style="margin-bottom: 1rem; text-align: center; color: var(--text-secondary); font-size: 0.85rem;">
+                                Free Trial: <strong><?php echo $freeImagesCount; ?>/<?php echo $freeLimit; ?></strong> images used
+                                <div style="width: 100%; background: rgba(255,255,255,0.1); height: 4px; border-radius: 2px; margin-top: 6px; overflow: hidden;">
+                                    <div style="width: <?php echo ($freeImagesCount / $freeLimit) * 100; ?>%; background: <?php echo ($freeImagesCount >= $freeLimit - 1) ? '#ef4444' : 'var(--primary)'; ?>; height: 100%; border-radius: 2px; transition: width 0.3s;"></div>
+                                </div>
+                            </div>
+                            <button type="submit" id="generate-btn" class="btn-auth btn-primary generate-main-btn">
+                                Generate (Free) 🎨
+                            </button>
+                            <button type="button" id="stop-btn" class="btn-auth glass btn-stop">
+                                Stop
+                            </button>
+                        <?php else: ?>
+                            <!-- Limite Alcanzado -->
+                            <div class="locked-feature glass"
+                                style="padding: 1rem; text-align: center; border: 1px solid #ef4444; border-radius: 12px; background: rgba(239, 68, 68, 0.1);">
+                                <p style="margin-bottom: 0.5rem; font-size: 0.9rem; color: #fca5a5;">🔒 Free Limit Reached (3/3)</p>
+                                <a href="pricing" class="btn-auth btn-primary full-width">Upgrade for Unlimited</a>
+                            </div>
+                        <?php endif; ?>
                     <?php else: ?>
-                        <!-- Usuario No Logueado -->
-                        <div class="locked-feature glass" style="padding: 1rem; text-align: center; border-radius: 12px;">
-                            <p style="margin-bottom: 0.5rem; font-size: 0.9rem;">Sign in to start creating</p>
-                            <a href="login.php" class="btn-auth btn-primary full-width">Login to Continue</a>
-                        </div>
+                        <!-- Usuario No Logueado (Apariencia Normal pero Redirige) -->
+                        <a href="login" class="btn-auth btn-primary generate-main-btn" style="text-decoration: none;">
+                            Start Generation 🚀
+                        </a>
+                        <button type="button" class="btn-auth glass btn-stop" disabled
+                            style="opacity: 0.5; cursor: not-allowed;">
+                            Stop
+                        </button>
                     <?php endif; ?>
                 </div>
             </form>
@@ -172,6 +203,9 @@ if (isset($_SESSION['user_id'])) {
     <?php include 'includes/layouts/footer.php'; ?>
 
     <!-- Modular Script Injection -->
+    <script>
+        const CURRENT_USER_ID = <?php echo isset($_SESSION['user_id']) ? $_SESSION['user_id'] : "'guest'"; ?>;
+    </script>
     <?php include 'includes/layouts/main-scripts.php'; ?>
 </body>
 

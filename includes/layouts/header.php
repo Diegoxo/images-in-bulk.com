@@ -1,13 +1,13 @@
 <header class="main-header">
     <nav>
-        <a href="index.php" class="logo">
+        <a href="./" class="logo">
             <img src="assets/img/bulk-image-generator-logo.avif" alt="bulk-image-generator-logo" height="32">
             <span>images in bulk</span>
         </a>
         <div class="nav-links">
-            <a href="index.php" class="btn-auth glass">Home</a>
-            <a href="generator.php" class="btn-auth glass">Generator</a>
-            <a href="pricing.php" class="btn-auth glass">Pricing</a>
+            <a href="./" class="btn-auth glass">Home</a>
+            <a href="generator" class="btn-auth glass">Generator</a>
+            <a href="pricing" class="btn-auth glass">Pricing</a>
             <?php if (isset($_SESSION['user_id'])): ?>
                 <?php
                 // Self-healing session: If avatar is missing but user is logged in, fetch it.
@@ -24,7 +24,7 @@
 
                 <div class="user-dropdown-container">
                     <div class="user-menu-trigger btn-auth glass" onclick="toggleUserDropdown()"
-                        style="padding: 0.5rem 1rem; border-radius: 50px;">
+                        style="padding: 0.5rem 1rem;">
                         <?php if ($displayAvatar): ?>
                             <img src="<?php echo htmlspecialchars($displayAvatar); ?>" alt="User"
                                 style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary);">
@@ -42,18 +42,15 @@
                     <div id="userDropdown" class="user-dropdown-menu">
                         <div style="padding: 0.75rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.1);">
                             <div style="font-weight: bold;"><?php echo htmlspecialchars($displayName); ?></div>
-                            <div style="font-size: 0.8rem; opacity: 0.7; overflow: hidden; text-overflow: ellipsis;">
-                                <?php echo $_SESSION['user_id']; // Using ID as simple identifier, email not in session yet ?>
-                            </div>
                         </div>
-                        <a href="dashboard.php" class="dropdown-item">
+                        <a href="dashboard" class="dropdown-item">
                             <span>📊</span> Dashboard
                         </a>
-                        <a href="pricing.php" class="dropdown-item">
+                        <a href="pricing" class="dropdown-item">
                             <span>💎</span> My Plan
                         </a>
                         <div class="dropdown-divider"></div>
-                        <a href="logout.php" class="dropdown-item text-danger">
+                        <a href="logout" class="dropdown-item text-danger">
                             <span>🚪</span> Logout
                         </a>
                     </div>
@@ -75,8 +72,8 @@
                     });
                 </script>
             <?php else: ?>
-                <a href="login.php" class="btn-auth glass">Login</a>
-                <a href="login.php?mode=signup" class="btn-auth btn-primary">Sign up</a>
+                <a href="login" class="btn-auth glass">Login</a>
+                <a href="login?mode=signup" class="btn-auth btn-primary">Sign up</a>
             <?php endif; ?>
         </div>
     </nav>
