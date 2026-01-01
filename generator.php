@@ -113,10 +113,15 @@ if (isset($_SESSION['user_id'])) {
                     <?php elseif (isset($_SESSION['user_id'])): ?>
                         <!-- Usuario Logueado (Free) -->
                         <?php if ($freeImagesCount < $freeLimit): ?>
-                            <div class="free-limit-info" style="margin-bottom: 1rem; text-align: center; color: var(--text-secondary); font-size: 0.85rem;">
-                                Free Trial: <strong><?php echo $freeImagesCount; ?>/<?php echo $freeLimit; ?></strong> images used
-                                <div style="width: 100%; background: rgba(255,255,255,0.1); height: 4px; border-radius: 2px; margin-top: 6px; overflow: hidden;">
-                                    <div style="width: <?php echo ($freeImagesCount / $freeLimit) * 100; ?>%; background: <?php echo ($freeImagesCount >= $freeLimit - 1) ? '#ef4444' : 'var(--primary)'; ?>; height: 100%; border-radius: 2px; transition: width 0.3s;"></div>
+                            <div class="free-limit-info"
+                                style="margin-bottom: 1rem; text-align: center; color: var(--text-secondary); font-size: 0.85rem;">
+                                Free Trial: <strong><?php echo $freeImagesCount; ?>/<?php echo $freeLimit; ?></strong> images
+                                used
+                                <div
+                                    style="width: 100%; background: rgba(255,255,255,0.1); height: 4px; border-radius: 2px; margin-top: 6px; overflow: hidden;">
+                                    <div
+                                        style="width: <?php echo ($freeImagesCount / $freeLimit) * 100; ?>%; background: <?php echo ($freeImagesCount >= $freeLimit - 1) ? '#ef4444' : 'var(--primary)'; ?>; height: 100%; border-radius: 2px; transition: width 0.3s;">
+                                    </div>
                                 </div>
                             </div>
                             <button type="submit" id="generate-btn" class="btn-auth btn-primary generate-main-btn">
@@ -129,7 +134,8 @@ if (isset($_SESSION['user_id'])) {
                             <!-- Limite Alcanzado -->
                             <div class="locked-feature glass"
                                 style="padding: 1rem; text-align: center; border: 1px solid #ef4444; border-radius: 12px; background: rgba(239, 68, 68, 0.1);">
-                                <p style="margin-bottom: 0.5rem; font-size: 0.9rem; color: #fca5a5;">🔒 Free Limit Reached (3/3)</p>
+                                <p style="margin-bottom: 0.5rem; font-size: 0.9rem; color: #fca5a5;">🔒 Free Limit Reached (3/3)
+                                </p>
                                 <a href="pricing" class="btn-auth btn-primary full-width">Upgrade for Unlimited</a>
                             </div>
                         <?php endif; ?>
