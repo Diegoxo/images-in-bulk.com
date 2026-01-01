@@ -1,3 +1,6 @@
+-- Delete Database
+DROP DATABASE IF EXISTS images_in_bulk;
+
 -- Create Database
 CREATE DATABASE IF NOT EXISTS images_in_bulk DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE images_in_bulk;
@@ -17,10 +20,14 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS subscriptions (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
-    stripe_customer_id VARCHAR(255),
-    stripe_subscription_id VARCHAR(255),
-    status VARCHAR(50) DEFAULT 'inactive', -- 'active', 'inactive', 'canceled'
+    plan_type VARCHAR(20) DEFAULT 'free', -- 'free', 'pro'
+    status VARCHAR(50) DEFAULT 'inactive', -- 'active', 'inactive'
+    stripe_customer_id VARCHAR(255), -- Optional (kept for future proofing)
+    stripe_subscription_id VARCHAR(255), -- Optional
+    current_period_start DATETIME,
     current_period_end DATETIME,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 

@@ -7,11 +7,18 @@ require_once '../includes/config.php';
 use Hybridauth\Hybridauth;
 use Hybridauth\HttpClient;
 
-$provider = isset($_GET['provider']) ? $_GET['provider'] : 'Google';
+// Detectar proveedor: Si viene por GET, es el inicio. Si no, recuperar de sesión (retorno).
+if (isset($_GET['provider'])) {
+    $provider = $_GET['provider'];
+    $_SESSION['auth_provider_flow'] = $provider;
+} else {
+    $provider = isset($_SESSION['auth_provider_flow']) ? $_SESSION['auth_provider_flow'] : 'Google';
+}
 
 // Configuration for HybridAuth
 $config = [
-    'callback' => 'http://localhost/images-in-bulk.com/auth/callback.php?provider=' . $provider,
+    // URL EXACTA registrada en Google/Microsoft (sin ?provider=...)
+    'callback' => 'http://localhost/images-in-bulk.com/auth/callback.php',
     'providers' => [
         'Google' => [
             'enabled' => true,
@@ -21,7 +28,7 @@ $config = [
             ],
         ],
         'MicrosoftGraph' => [
-            'enabled' => true,
+            'enabled' => false, // Desactivado por restricciones de Azure
             'keys' => [
                 'id' => MICROSOFT_CLIENT_ID,
                 'secret' => MICROSOFT_CLIENT_SECRET,

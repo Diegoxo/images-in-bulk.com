@@ -30,12 +30,7 @@
             <div class="auth-options">
                 <a href="auth/callback.php?provider=Google" class="btn-auth btn-google">
                     <img src="https://www.google.com/favicon.ico" alt="Google" width="18">
-                    Sign in with Google
-                </a>
-
-                <a href="auth/callback.php?provider=MicrosoftGraph" class="btn-auth btn-microsoft">
-                    <img src="https://www.microsoft.com/favicon.ico" alt="Microsoft" width="18">
-                    Sign in with Microsoft
+                    <?php echo $isSignUp ? "Sign up with Google" : "Sign in with Google"; ?>
                 </a>
             </div>
 
