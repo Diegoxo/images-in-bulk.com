@@ -1,7 +1,18 @@
 <?php
-require_once 'includes/auth-check.php';
-checkAuth();
+require_once 'includes/config.php';
 include 'includes/pages-config/generator-config.php';
+
+// Verificamos el estado del usuario (sin bloquear acceso)
+$isPro = false;
+if (isset($_SESSION['user_id'])) {
+    $db = getDB();
+    $stmt = $db->prepare("SELECT plan_type, status FROM subscriptions WHERE user_id = ? AND status = 'active'");
+    $stmt->execute([$_SESSION['user_id']]);
+    $sub = $stmt->fetch();
+    if ($sub && $sub['plan_type'] === 'pro') {
+        $isPro = true;
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -80,64 +91,81 @@ include 'includes/pages-config/generator-config.php';
                 </div>
 
                 <div class="btn-group-vertical">
-                    <button type="submit" id="generate-btn" class="btn-auth btn-primary generate-main-btn">
-                        Start Generation
-                    </button>
-                    <button type="button" id="stop-btn" class="btn-auth glass btn-stop">
-                        Stop
-                    </button>
+                    <?php if ($isPro): ?>
+                        <button type="submit" id="generate-btn" class="btn-auth btn-primary generate-main-btn">
+                            Start Generation 🚀
+                        </button>
+                        <button type="button" id="stop-btn" class="btn-auth glass btn-stop">
+                            Stop
+                        </button>
+                    <?php elseif (isset($_SESSION['user_id'])): ?>
+                        <!-- Usuario Logueado pero Free -->
+                        <div class="locked-feature glass"
+                            style="padding: 1rem; text-align: center; border: 1px solid var(--primary); border-radius: 12px; background: rgba(0,0,0,0.2);">
+                            <p style="margin-bottom: 0.5rem; font-size: 0.9rem;">🔒 PRO Feature Only</p>
+                            <a href="pricing.php" class="btn-auth btn-primary full-width">Upgrade to Generate</a>
+                        </div>
+                    <?php else: ?>
+                        <!-- Usuario No Logueado -->
+                        <div class="locked-feature glass" style="padding: 1rem; text-align: center; border-radius: 12px;">
+                            <p style="margin-bottom: 0.5rem; font-size: 0.9rem;">Sign in to start creating</p>
+                            <a href="login.php" class="btn-auth btn-primary full-width">Login to Continue</a>
+                        </div>
+                    <?php endif; ?>
                 </div>
             </form>
         </section>
 
-        <!-- Preview Section -->
-        <section class="preview-area">
-            <div class="glass animate-fade section-card">
-                <div class="results-header">
-                    <div class="header-left">
-                        <h2 style="font-size: 1.5rem;">Results</h2>
-                        <span id="generation-counter" class="counter-badge">0 / 0</span>
+        <?php if (isset($_SESSION['user_id'])): ?>
+            <!-- Preview Section -->
+            <section class="preview-area">
+                <div class="glass animate-fade section-card">
+                    <div class="results-header">
+                        <div class="header-left">
+                            <h2 style="font-size: 1.5rem;">Results</h2>
+                            <span id="generation-counter" class="counter-badge">0 / 0</span>
+                        </div>
+                        <div class="header-right">
+                            <button id="clear-gallery" class="btn-auth glass btn-clear">Clear History</button>
+                        </div>
                     </div>
-                    <div class="header-right">
-                        <button id="clear-gallery" class="btn-auth glass btn-clear">Clear History</button>
+
+                    <div id="progress-bar-container" class="progress-container">
+                        <div id="progress-bar" class="progress-fill"></div>
+                    </div>
+
+                    <div id="image-grid" class="image-grid">
+                        <!-- Images will appear here -->
+                        <div class="empty-state">
+                            Your generated images will appear here.
+                        </div>
+                    </div>
+
+                    <div class="btn-group download-area">
+                        <button id="download-zip" class="btn-auth btn-primary hidden-btn">
+                            Download Full Batch (ZIP)
+                        </button>
                     </div>
                 </div>
+            </section>
 
-                <div id="progress-bar-container" class="progress-container">
-                    <div id="progress-bar" class="progress-fill"></div>
-                </div>
-
-                <div id="image-grid" class="image-grid">
-                    <!-- Images will appear here -->
-                    <div class="empty-state">
-                        Your generated images will appear here.
+            <!-- History Section -->
+            <section id="history-section" class="preview-area hidden-btn">
+                <div class="glass animate-fade section-card">
+                    <div class="results-header">
+                        <h2 style="font-size: 1.5rem;">Previous Generations</h2>
+                    </div>
+                    <div id="history-grid" class="image-grid">
+                        <!-- Past images will be moved here -->
+                    </div>
+                    <div class="btn-group download-area">
+                        <button id="download-zip-history" class="btn-auth btn-primary hidden-btn">
+                            Download Complete History (ZIP)
+                        </button>
                     </div>
                 </div>
-
-                <div class="btn-group download-area">
-                    <button id="download-zip" class="btn-auth btn-primary hidden-btn">
-                        Download Full Batch (ZIP)
-                    </button>
-                </div>
-            </div>
-        </section>
-
-        <!-- History Section -->
-        <section id="history-section" class="preview-area hidden-btn">
-            <div class="glass animate-fade section-card">
-                <div class="results-header">
-                    <h2 style="font-size: 1.5rem;">Previous Generations</h2>
-                </div>
-                <div id="history-grid" class="image-grid">
-                    <!-- Past images will be moved here -->
-                </div>
-                <div class="btn-group download-area">
-                    <button id="download-zip-history" class="btn-auth btn-primary hidden-btn">
-                        Download Complete History (ZIP)
-                    </button>
-                </div>
-            </div>
-        </section>
+            </section>
+        <?php endif; ?>
     </main>
 
     <!-- Main Footer Section -->

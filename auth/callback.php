@@ -47,30 +47,34 @@ try {
         $db = getDB();
 
         // 1. Check if user exists
-        $stmt = $db->prepare("SELECT id, full_name, email FROM users WHERE provider_id = ? AND auth_provider = ?");
+        $stmt = $db->prepare("SELECT id, full_name, email, avatar_url FROM users WHERE provider_id = ? AND auth_provider = ?");
         $stmt->execute([$userProfile->identifier, $provider]);
         $user = $stmt->fetch();
 
         if (!$user) {
             // Register new user
+            $storeAvatar = $userProfile->photoURL;
             $stmt = $db->prepare("INSERT INTO users (email, full_name, auth_provider, provider_id, avatar_url) VALUES (?, ?, ?, ?, ?)");
             $stmt->execute([
                 $userProfile->email,
                 $userProfile->displayName,
                 $provider,
                 $userProfile->identifier,
-                $userProfile->photoURL
+                $storeAvatar
             ]);
             $userId = $db->lastInsertId();
             $userName = $userProfile->displayName;
+            $userAvatar = $storeAvatar;
         } else {
             $userId = $user['id'];
             $userName = $user['full_name'];
+            $userAvatar = $user['avatar_url'];
         }
 
         // 2. Set session
         $_SESSION['user_id'] = $userId;
         $_SESSION['user_name'] = $userName;
+        $_SESSION['user_avatar'] = $userAvatar;
 
         // 3. Redirect back to home or generator
         header('Location: ../generator.php?login=success');
