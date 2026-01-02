@@ -159,6 +159,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         isStopping = false;
         isGenerating = true;
 
+        // Show warning text
+        const warningText = document.getElementById('generation-warning-text');
+        if (warningText) warningText.style.display = 'block';
+
         imageGrid.innerHTML = '';
         progressContainer.style.display = 'block';
         progressBar.style.width = '0%';
@@ -262,6 +266,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         stopBtn.style.display = 'none';
         downloadBtn.classList.remove('hidden-btn');
+
+        // Hide warning text
+        if (warningText) warningText.style.display = 'none';
 
         // Reset button and hide progress
         isGenerating = false;

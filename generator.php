@@ -167,6 +167,12 @@ if (isset($_SESSION['user_id'])) {
                         </div>
                     </div>
 
+                    <div id="generation-warning-text" style="display: none; text-align: center; padding: 0.75rem; margin-bottom: 1rem; background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.3); border-radius: 8px;">
+                        <p style="margin: 0; color: #fbbf24; font-size: 0.9rem;">
+                            ⚠️ <strong>Generation in progress.</strong> Please don't close this tab or navigate away.
+                        </p>
+                    </div>
+
                     <div id="progress-bar-container" class="progress-container">
                         <div id="progress-bar" class="progress-fill"></div>
                     </div>
