@@ -402,19 +402,20 @@ $isPro = ($planType === 'pro' && $planStatus === 'active');
 
         <!-- Gallery Section -->
         <section class="glass animate-fade gallery-section" style="margin-top: 2rem;">
-            <div
-                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+            <div style="margin-bottom: 1.5rem;">
                 <h2 class="section-title" style="margin: 0;">Your Gallery</h2>
-                <button id="download-all-btn" class="btn-auth glass">
-                    Download All (.zip) 📥
-                </button>
             </div>
 
-            <div id="dashboard-gallery-grid"
-                style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem;">
+            <div id="dashboard-gallery-grid" class="dashboard-image-grid">
                 <!-- Images will be loaded here via JS -->
                 <p style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 2rem;">Loading your
                     images...</p>
+            </div>
+
+            <div class="btn-group" style="margin-top: 2rem; justify-content: center;">
+                <button id="download-all-btn" class="btn-auth btn-primary" style="display: none; min-width: 250px;">
+                    Download All (.zip)
+                </button>
             </div>
         </section>
 

@@ -212,7 +212,7 @@ if (isset($_SESSION['user_id'])) {
                     </div>
                     <div class="btn-group download-area">
                         <button id="download-zip-history" class="btn-auth btn-primary hidden-btn">
-                            Download Complete History (ZIP)
+                            Download All (.zip)
                         </button>
                     </div>
                 </div>
