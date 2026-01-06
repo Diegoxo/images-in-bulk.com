@@ -13,7 +13,7 @@ $db = getDB();
 try {
     // Info de Usuario y Suscripción
     $stmt = $db->prepare("
-        SELECT u.*, s.plan_type, s.status as sub_status, s.current_period_end 
+        SELECT u.*, s.plan_type, s.status as sub_status, s.current_period_start, s.current_period_end 
         FROM users u 
         LEFT JOIN subscriptions s ON u.id = s.user_id 
         WHERE u.id = ?
@@ -50,33 +50,89 @@ $isPro = ($planType === 'pro' && $planStatus === 'active');
     <style>
         .dashboard-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(3, 1fr);
             gap: 2rem;
             margin-top: 2rem;
         }
 
-        .stat-card {
+        @media (max-width: 900px) {
+            .dashboard-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .dash-card {
+            padding: 2.5rem 2rem;
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            justify-content: space-between;
+            /* Space content and buttons */
             align-items: center;
-            padding: 2rem;
             text-align: center;
+            border-radius: 20px;
+            transition: var(--transition-base);
+            position: relative;
+            overflow: hidden;
+            min-height: 420px;
+            /* Fixed minimum height to keep them equal */
+            height: 100%;
+        }
+
+        .card-content {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+        }
+
+        .card-footer {
+            width: 100%;
+            margin-top: 2rem;
+        }
+
+        .dash-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary);
+        }
+
+        .dash-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--gradient-primary);
+            opacity: 0.6;
         }
 
         .stat-value {
-            font-size: 3rem;
+            font-size: 3.5rem;
             font-weight: 800;
+            color: var(--primary);
             background: var(--gradient-primary);
+            background-clip: text;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            line-height: 1.2;
+            line-height: 1;
+            margin-bottom: 0.5rem;
+            filter: drop-shadow(0 2px 10px rgba(var(--primary-rgb), 0.3));
         }
 
         .stat-label {
-            font-size: 1rem;
-            color: var(--text-secondary);
-            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+            color: var(--text-muted);
         }
 
         .profile-header {
@@ -102,9 +158,25 @@ $isPro = ($planType === 'pro' && $planStatus === 'active');
         .profile-info h1 {
             font-size: 2rem;
             margin-bottom: 0.25rem;
-            word-wrap: break-word;
-            /* Wrap long names */
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
             line-height: 1.2;
+        }
+
+        .profile-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid var(--primary);
+            background: var(--bg-card);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            flex-shrink: 0;
         }
 
         .profile-info p {
@@ -183,9 +255,8 @@ $isPro = ($planType === 'pro' && $planStatus === 'active');
                 <?php if (!empty($user['avatar_url'])): ?>
                     <img src="<?php echo htmlspecialchars($user['avatar_url']); ?>" alt="Profile" class="profile-avatar">
                 <?php else: ?>
-                    <div class="profile-avatar"
-                        style="background: var(--card-bg); display: flex; align-items: center; justify-content: center; font-size: 2rem;">
-                        <?php echo strtoupper(substr($user['full_name'], 0, 1)); ?>
+                    <div class="profile-avatar">
+                        <?php echo !empty($user['full_name']) ? strtoupper(substr($user['full_name'], 0, 1)) : '?'; ?>
                     </div>
                 <?php endif; ?>
 
@@ -209,46 +280,85 @@ $isPro = ($planType === 'pro' && $planStatus === 'active');
         <div class="dashboard-grid animate-fade">
 
             <!-- Plan Details -->
-            <div class="glass" style="padding: 2rem; border-radius: 20px;">
-                <h3 class="section-title" style="font-size: 1.5rem; margin-bottom: 1.5rem;">Current Plan</h3>
+            <div class="glass dash-card">
+                <div class="card-content">
+                    <h3 class="section-title" style="font-size: 1.5rem; margin-bottom: 1.5rem;">Current Plan</h3>
 
-                <?php if ($isPro): ?>
-                    <p style="margin-bottom: 1rem;">You have access to all premium features.</p>
-                    <ul style="list-style: none; padding: 0; margin-bottom: 2rem; color: var(--text-secondary);">
-                        <li style="margin-bottom: 0.5rem;">✅ Unlimited Generations</li>
-                        <li style="margin-bottom: 0.5rem;">✅ All Resolutions (1:1, 16:9, 9:16)</li>
-                        <li style="margin-bottom: 0.5rem;">✅ Priority Support</li>
-                    </ul>
-                    <button class="btn-auth glass full-width" disabled
-                        style="opacity: 0.7; cursor: default;">Active</button>
-                <?php else: ?>
-                    <p style="margin-bottom: 1rem;">You are currently on the Free plan.</p>
-                    <ul style="list-style: none; padding: 0; margin-bottom: 2rem; color: var(--text-secondary);">
-                        <li style="margin-bottom: 0.5rem;">❌ Limited Generations</li>
-                        <li style="margin-bottom: 0.5rem;">❌ Standard Resolution Only</li>
-                    </ul>
-                    <a href="pricing.php" class="btn-auth btn-primary full-width">Upgrade to Pro</a>
-                <?php endif; ?>
+                    <?php if ($isPro): ?>
+                        <p style="margin-bottom: 1rem;">You have access to all premium features.</p>
+                        <ul
+                            style="list-style: none; padding: 0; margin-bottom: 1rem; color: var(--text-secondary); text-align: left; width: 100%;">
+                            <li style="margin-bottom: 0.5rem;">✅ All Resolutions (1:1, 16:9, 9:16)</li>
+                            <li style="margin-bottom: 0.5rem;">✅ Priority Support</li>
+                            <?php if ($user['current_period_start']): ?>
+                                <li style="margin-top: 1rem; font-size: 0.85rem; color: var(--text-muted);">
+                                    📅 Paid on:
+                                    <strong>
+                                        <?php echo date('d M, Y', strtotime($user['current_period_start'])); ?></strong>
+                                </li>
+                            <?php endif; ?>
+                            <?php if ($user['current_period_end']): ?>
+                                <li style="font-size: 0.85rem; color: var(--text-muted);">
+                                    ⏳ Expires on:
+                                    <strong><?php echo date('d M, Y', strtotime($user['current_period_end'])); ?></strong>
+                                </li>
+                            <?php endif; ?>
+                        </ul>
+                    <?php else: ?>
+                        <p style="margin-bottom: 1rem;">You are currently on the Free plan.</p>
+                        <ul
+                            style="list-style: none; padding: 0; margin-bottom: 1rem; color: var(--text-secondary); text-align: left; width: 100%;">
+                            <li style="margin-bottom: 0.5rem;">❌ Limited Generations</li>
+                            <li style="margin-bottom: 0.5rem;">❌ Standard Resolution Only</li>
+                            <li style="margin-bottom: 0.5rem; opacity: 0;">Spacer</li>
+                        </ul>
+                    <?php endif; ?>
+                </div>
+
+                <div class="card-footer">
+                    <?php if ($isPro): ?>
+                        <button class="btn-auth glass full-width" disabled
+                            style="opacity: 0.7; cursor: default;">Active</button>
+                    <?php else: ?>
+                        <a href="pricing" class="btn-auth btn-primary full-width">Upgrade to Pro</a>
+                    <?php endif; ?>
+                </div>
             </div>
 
-            <!-- Stats (Compact) -->
-            <div class="glass stat-card" style="border-radius: 20px;">
-                <div class="stat-value">
-                    <?php echo number_format($stats['total_images']); ?>
+            <!-- Stats -->
+            <div class="glass dash-card">
+                <div class="card-content">
+                    <div class="stat-value">
+                        <?php echo number_format($stats['total_images']); ?>
+                    </div>
+                    <div class="stat-label">Total Images Generated</div>
+                    <p style="margin-top: 2rem; font-size: 0.85rem; color: var(--text-muted);">
+                        Keep creating to grow your collection!
+                    </p>
                 </div>
-                <div class="stat-label">Total Images Generated</div>
+                <div class="card-footer">
+                    <a href="generator" class="btn-auth glass full-width">View Generator</a>
+                </div>
             </div>
 
             <!-- Quick Actions -->
-            <div class="glass"
-                style="padding: 2rem; border-radius: 20px; display: flex; flex-direction: column; justify-content: center;">
-                <h3 class="section-title" style="font-size: 1.5rem; margin-bottom: 1.5rem;">Quick Actions</h3>
-                <a href="generator" class="btn-auth btn-primary full-width" style="margin-bottom: 1rem;">
-                    Go to Generator ✨
-                </a>
-                <a href="pricing" class="btn-auth glass full-width">
-                    View Pricing
-                </a>
+            <div class="glass dash-card">
+                <div class="card-content">
+                    <h3 class="section-title" style="font-size: 1.5rem; margin-bottom: 1.5rem;">User Actions</h3>
+                    <div style="width: 100%; display: flex; flex-direction: column; gap: 1rem;">
+                        <a href="pricing" class="btn-auth glass full-width">
+                            View Pricing
+                        </a>
+                        <a href="billing" class="btn-auth glass full-width">
+                            Billing & Payments 💳
+                        </a>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <a href="generator" class="btn-auth btn-primary full-width">
+                        Go to Generator ✨
+                    </a>
+                </div>
             </div>
 
         </div>
@@ -283,6 +393,7 @@ $isPro = ($planType === 'pro' && $planStatus === 'active');
             const galleryGrid = document.getElementById('dashboard-gallery-grid');
             const downloadBtn = document.getElementById('download-all-btn');
 
+            // --- Gallery Logic ---
             try {
                 // Initialize Storage
                 const images = await ImageStorage.getAllImages();

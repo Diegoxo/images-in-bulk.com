@@ -1,0 +1,13 @@
+# Cosas que yo debo hacer al final
+
+- Cambiar la linea: define('RECURRING_CHARGE_SECRET', 'RECURRING_SECRET_123'), en la "RECURRING_SECRET_123" la debo poner mas segura, al final.
+
+- Para que los cobros automaticos queden programados en wompi debo: 
+A. Definir la clave privada (Ya lo hice), el config.php
+
+B. Configurar el Webhook en Wompi
+Entra a tu panel de Wompi y en la sección de configuración busca "URL de Eventos" (Webhook). Pega esta URL: https://tu-dominio.com/api/wompi-webhook.php (Esto asegura que si el cobro automático del próximo mes es exitoso, tu base de datos se actualice sola).
+
+C. Programar el Cobro (CRON Job)
+Debes configurar una tarea programada (Cron Job) en tu servidor que llame a este archivo una vez al día: https://tu-dominio.com/api/cron-recurring-charge.php?key=RECURRING_SECRET_123
+(O si tienes acceso a la consola del servidor, puedes programarlo así: php /ruta/al/proyecto/api/cron-recurring-charge.php)

@@ -22,9 +22,13 @@ define('GOOGLE_CLIENT_SECRET', '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');
 define('MICROSOFT_CLIENT_ID', 'YOUR_MICROSOFT_CLIENT_ID');
 define('MICROSOFT_CLIENT_SECRET', 'YOUR_MICROSOFT_CLIENT_SECRET');
 
-// Wompi Configuration (Placeholders for USER to fill)
+// Wompi Configuration
 define('WOMPI_PUBLIC_KEY', 'pub_test_LeIVGZlLS7OylHnwFTA2N5UAVNSXpn9N');
+define('WOMPI_PRIVATE_KEY', 'prv_prod_E05G4AOHXGG2eT1FGa8aIzQqoujmphdt'); // <-- LLAVE PRIVADA (Empieza por prv_)
 define('WOMPI_INTEGRITY_SECRET', 'test_integrity_pyVnUdqtCgQN0rjWv3nUGt8rb2wPB3CI');
+
+// Secret for automated tasks (Cron)
+define('RECURRING_CHARGE_SECRET', 'RECURRING_SECRET_123');
 
 // Redirect URLs
 define('AUTH_CALLBACK_URL', 'http://localhost/images-in-bulk.com/auth/callback.php');

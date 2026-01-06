@@ -13,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $data = json_decode(file_get_contents('php://input'), true);
 $prompt = $data['prompt'] ?? '';
 $model = $data['model'] ?? 'dall-e-3';
-$resolution = $data['resolution'] ?? '1024x1024';
+$resolution = $data['resolution'] ?? '1:1';
 $quality = $data['quality'] ?? 'standard';
 $style = $data['style'] ?? 'vivid';
 $format = $data['format'] ?? 'png';
@@ -23,8 +23,33 @@ if (empty($prompt)) {
     exit;
 }
 
-// In a real app, we check the user session and credits here
-// For now, let's assume it's authorized.
+// Check user subscription and model access
+$isPro = false;
+if (isset($_SESSION['user_id'])) {
+    try {
+        $db = getDB();
+        $stmt = $db->prepare("SELECT plan_type, status FROM subscriptions WHERE user_id = ? AND status = 'active'");
+        $stmt->execute([$_SESSION['user_id']]);
+        $sub = $stmt->fetch();
+        if ($sub && $sub['plan_type'] === 'pro') {
+            $isPro = true;
+        }
+    } catch (Exception $e) {
+        error_log("Sub check error: " . $e->getMessage());
+    }
+}
+
+// Restriction: Only Pro users can use GPT Image models
+if (!$isPro && $model !== 'dall-e-3') {
+    echo json_encode(['success' => false, 'error' => 'This model is only available for PRO users.']);
+    exit;
+}
+
+// Restriction: Only Pro users can use non-square resolutions
+if (!$isPro && $resolution !== '1:1') {
+    echo json_encode(['success' => false, 'error' => 'Custom resolutions (16:9, 9:16) are only available for PRO users.']);
+    exit;
+}
 
 $apiKey = OPENAI_API_KEY;
 
@@ -115,17 +140,85 @@ if ($httpCode !== 200) {
 
 // Return the image data to the frontend
 if (isset($response['data'][0]['url'])) {
+    $imageUrl = $response['data'][0]['url'];
+
+    // Log generation in database (only if user is logged in)
+    if (isset($_SESSION['user_id'])) {
+        try {
+            $db = getDB();
+            $userId = $_SESSION['user_id'];
+
+            // Insert into generations table
+            $stmt = $db->prepare("INSERT INTO generations (user_id, prompt, image_url, model, resolution) VALUES (?, ?, ?, ?, ?)");
+            $stmt->execute([$userId, $prompt, $imageUrl, $model, $mappedResolution]);
+
+            // Update usage_log counter
+            $currentMonth = date('Y-m');
+            $stmtCheck = $db->prepare("SELECT id, images_count FROM usage_log WHERE user_id = ? AND month_year = ?");
+            $stmtCheck->execute([$userId, $currentMonth]);
+            $usageRow = $stmtCheck->fetch();
+
+            if ($usageRow) {
+                // Update existing record
+                $newCount = $usageRow['images_count'] + 1;
+                $stmtUpdate = $db->prepare("UPDATE usage_log SET images_count = ? WHERE id = ?");
+                $stmtUpdate->execute([$newCount, $usageRow['id']]);
+            } else {
+                // Create new record for this month
+                $stmtInsert = $db->prepare("INSERT INTO usage_log (user_id, images_count, month_year) VALUES (?, 1, ?)");
+                $stmtInsert->execute([$userId, $currentMonth]);
+            }
+        } catch (Exception $e) {
+            // Log error but don't fail the request
+            error_log("Database logging error: " . $e->getMessage());
+        }
+    }
+
     echo json_encode([
         'success' => true,
-        'image_url' => $response['data'][0]['url']
+        'image_url' => $imageUrl
     ]);
 } else if (isset($response['data'][0]['b64_json'])) {
     // If it's base64, we can return it as a data URI
     $b64 = $response['data'][0]['b64_json'];
     $mime = ($format === 'jpg' || $format === 'jpeg') ? 'image/jpeg' : 'image/png';
+    $imageUrl = "data:$mime;base64,$b64";
+
+    // Log generation in database (only if user is logged in)
+    if (isset($_SESSION['user_id'])) {
+        try {
+            $db = getDB();
+            $userId = $_SESSION['user_id'];
+
+            // Insert into generations table
+            $stmt = $db->prepare("INSERT INTO generations (user_id, prompt, image_url, model, resolution) VALUES (?, ?, ?, ?, ?)");
+            $stmt->execute([$userId, $prompt, 'base64_image', $model, $mappedResolution]);
+
+            // Update usage_log counter
+            $currentMonth = date('Y-m');
+            $stmtCheck = $db->prepare("SELECT id, images_count FROM usage_log WHERE user_id = ? AND month_year = ?");
+            $stmtCheck->execute([$userId, $currentMonth]);
+            $usageRow = $stmtCheck->fetch();
+
+            if ($usageRow) {
+                // Update existing record
+                $newCount = $usageRow['images_count'] + 1;
+                $stmtUpdate = $db->prepare("UPDATE usage_log SET images_count = ? WHERE id = ?");
+                $stmtUpdate->execute([$newCount, $usageRow['id']]);
+            } else {
+                // Create new record for this month
+                $stmtInsert = $db->prepare("INSERT INTO usage_log (user_id, images_count, month_year) VALUES (?, 1, ?)");
+                $stmtInsert->execute([$userId, $currentMonth]);
+            }
+        } catch (Exception $e) {
+            // Log error but don't fail the request
+            error_log("Database logging error: " . $e->getMessage());
+        }
+    }
+
     echo json_encode([
         'success' => true,
-        'image_url' => "data:$mime;base64,$b64"
+        'image_url' => $imageUrl
     ]);
 } else {
     echo json_encode(['success' => false, 'error' => 'No se recibió una imagen válida de la API']);

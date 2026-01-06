@@ -1,4 +1,7 @@
-<?php include 'includes/pages-config/index-config.php'; ?>
+<?php
+require_once 'includes/config.php';
+include 'includes/pages-config/index-config.php';
+?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -24,8 +27,13 @@
                     <p class="subtitle">Stop generating one by one. Enter your prompts list and get dozens of stunning
                         images in seconds. Perfect for content creators and marketers.</p>
                     <div class="hero-actions">
-                        <a href="login.php" class="btn-auth btn-primary btn-large">Start Creating Now</a>
-                        <a href="#features" class="btn-auth glass btn-large">How it works</a>
+                        <?php if (isset($_SESSION['user_id'])): ?>
+                            <a href="generator" class="btn-auth btn-primary btn-large">Start Creating Now ✨</a>
+                            <a href="dashboard" class="btn-auth glass btn-large">Go to Dashboard</a>
+                        <?php else: ?>
+                            <a href="login" class="btn-auth btn-primary btn-large">Start Creating Now</a>
+                            <a href="#features" class="btn-auth glass btn-large">How it works</a>
+                        <?php endif; ?>
                     </div>
                 </div>
                 <div class="hero-image animate-fade-up" style="animation-delay: 0.2s;">
@@ -73,7 +81,11 @@
                 <div class="glass cta-container animate-fade">
                     <h2>Ready to scale your creativity?</h2>
                     <p>Join hundreds of creators who are already saving hours every week.</p>
-                    <a href="login.php" class="btn-auth btn-primary btn-large">Get Started for Free</a>
+                    <?php if (isset($_SESSION['user_id'])): ?>
+                        <a href="generator" class="btn-auth btn-primary btn-large">Open Generator ✨</a>
+                    <?php else: ?>
+                        <a href="login" class="btn-auth btn-primary btn-large">Get Started for Free</a>
+                    <?php endif; ?>
                 </div>
             </div>
         </section>

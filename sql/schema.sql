@@ -23,8 +23,8 @@ CREATE TABLE IF NOT EXISTS subscriptions (
     user_id INT NOT NULL,
     plan_type VARCHAR(20) DEFAULT 'free', -- 'free', 'pro'
     status VARCHAR(50) DEFAULT 'inactive', -- 'active', 'inactive'
-    stripe_customer_id VARCHAR(255), -- Optional (kept for future proofing)
-    stripe_subscription_id VARCHAR(255), -- Optional
+    wompi_payment_source_id VARCHAR(255),
+    wompi_customer_email VARCHAR(255),
     current_period_start DATETIME,
     current_period_end DATETIME,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

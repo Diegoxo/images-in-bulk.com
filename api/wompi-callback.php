@@ -1,11 +1,11 @@
 <?php
 /**
  * Wompi Callback Handler
- * Este archivo recibe al usuario después del pago y activa su suscripción.
+ * Recibe al usuario, verifica el pago y guarda la fuente para cobros recurrentes.
  */
 require_once '../includes/config.php';
+require_once '../includes/wompi-helper.php';
 
-// Wompi envía el ID de la transacción por GET: ?id=XXXXXXXXX
 $transactionId = isset($_GET['id']) ? $_GET['id'] : null;
 
 if (!$transactionId) {
@@ -15,30 +15,63 @@ if (!$transactionId) {
 
 try {
     $db = getDB();
-    $userId = $_SESSION['user_id'];
+    $wompi = new WompiHelper();
 
-    // 1. Verificar si el usuario ya tiene una entrada en subscriptions
+    // 1. Verificar estado real de la transacción en Wompi
+    $res = $wompi->getTransaction($transactionId);
+    $transaction = $res['data'] ?? null;
+
+    if (!$transaction || $transaction['status'] !== 'APPROVED') {
+        header('Location: ../pricing.php?error=payment_not_approved');
+        exit;
+    }
+
+    $userId = $_SESSION['user_id'];
+    $customerEmail = $transaction['customer_email'];
+    $paymentMethod = $transaction['payment_method'];
+    $paymentSourceId = null;
+
+    // 2. Si el pago fue con tarjeta, crear/guardar la Fuente de Pago para el futuro
+    if ($transaction['payment_method_type'] === 'CARD' && isset($paymentMethod['extra']['bin'])) {
+        // En una transacción aprobada, Wompi a veces no devuelve el token directo en el callback, 
+        // pero podemos generar la fuente si el usuario aceptó términos.
+        // NOTA: Para recurrencia real, lo ideal es tokenizar ANTES, pero intentamos extraer info:
+
+        // Si Wompi devolvió un token de tarjeta en la respuesta (algunas versiones lo hacen)
+        $cardToken = $transaction['payment_method']['token'] ?? null;
+
+        if ($cardToken) {
+            $paymentSourceId = $wompi->createPaymentSource($cardToken, $customerEmail);
+        }
+    }
+
+    // 3. Activar o actualizar suscripción
     $stmt = $db->prepare("SELECT id FROM subscriptions WHERE user_id = ?");
     $stmt->execute([$userId]);
     $subscription = $stmt->fetch();
 
     if ($subscription) {
-        // Actualizar suscripción existente a PRO (usando solo columnas que existen)
-        $stmt = $db->prepare("UPDATE subscriptions SET plan_type = 'pro', status = 'active' WHERE user_id = ?");
-        $stmt->execute([$userId]);
+        $stmt = $db->prepare("UPDATE subscriptions SET 
+            plan_type = 'pro', 
+            status = 'active', 
+            wompi_payment_source_id = ?, 
+            wompi_customer_email = ?,
+            current_period_start = NOW(),
+            current_period_end = DATE_ADD(NOW(), INTERVAL 1 MONTH) 
+            WHERE user_id = ?");
+        $stmt->execute([$paymentSourceId, $customerEmail, $userId]);
     } else {
-        // Crear nueva suscripción PRO
-        $stmt = $db->prepare("INSERT INTO subscriptions (user_id, plan_type, status, current_period_end) VALUES (?, 'pro', 'active', DATE_ADD(NOW(), INTERVAL 1 MONTH))");
-        $stmt->execute([$userId]);
+        $stmt = $db->prepare("INSERT INTO subscriptions (user_id, plan_type, status, current_period_start, current_period_end, wompi_payment_source_id, wompi_customer_email) 
+            VALUES (?, 'pro', 'active', NOW(), DATE_ADD(NOW(), INTERVAL 1 MONTH), ?, ?)");
+        $stmt->execute([$userId, $paymentSourceId, $customerEmail]);
     }
 
-    // 3. Redirigir al generador con mensaje de éxito
     header('Location: ../generator.php?payment=success');
     exit;
 
 } catch (Exception $e) {
-    // Log error y redirigir
     error_log("Error en Wompi Callback: " . $e->getMessage());
-    header('Location: ../pricing.php?error=db_update_failed');
+    header('Location: ../pricing.php?error=system_error');
     exit;
 }
+

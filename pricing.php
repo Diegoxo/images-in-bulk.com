@@ -28,12 +28,12 @@ include 'includes/pages-config/pricing-config.php';
                     <h3>Free</h3>
                     <div class="price">$0<span>/month</span></div>
                     <ul class="pricing-features">
-                        <li>5 images per month</li>
+                        <li>3 images (One-time trial)</li>
                         <li>DALL-E 3 Model</li>
                         <li>Standard resolution</li>
                         <li>Community Support</li>
                     </ul>
-                    <a href="login.php" class="btn-auth glass full-width">Get Started</a>
+                    <a href="login" class="btn-auth glass full-width">Get Started</a>
                 </div>
 
                 <!-- Pro Plan -->
@@ -42,11 +42,9 @@ include 'includes/pages-config/pricing-config.php';
                     <h3>Pro Plan</h3>
                     <div class="price">$5<span>/month</span></div>
                     <ul class="pricing-features">
-                        <li><strong>Unlimited</strong> batch generation</li>
                         <li>Priority Queue</li>
                         <li>All resolutions (1:1, 16:9, 9:16)</li>
                         <li>Premium Support</li>
-                        <li>Advanced Style Modifiers</li>
                     </ul>
                     <?php
                     if (isset($_SESSION['user_id'])):
@@ -57,38 +55,37 @@ include 'includes/pages-config/pricing-config.php';
                         $userSub = $stmt->fetch();
 
                         if ($userSub && $userSub['plan_type'] === 'pro'):
-                    ?>
-                        <div class="subscription-status success-glass" style="margin-top: 2rem; padding: 1rem; border-radius: 12px; text-align: center;">
-                            <p style="color: #4ade80; font-weight: bold; margin-bottom: 0.5rem;">✨ You are a PRO member!</p>
-                            <a href="generator.php" class="btn-auth btn-primary full-width">Go to Generator</a>
-                        </div>
-                    <?php else: ?>
-                        <?php 
-                        // Configuramos los datos exactos del pago
-                        $amountInCents = 2000000; // 20.000 COP
-                        $currency = 'COP';
-                        // Referencia estable (BULK + ID + Fecha-Hora)
-                        $reference = 'BULK' . $_SESSION['user_id'] . '-' . date('YmdHi');
-                        
-                        // Firma SHA256 (Referencia + Monto + Moneda + Secreto)
-                        $rawString = $reference . $amountInCents . $currency . WOMPI_INTEGRITY_SECRET;
-                        $signature = hash('sha256', $rawString);
-                    ?>
-                        <div class="payment-box" style="margin-top: 2rem; border: 1px solid var(--primary); padding: 1rem; border-radius: 12px; display: flex; flex-direction: column; align-items: center;">
-                            <p style="margin-bottom: 1rem; font-size: 0.8rem; opacity: 0.8;">Secure Payment by Wompi</p>
-                            <form>
-                                <script
-                                    src="https://checkout.wompi.co/widget.js"
-                                    data-render="button"
-                                    data-public-key="<?php echo WOMPI_PUBLIC_KEY; ?>"
-                                    data-currency="<?php echo $currency; ?>"
-                                    data-amount-in-cents="<?php echo $amountInCents; ?>"
-                                    data-reference="<?php echo $reference; ?>"
-                                    data-signature:integrity="<?php echo $signature; ?>"
-                                ></script>
-                            </form>
-                        </div>
-                    <?php endif; ?>
+                            ?>
+                            <div class="subscription-status success-glass"
+                                style="margin-top: 2rem; padding: 1rem; border-radius: 12px; text-align: center;">
+                                <p style="color: #4ade80; font-weight: bold; margin-bottom: 0.5rem;">✨ You are a PRO member!</p>
+                                <a href="generator" class="btn-auth btn-primary full-width">Go to Generator</a>
+                            </div>
+                        <?php else: ?>
+                            <?php
+                            // Configuramos los datos exactos del pago
+                            $amountInCents = 2000000; // 20.000 COP
+                            $currency = 'COP';
+                            // Referencia estable (BULK + ID + Fecha-Hora)
+                            $reference = 'BULK' . $_SESSION['user_id'] . '-' . date('YmdHi');
+
+                            // Firma SHA256 (Referencia + Monto + Moneda + Secreto)
+                            $rawString = $reference . $amountInCents . $currency . WOMPI_INTEGRITY_SECRET;
+                            $signature = hash('sha256', $rawString);
+                            ?>
+                            <div class="payment-box"
+                                style="margin-top: 2rem; border: 1px solid var(--primary); padding: 1rem; border-radius: 12px; display: flex; flex-direction: column; align-items: center;">
+                                <p style="margin-bottom: 1rem; font-size: 0.8rem; opacity: 0.8;">Secure Payment by Wompi</p>
+                                <form>
+                                    <script src="https://checkout.wompi.co/widget.js" data-render="button"
+                                        data-public-key="<?php echo WOMPI_PUBLIC_KEY; ?>"
+                                        data-currency="<?php echo $currency; ?>"
+                                        data-amount-in-cents="<?php echo $amountInCents; ?>"
+                                        data-reference="<?php echo $reference; ?>"
+                                        data-signature:integrity="<?php echo $signature; ?>"></script>
+                                </form>
+                            </div>
+                        <?php endif; ?>
                     <?php else: ?>
                         <a href="login.php?mode=signup" class="btn-auth btn-primary full-width">Sign up to buy</a>
                     <?php endif; ?>

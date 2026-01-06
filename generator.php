@@ -81,8 +81,12 @@ if (isset($_SESSION['user_id'])) {
                         <label>Model</label>
                         <select id="model">
                             <option value="dall-e-3" selected>DALL-E 3</option>
-                            <option value="gpt-image-1.5">GPT Image 1.5</option>
-                            <option value="gpt-image-1-mini">GPT Image 1.0 (Mini)</option>
+                            <option value="gpt-image-1.5" <?php echo !$isPro ? 'disabled' : ''; ?>>
+                                GPT Image 1.5 <?php echo !$isPro ? '(PRO)' : ''; ?>
+                            </option>
+                            <option value="gpt-image-1-mini" <?php echo !$isPro ? 'disabled' : ''; ?>>
+                                GPT Image 1.0 (Mini) <?php echo !$isPro ? '(PRO)' : ''; ?>
+                            </option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -95,9 +99,13 @@ if (isset($_SESSION['user_id'])) {
                     <div class="form-group">
                         <label>Resolution</label>
                         <select id="resolution">
-                            <option value="1:1">1:1 (Square)</option>
-                            <option value="16:9">16:9 (Horizontal)</option>
-                            <option value="9:16">9:16 (Vertical)</option>
+                            <option value="1:1" selected>1:1 (Square)</option>
+                            <option value="16:9" <?php echo !$isPro ? 'disabled' : ''; ?>>
+                                16:9 (Horizontal) <?php echo !$isPro ? '(PRO)' : ''; ?>
+                            </option>
+                            <option value="9:16" <?php echo !$isPro ? 'disabled' : ''; ?>>
+                                9:16 (Vertical) <?php echo !$isPro ? '(PRO)' : ''; ?>
+                            </option>
                         </select>
                     </div>
                 </div>
@@ -167,7 +175,8 @@ if (isset($_SESSION['user_id'])) {
                         </div>
                     </div>
 
-                    <div id="generation-warning-text" style="display: none; text-align: center; padding: 0.75rem; margin-bottom: 1rem; background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.3); border-radius: 8px;">
+                    <div id="generation-warning-text"
+                        style="display: none; text-align: center; padding: 0.75rem; margin-bottom: 1rem; background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.3); border-radius: 8px;">
                         <p style="margin: 0; color: #fbbf24; font-size: 0.9rem;">
                             ⚠️ <strong>Generation in progress.</strong> Please don't close this tab or navigate away.
                         </p>
