@@ -47,219 +47,6 @@ $isPro = ($planType === 'pro' && $planStatus === 'active');
     </title>
     <link rel="icon" type="image/x-icon" href="assets/img/favicon.ico">
     <link rel="stylesheet" href="assets/css/style.css">
-    <style>
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 2rem;
-            margin-top: 2rem;
-        }
-
-        @media (max-width: 900px) {
-            .dashboard-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-
-        @media (max-width: 600px) {
-            .dashboard-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .dash-card {
-            padding: 2.5rem 2rem;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            /* Space content and buttons */
-            align-items: center;
-            text-align: center;
-            border-radius: 20px;
-            transition: var(--transition-base);
-            position: relative;
-            overflow: hidden;
-            min-height: 420px;
-            /* Fixed minimum height to keep them equal */
-            height: 100%;
-        }
-
-        .card-content {
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            flex: 1;
-        }
-
-        .card-footer {
-            width: 100%;
-            margin-top: 2rem;
-        }
-
-        .dash-card:hover {
-            transform: translateY(-5px);
-            border-color: var(--primary);
-        }
-
-        .dash-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 4px;
-            background: var(--gradient-primary);
-            opacity: 0.6;
-        }
-
-        .stat-value {
-            font-size: 3.5rem;
-            font-weight: 800;
-            color: var(--primary);
-            background: var(--gradient-primary);
-            background-clip: text;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            line-height: 1;
-            margin-bottom: 0.5rem;
-            filter: drop-shadow(0 2px 10px rgba(var(--primary-rgb), 0.3));
-        }
-
-        .stat-label {
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-weight: 600;
-            color: var(--text-muted);
-        }
-
-        .profile-header {
-            display: flex;
-            align-items: center;
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-            flex-wrap: wrap;
-            /* Allow wrapping */
-        }
-
-        .profile-info {
-            flex: 1;
-            /* Take remaining space */
-            min-width: 0;
-            /* Crucial for text-overflow to work in flex children */
-            display: flex;
-            /* Para mejor control */
-            flex-direction: column;
-            justify-content: center;
-        }
-
-        .profile-info h1 {
-            font-size: 2rem;
-            margin-bottom: 0.25rem;
-            display: flex;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 1rem;
-            line-height: 1.2;
-            word-break: break-word;
-            overflow-wrap: anywhere;
-        }
-
-        .profile-avatar {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 3px solid var(--primary);
-            background: var(--bg-card);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2rem;
-            flex-shrink: 0;
-        }
-
-        .profile-info p {
-            color: var(--text-secondary);
-            word-break: break-all;
-            /* Break long emails on mobile */
-            font-size: 0.95rem;
-            overflow-wrap: anywhere;
-        }
-
-        @media (max-width: 600px) {
-            .profile-header {
-                flex-direction: column;
-                text-align: center;
-                gap: 1rem;
-            }
-
-            .profile-info {
-                width: 100%;
-                align-items: center;
-                /* Center content in column mode */
-            }
-
-            .profile-info h1 {
-                font-size: 1.5rem;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                gap: 0.5rem;
-            }
-
-            .profile-info p {
-                font-size: 0.8rem !important;
-                /* Smaller email on mobile */
-                opacity: 0.8;
-                max-width: 100%;
-            }
-
-            .dashboard-grid {
-                gap: 1rem;
-            }
-
-            .container {
-                padding: 0 1rem;
-                gap: 1rem;
-            }
-
-            .profile-section,
-            .gallery-section {
-                padding: 1.5rem 1rem !important;
-            }
-        }
-
-        .profile-section,
-        .gallery-section {
-            padding: 2rem;
-            border-radius: 20px;
-        }
-
-        .badge {
-            display: inline-block;
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            margin-left: 0.5rem;
-            vertical-align: middle;
-        }
-
-        .badge-pro {
-            background: rgba(74, 222, 128, 0.2);
-            color: #4ade80;
-            border: 1px solid rgba(74, 222, 128, 0.3);
-        }
-
-        .badge-free {
-            background: rgba(148, 163, 184, 0.2);
-            color: #94a3b8;
-            border: 1px solid rgba(148, 163, 184, 0.3);
-        }
-    </style>
 </head>
 
 <body>
@@ -319,43 +106,40 @@ $isPro = ($planType === 'pro' && $planStatus === 'active');
             <!-- Plan Details -->
             <div class="glass dash-card">
                 <div class="card-content">
-                    <h3 class="section-title" style="font-size: 1.5rem; margin-bottom: 1.5rem;">Current Plan</h3>
+                    <h3 class="section-title mb-15 fs-15">Current Plan</h3>
 
                     <?php if ($isPro): ?>
-                        <p style="margin-bottom: 1rem;">You have access to all premium features.</p>
-                        <ul
-                            style="list-style: none; padding: 0; margin-bottom: 1rem; color: var(--text-secondary); text-align: left; width: 100%;">
-                            <li style="margin-bottom: 0.5rem;">✅ All Resolutions (1:1, 16:9, 9:16)</li>
-                            <li style="margin-bottom: 0.5rem;">✅ Priority Support</li>
+                        <p class="mb-1">You have access to all premium features.</p>
+                        <ul class="list-none p-0 mb-1 text-secondary text-left w-100">
+                            <li class="mb-05">✅ All Resolutions (1:1, 16:9, 9:16)</li>
+                            <li class="mb-05">✅ Priority Support</li>
                             <?php if ($user['current_period_start']): ?>
-                                <li style="margin-top: 1rem; font-size: 0.85rem; color: var(--text-muted);">
+                                <li class="mt-1 fs-sm text-muted">
                                     📅 Paid on:
                                     <strong>
                                         <?php echo date('d M, Y', strtotime($user['current_period_start'])); ?></strong>
                                 </li>
                             <?php endif; ?>
                             <?php if ($user['current_period_end']): ?>
-                                <li style="font-size: 0.85rem; color: var(--text-muted);">
+                                <li class="fs-sm text-muted">
                                     ⏳ Expires on:
                                     <strong><?php echo date('d M, Y', strtotime($user['current_period_end'])); ?></strong>
                                 </li>
                             <?php endif; ?>
                         </ul>
                     <?php else: ?>
-                        <p style="margin-bottom: 1rem;">You are currently on the Free plan.</p>
-                        <ul
-                            style="list-style: none; padding: 0; margin-bottom: 1rem; color: var(--text-secondary); text-align: left; width: 100%;">
-                            <li style="margin-bottom: 0.5rem;">❌ Limited Generations</li>
-                            <li style="margin-bottom: 0.5rem;">❌ Standard Resolution Only</li>
-                            <li style="margin-bottom: 0.5rem; opacity: 0;">Spacer</li>
+                        <p class="mb-1">You are currently on the Free plan.</p>
+                        <ul class="list-none p-0 mb-1 text-secondary text-left w-100">
+                            <li class="mb-05">❌ Limited Generations</li>
+                            <li class="mb-05">❌ Standard Resolution Only</li>
+                            <li class="mb-05 opacity-0">Spacer</li>
                         </ul>
                     <?php endif; ?>
                 </div>
 
                 <div class="card-footer">
                     <?php if ($isPro): ?>
-                        <button class="btn-auth glass full-width" disabled
-                            style="opacity: 0.7; cursor: default;">Active</button>
+                        <button class="btn-auth glass full-width opacity-7 cursor-default" disabled>Active</button>
                     <?php else: ?>
                         <a href="pricing" class="btn-auth btn-primary full-width">Upgrade to Pro</a>
                     <?php endif; ?>
@@ -369,7 +153,7 @@ $isPro = ($planType === 'pro' && $planStatus === 'active');
                         <?php echo number_format($stats['total_images']); ?>
                     </div>
                     <div class="stat-label">Total Images Generated</div>
-                    <p style="margin-top: 2rem; font-size: 0.85rem; color: var(--text-muted);">
+                    <p class="mt-2 fs-sm text-muted">
                         Keep creating to grow your collection!
                     </p>
                 </div>
@@ -381,8 +165,8 @@ $isPro = ($planType === 'pro' && $planStatus === 'active');
             <!-- Quick Actions -->
             <div class="glass dash-card">
                 <div class="card-content">
-                    <h3 class="section-title" style="font-size: 1.5rem; margin-bottom: 1.5rem;">User Actions</h3>
-                    <div style="width: 100%; display: flex; flex-direction: column; gap: 1rem;">
+                    <h3 class="section-title mb-15 fs-15">User Actions</h3>
+                    <div class="w-100 d-flex flex-column gap-1">
                         <a href="pricing" class="btn-auth glass full-width">
                             View Pricing
                         </a>
@@ -401,19 +185,18 @@ $isPro = ($planType === 'pro' && $planStatus === 'active');
         </div>
 
         <!-- Gallery Section -->
-        <section class="glass animate-fade gallery-section" style="margin-top: 2rem;">
-            <div style="margin-bottom: 1.5rem;">
-                <h2 class="section-title" style="margin: 0;">Your Gallery</h2>
+        <section class="glass animate-fade gallery-section mt-2">
+            <div class="mb-15">
+                <h2 class="section-title m-0">Your Gallery</h2>
             </div>
 
             <div id="dashboard-gallery-grid" class="dashboard-image-grid">
                 <!-- Images will be loaded here via JS -->
-                <p style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 2rem;">Loading your
-                    images...</p>
+                <p class="text-center text-muted p-2">Loading your images...</p>
             </div>
 
-            <div class="btn-group" style="margin-top: 2rem; justify-content: center;">
-                <button id="download-all-btn" class="btn-auth btn-primary" style="display: none; min-width: 250px;">
+            <div class="btn-group mt-2 justify-center">
+                <button id="download-all-btn" class="btn-auth btn-primary hidden-btn min-w-250">
                     Download All (.zip)
                 </button>
             </div>
@@ -444,7 +227,7 @@ $isPro = ($planType === 'pro' && $planStatus === 'active');
                 galleryGrid.innerHTML = '';
 
                 if (myImages.length === 0) {
-                    galleryGrid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 2rem;">No images found in this browser.</p>';
+                    galleryGrid.innerHTML = '<p class="text-center text-muted p-2">No images found in this browser.</p>';
                     downloadBtn.style.display = 'none';
                     return;
                 }
@@ -456,13 +239,11 @@ $isPro = ($planType === 'pro' && $planStatus === 'active');
                     const url = URL.createObjectURL(img.blob);
 
                     const div = document.createElement('div');
-                    div.style.cssText = 'position: relative; aspect-ratio: 1; border-radius: 12px; overflow: hidden; border: 1px solid var(--glass-border);';
+                    div.className = 'gallery-item';
 
                     const imageEl = document.createElement('img');
                     imageEl.src = url;
-                    imageEl.style.cssText = 'width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s;';
-                    imageEl.onmouseover = () => imageEl.style.transform = 'scale(1.1)';
-                    imageEl.onmouseout = () => imageEl.style.transform = 'scale(1)';
+                    imageEl.className = 'gallery-item-img';
 
                     div.appendChild(imageEl);
                     galleryGrid.appendChild(div);
@@ -503,7 +284,7 @@ $isPro = ($planType === 'pro' && $planStatus === 'active');
 
             } catch (err) {
                 console.error(err);
-                galleryGrid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #ef4444;">Error loading gallery.</p>';
+                galleryGrid.innerHTML = '<p class="text-center p-2" style="color: #ef4444;">Error loading gallery.</p>';
             }
         });
     </script>

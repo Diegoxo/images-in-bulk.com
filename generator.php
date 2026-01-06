@@ -121,14 +121,12 @@ if (isset($_SESSION['user_id'])) {
                     <?php elseif (isset($_SESSION['user_id'])): ?>
                         <!-- Usuario Logueado (Free) -->
                         <?php if ($freeImagesCount < $freeLimit): ?>
-                            <div class="free-limit-info"
-                                style="margin-bottom: 1rem; text-align: center; color: var(--text-secondary); font-size: 0.85rem;">
+                            <div class="mb-1 text-center text-secondary fs-sm">
                                 Free Trial: <strong><?php echo $freeImagesCount; ?>/<?php echo $freeLimit; ?></strong> images
                                 used
-                                <div
-                                    style="width: 100%; background: rgba(255,255,255,0.1); height: 4px; border-radius: 2px; margin-top: 6px; overflow: hidden;">
-                                    <div
-                                        style="width: <?php echo ($freeImagesCount / $freeLimit) * 100; ?>%; background: <?php echo ($freeImagesCount >= $freeLimit - 1) ? '#ef4444' : 'var(--primary)'; ?>; height: 100%; border-radius: 2px; transition: width 0.3s;">
+                                <div class="progress-small">
+                                    <div class="progress-small-fill <?php echo ($freeImagesCount >= $freeLimit - 1) ? 'bg-danger' : 'bg-primary'; ?>"
+                                        style="width: <?php echo ($freeImagesCount / $freeLimit) * 100; ?>%;">
                                     </div>
                                 </div>
                             </div>
@@ -140,20 +138,17 @@ if (isset($_SESSION['user_id'])) {
                             </button>
                         <?php else: ?>
                             <!-- Limite Alcanzado -->
-                            <div class="locked-feature glass"
-                                style="padding: 1rem; text-align: center; border: 1px solid #ef4444; border-radius: 12px; background: rgba(239, 68, 68, 0.1);">
-                                <p style="margin-bottom: 0.5rem; font-size: 0.9rem; color: #fca5a5;">🔒 Free Limit Reached (3/3)
-                                </p>
+                            <div class="alert-danger mb-1">
+                                <p class="mb-05 fs-sm">🔒 Free Limit Reached (3/3)</p>
                                 <a href="pricing" class="btn-auth btn-primary full-width">Upgrade for Unlimited</a>
                             </div>
                         <?php endif; ?>
                     <?php else: ?>
-                        <!-- Usuario No Logueado (Apariencia Normal pero Redirige) -->
-                        <a href="login" class="btn-auth btn-primary generate-main-btn" style="text-decoration: none;">
+                        <!-- Usuario No Logueado -->
+                        <a href="login" class="btn-auth btn-primary generate-main-btn no-decor">
                             Start Generation 🚀
                         </a>
-                        <button type="button" class="btn-auth glass btn-stop" disabled
-                            style="opacity: 0.5; cursor: not-allowed;">
+                        <button type="button" class="btn-auth glass btn-stop not-allowed opacity-7" disabled>
                             Stop
                         </button>
                     <?php endif; ?>
@@ -167,7 +162,7 @@ if (isset($_SESSION['user_id'])) {
                 <div class="glass animate-fade section-card">
                     <div class="results-header">
                         <div class="header-left">
-                            <h2 style="font-size: 1.5rem;">Results</h2>
+                            <h2 class="card-title m-0">Results</h2>
                             <span id="generation-counter" class="counter-badge">0 / 0</span>
                         </div>
                         <div class="header-right">
@@ -175,9 +170,8 @@ if (isset($_SESSION['user_id'])) {
                         </div>
                     </div>
 
-                    <div id="generation-warning-text"
-                        style="display: none; text-align: center; padding: 0.75rem; margin-bottom: 1rem; background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.3); border-radius: 8px;">
-                        <p style="margin: 0; color: #fbbf24; font-size: 0.9rem;">
+                    <div id="generation-warning-text" class="alert-warning">
+                        <p class="m-0 fs-sm">
                             ⚠️ <strong>Generation in progress.</strong> Please don't close this tab or navigate away.
                         </p>
                     </div>
@@ -205,7 +199,7 @@ if (isset($_SESSION['user_id'])) {
             <section id="history-section" class="preview-area hidden-btn">
                 <div class="glass animate-fade section-card">
                     <div class="results-header">
-                        <h2 style="font-size: 1.5rem;">Previous Generations</h2>
+                        <h2 class="card-title m-0">Previous Generations</h2>
                     </div>
                     <div id="history-grid" class="image-grid">
                         <!-- Past images will be moved here -->

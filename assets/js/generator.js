@@ -176,11 +176,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Add spinner next to counter
         const spinner = document.createElement('div');
         spinner.id = 'main-spinner';
-        spinner.className = 'btn-spinner';
-        spinner.style.margin = '0 0 0 10px'; // Reset margin for correct alignment
         generationCounter.after(spinner);
         downloadBtn.classList.add('hidden-btn');
-        stopBtn.style.display = 'block';
+        stopBtn.classList.remove('hidden-btn');
+        stopBtn.classList.add('d-flex');
         stopBtn.disabled = false;
         stopBtn.textContent = 'Stop';
 
@@ -196,9 +195,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if (isStopping) {
                 const cancelMsg = document.createElement('p');
-                cancelMsg.style.textAlign = 'center';
-                cancelMsg.style.color = 'var(--accent)';
-                cancelMsg.style.gridColumn = '1/-1';
+                cancelMsg.className = 'text-center text-accent';
+                cancelMsg.style.gridColumn = '1/-1'; // Keep grid-column as it's layout specific and hard to utility class without bloat, but maybe just use a class if possible.
                 cancelMsg.textContent = 'Generation stopped by user.';
                 imageGrid.append(cancelMsg);
                 break;
@@ -264,7 +262,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             generationCounter.textContent = `${completed} / ${total}`;
         }
 
-        stopBtn.style.display = 'none';
+        stopBtn.classList.add('hidden-btn');
         downloadBtn.classList.remove('hidden-btn');
 
         // Hide warning text
@@ -274,7 +272,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         isGenerating = false;
         generateBtn.disabled = false;
         generateBtn.innerHTML = 'Start Generation';
-        progressContainer.style.display = 'none';
+        progressContainer.classList.add('hidden-btn');
 
         // Remove spinner
         const finalSpinner = document.getElementById('main-spinner');
@@ -344,7 +342,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <div class="img-wrapper">
                     <div class="status status-error">${statusText}</div>
                     <div class="placeholder-content">
-                        <p class="placeholder-name" style="color: var(--accent)">Error</p>
+                        <p class="placeholder-name text-accent">Error</p>
                     </div>
                 </div>
                 <div class="card-info">
