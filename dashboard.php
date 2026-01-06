@@ -163,6 +163,8 @@ $isPro = ($planType === 'pro' && $planStatus === 'active');
             flex-wrap: wrap;
             gap: 1rem;
             line-height: 1.2;
+            word-break: break-word;
+            overflow-wrap: anywhere;
         }
 
         .profile-avatar {
@@ -184,6 +186,7 @@ $isPro = ($planType === 'pro' && $planStatus === 'active');
             word-break: break-all;
             /* Break long emails on mobile */
             font-size: 0.95rem;
+            overflow-wrap: anywhere;
         }
 
         @media (max-width: 600px) {
@@ -211,12 +214,28 @@ $isPro = ($planType === 'pro' && $planStatus === 'active');
                 font-size: 0.8rem !important;
                 /* Smaller email on mobile */
                 opacity: 0.8;
+                max-width: 100%;
             }
 
-            .badge {
-                margin-left: 0;
-                /* Remove left margin in stack mode */
+            .dashboard-grid {
+                gap: 1rem;
             }
+
+            .container {
+                padding: 0 1rem;
+                gap: 1rem;
+            }
+
+            .profile-section,
+            .gallery-section {
+                padding: 1.5rem 1rem !important;
+            }
+        }
+
+        .profile-section,
+        .gallery-section {
+            padding: 2rem;
+            border-radius: 20px;
         }
 
         .badge {
@@ -250,10 +269,28 @@ $isPro = ($planType === 'pro' && $planStatus === 'active');
     <main class="container">
 
         <!-- Profile Header -->
-        <section class="animate-fade glass" style="padding: 2rem; border-radius: 20px;">
+        <section class="animate-fade glass profile-section">
             <div class="profile-header">
-                <?php if (!empty($user['avatar_url'])): ?>
-                    <img src="<?php echo htmlspecialchars($user['avatar_url']); ?>" alt="Profile" class="profile-avatar">
+                <?php
+                $avatarExists = false;
+                $avatarUrl = $user['avatar_url'] ?? '';
+
+                if (!empty($avatarUrl)) {
+                    if (strpos($avatarUrl, 'http') === 0) {
+                        $avatarExists = true; // URL externa de Google/Microsoft
+                    } elseif (file_exists($avatarUrl)) {
+                        $avatarExists = true; // Archivo local que sí existe
+                    } else {
+                        // El archivo local no existe (lo borramos), limpiamos DB silenciosamente
+                        $db->prepare("UPDATE users SET avatar_url = NULL WHERE id = ?")->execute([$user['id']]);
+                        $avatarUrl = '';
+                    }
+                }
+                ?>
+
+                <?php if ($avatarExists): ?>
+                    <img src="<?php echo htmlspecialchars($avatarUrl); ?>" alt="Google Profile Picture"
+                        class="profile-avatar" referrerpolicy="no-referrer">
                 <?php else: ?>
                     <div class="profile-avatar">
                         <?php echo !empty($user['full_name']) ? strtoupper(substr($user['full_name'], 0, 1)) : '?'; ?>
@@ -364,8 +401,9 @@ $isPro = ($planType === 'pro' && $planStatus === 'active');
         </div>
 
         <!-- Gallery Section -->
-        <section class="glass animate-fade" style="margin-top: 2rem; padding: 2rem; border-radius: 20px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <section class="glass animate-fade gallery-section" style="margin-top: 2rem;">
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
                 <h2 class="section-title" style="margin: 0;">Your Gallery</h2>
                 <button id="download-all-btn" class="btn-auth glass">
                     Download All (.zip) 📥

@@ -18,7 +18,16 @@
                     $u = $stmt->fetch();
                     $_SESSION['user_avatar'] = $u['avatar_url'] ?? '';
                 }
-                $displayAvatar = !empty($_SESSION['user_avatar']) ? $_SESSION['user_avatar'] : null;
+
+                $displayAvatar = $_SESSION['user_avatar'];
+                // Verificación de robustez: Si es local y no existe, no mostrar
+                if (!empty($displayAvatar) && strpos($displayAvatar, 'http') !== 0) {
+                    if (!file_exists($displayAvatar)) {
+                        $displayAvatar = null;
+                        $_SESSION['user_avatar'] = ''; // Limpiar sesión
+                    }
+                }
+
                 $displayName = explode(' ', $_SESSION['user_name'])[0];
                 ?>
 
@@ -27,7 +36,8 @@
                         style="padding: 0.5rem 1rem;">
                         <?php if ($displayAvatar): ?>
                             <img src="<?php echo htmlspecialchars($displayAvatar); ?>" alt="User"
-                                style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary);">
+                                style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary);"
+                                referrerpolicy="no-referrer">
                         <?php else: ?>
                             <div
                                 style="width: 28px; height: 28px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 0.8rem;">

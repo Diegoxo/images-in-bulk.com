@@ -66,9 +66,13 @@ try {
             $userName = $userProfile->displayName;
             $userAvatar = $storeAvatar;
         } else {
+            // Update existing user with fresh info from provider
             $userId = $user['id'];
-            $userName = $user['full_name'];
-            $userAvatar = $user['avatar_url'];
+            $userName = $userProfile->displayName ?: $user['full_name'];
+            $userAvatar = $userProfile->photoURL ?: $user['avatar_url'];
+
+            $stmt = $db->prepare("UPDATE users SET full_name = ?, avatar_url = ? WHERE id = ?");
+            $stmt->execute([$userName, $userAvatar, $userId]);
         }
 
         // 2. Set session
