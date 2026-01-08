@@ -104,9 +104,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Clean Results
         imageGrid.innerHTML = '<div class="empty-state">Your generated images will appear here.</div>';
-        progressContainer.style.display = 'none';
+        progressContainer.classList.add('hidden-btn');
         progressBar.style.width = '0%';
-        generationCounter.style.display = 'none';
+        generationCounter.classList.add('hidden-btn');
         generationCounter.textContent = '0 / 0';
         const clearSpinner = document.getElementById('main-spinner');
         if (clearSpinner) clearSpinner.remove();
@@ -118,7 +118,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Reset Buttons
         downloadBtn.classList.add('hidden-btn');
         downloadHistoryBtn.classList.add('hidden-btn');
-        stopBtn.style.display = 'none';
+        stopBtn.classList.add('hidden-btn');
     });
 
     stopBtn.addEventListener('click', () => {
@@ -161,12 +161,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Show warning text
         const warningText = document.getElementById('generation-warning-text');
-        if (warningText) warningText.style.display = 'block';
+        if (warningText) warningText.classList.remove('hidden-btn');
 
         imageGrid.innerHTML = '';
-        progressContainer.style.display = 'block';
+        progressContainer.classList.remove('hidden-btn');
         progressBar.style.width = '0%';
-        generationCounter.style.display = 'inline-block';
+        generationCounter.classList.remove('hidden-btn');
+        generationCounter.classList.add('d-inline-block');
         generationCounter.textContent = `0 / ${prompts.length}`;
 
         // Remove existing spinner if any
@@ -266,7 +267,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         downloadBtn.classList.remove('hidden-btn');
 
         // Hide warning text
-        if (warningText) warningText.style.display = 'none';
+        if (warningText) warningText.classList.add('hidden-btn');
 
         // Reset button and hide progress
         isGenerating = false;

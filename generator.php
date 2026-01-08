@@ -170,7 +170,7 @@ if (isset($_SESSION['user_id'])) {
                         </div>
                     </div>
 
-                    <div id="generation-warning-text" class="alert-warning">
+                    <div id="generation-warning-text" class="alert-warning hidden-btn">
                         <p class="m-0 fs-sm">
                             ⚠️ <strong>Generation in progress.</strong> Please don't close this tab or navigate away.
                         </p>

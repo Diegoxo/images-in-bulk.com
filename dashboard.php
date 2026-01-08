@@ -185,7 +185,7 @@ $isPro = ($planType === 'pro' && $planStatus === 'active');
         </div>
 
         <!-- Gallery Section -->
-        <section class="glass animate-fade gallery-section mt-2">
+        <section class="glass animate-fade gallery-section">
             <div class="mb-15">
                 <h2 class="section-title m-0">Your Gallery</h2>
             </div>
@@ -228,25 +228,45 @@ $isPro = ($planType === 'pro' && $planStatus === 'active');
 
                 if (myImages.length === 0) {
                     galleryGrid.innerHTML = '<p class="text-center text-muted p-2">No images found in this browser.</p>';
-                    downloadBtn.style.display = 'none';
+                    downloadBtn.classList.add('hidden-btn');
                     return;
                 }
 
-                downloadBtn.style.display = 'block';
+                downloadBtn.classList.remove('hidden-btn');
 
                 // Render Images
                 myImages.forEach(img => {
                     const url = URL.createObjectURL(img.blob);
+                    const fileName = img.fileName || 'image.png';
+                    const prompt = img.prompt || '';
 
-                    const div = document.createElement('div');
-                    div.className = 'gallery-item';
+                    const card = document.createElement('div');
+                    card.className = 'image-card glass';
 
-                    const imageEl = document.createElement('img');
-                    imageEl.src = url;
-                    imageEl.className = 'gallery-item-img';
+                    card.innerHTML = `
+                        <div class="img-wrapper">
+                            <button class="btn-download-single" title="Download image">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                            </button>
+                            <img src="${url}" alt="Generated Image" class="fade-img loaded">
+                        </div>
+                        <div class="card-info">
+                            <div class="image-name-tag" title="${fileName}">${fileName}</div>
+                            <div class="image-prompt-tag" title="${prompt}">${prompt}</div>
+                        </div>
+                    `;
 
-                    div.appendChild(imageEl);
-                    galleryGrid.appendChild(div);
+                    // Single Download Logic
+                    const singleDownloadBtn = card.querySelector('.btn-download-single');
+                    singleDownloadBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.download = fileName;
+                        link.click();
+                    });
+
+                    galleryGrid.appendChild(card);
                 });
 
                 // Handle Download All
