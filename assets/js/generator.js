@@ -1,387 +1,270 @@
 /**
- * Main Generator Logic
+ * Generator UI Controller (Minimal JS)
+ * This script only handles UI interaction and communicates with the Backend "Brain".
  */
 document.addEventListener('DOMContentLoaded', async () => {
-    const form = document.getElementById('generator-form');
-    const imageGrid = document.getElementById('image-grid');
-    const historyGrid = document.getElementById('history-grid');
-    const historySection = document.getElementById('history-section');
-    const progressBar = document.getElementById('progress-bar');
-    const progressContainer = document.getElementById('progress-bar-container');
-    const downloadBtn = document.getElementById('download-zip');
-    const downloadHistoryBtn = document.getElementById('download-zip-history');
-    const stopBtn = document.getElementById('stop-btn');
-    const promptsInput = document.getElementById('prompts');
-    const filenamesInput = document.getElementById('filenames');
-    const promptsCounter = document.getElementById('prompts-count');
-    const filenamesCounter = document.getElementById('filenames-count');
-    const generationCounter = document.getElementById('generation-counter');
-    const clearGalleryBtn = document.getElementById('clear-gallery');
-    const generateBtn = document.getElementById('generate-btn');
-
-    const clearPromptsBtn = document.getElementById('clear-prompts');
-    const clearFilenamesBtn = document.getElementById('clear-filenames');
-
-    let isStopping = false;
-    let isGenerating = false;
-
-    // Prevent accidental navigation
-    window.addEventListener('beforeunload', (e) => {
-        if (isGenerating) {
-            e.preventDefault();
-            e.returnValue = ''; // Chrome requires this to show the prompt
-        }
-    });
-
-    const updateLineCount = (input, counter, suffix) => {
-        const lines = input.value.split('\n').filter(line => line.trim() !== '').length;
-        counter.textContent = `${lines} ${suffix}`;
+    // UI Elements
+    const elements = {
+        form: document.getElementById('generator-form'),
+        imageGrid: document.getElementById('image-grid'),
+        historyGrid: document.getElementById('history-grid'),
+        historySection: document.getElementById('history-section'),
+        progressBar: document.getElementById('progress-bar'),
+        progressContainer: document.getElementById('progress-bar-container'),
+        downloadBtn: document.getElementById('download-zip'),
+        downloadHistoryBtn: document.getElementById('download-zip-history'),
+        stopBtn: document.getElementById('stop-btn'),
+        promptsInput: document.getElementById('prompts'),
+        filenamesInput: document.getElementById('filenames'),
+        promptsCounter: document.getElementById('prompts-count'),
+        filenamesCounter: document.getElementById('filenames-count'),
+        generationCounter: document.getElementById('generation-counter'),
+        clearGalleryBtn: document.getElementById('clear-gallery'),
+        generateBtn: document.getElementById('generate-btn'),
+        warningText: document.getElementById('generation-warning-text')
     };
 
-    promptsInput.addEventListener('input', () => updateLineCount(promptsInput, promptsCounter, 'Prompts'));
-    filenamesInput.addEventListener('input', () => updateLineCount(filenamesInput, filenamesCounter, 'Names'));
-
-    clearPromptsBtn.addEventListener('click', () => {
-        promptsInput.value = '';
-        updateLineCount(promptsInput, promptsCounter, 'Prompts');
-    });
-
-    clearFilenamesBtn.addEventListener('click', () => {
-        filenamesInput.value = '';
-        updateLineCount(filenamesInput, filenamesCounter, 'Names');
-    });
+    let controller = null; // For cancelling the stream
 
     // Initialize Storage
     await ImageStorage.init();
 
-    // Load existing images from IndexedDB
+    // 1. UPDATE UI COUNTERS
+    const updateLineCount = (input, counter, suffix) => {
+        const lines = input.value.split('\n').filter(line => line.trim() !== '').length;
+        counter.textContent = `${lines} ${suffix}`;
+    };
+    elements.promptsInput.addEventListener('input', () => updateLineCount(elements.promptsInput, elements.promptsCounter, 'Prompts'));
+    elements.filenamesInput.addEventListener('input', () => updateLineCount(elements.filenamesInput, elements.filenamesCounter, 'Names'));
+
+    // 2. LOAD GALLERY FROM INDEXEDDB
     const loadGallery = async () => {
         const storedImages = await ImageStorage.getAllImages();
-
-        // Reset grids before loading
-        imageGrid.innerHTML = '';
-        historyGrid.innerHTML = '';
+        elements.imageGrid.innerHTML = '';
+        elements.historyGrid.innerHTML = '';
 
         if (storedImages.length > 0) {
-            let hasCurrentResults = false;
-            let hasHistory = false;
-
+            let hasHistory = false, hasCurrent = false;
             storedImages.forEach(img => {
-                const card = createPlaceholder(img.fileName, img.prompt);
-                updateCard(card, URL.createObjectURL(img.blob), 'Stored', false, img.fileName, img.prompt);
-
-                if (img.isArchived === true) {
-                    historyGrid.append(card);
+                const card = createCardElement(img.fileName, img.prompt, URL.createObjectURL(img.blob));
+                if (img.isArchived) {
+                    elements.historyGrid.append(card);
                     hasHistory = true;
                 } else {
-                    imageGrid.append(card);
-                    hasCurrentResults = true;
+                    elements.imageGrid.append(card);
+                    hasCurrent = true;
                 }
             });
-
-            // Restore visibility based on content
             if (hasHistory) {
-                historySection.classList.remove('hidden-btn');
-                downloadHistoryBtn.classList.remove('hidden-btn');
+                elements.historySection.classList.remove('hidden-btn');
+                elements.downloadHistoryBtn.classList.remove('hidden-btn');
             }
-            if (hasCurrentResults) downloadBtn.classList.remove('hidden-btn');
-
-            // Clean empty state if we have results
-            if (hasCurrentResults) {
-                // Empty state is already replaced by innerHTML = ''
-            } else {
-                imageGrid.innerHTML = '<div class="empty-state">Your generated images will appear here.</div>';
+            if (hasCurrent) {
+                elements.downloadBtn.classList.remove('hidden-btn');
+            } else if (!hasHistory) {
+                // ONLY show the message if both grids are totally empty
+                elements.imageGrid.innerHTML = '<div class="empty-state">Your generated images will appear here.</div>';
             }
         } else {
-            imageGrid.innerHTML = '<div class="empty-state">Your generated images will appear here.</div>';
+            elements.imageGrid.innerHTML = '<div class="empty-state">Your generated images will appear here.</div>';
         }
     };
-
     loadGallery();
 
-    clearGalleryBtn.addEventListener('click', async () => {
-        await ImageStorage.clear();
-
-        // Clean Results
-        imageGrid.innerHTML = '<div class="empty-state">Your generated images will appear here.</div>';
-        progressContainer.classList.add('hidden-btn');
-        progressBar.style.width = '0%';
-        generationCounter.classList.add('hidden-btn');
-        generationCounter.textContent = '0 / 0';
-        const clearSpinner = document.getElementById('main-spinner');
-        if (clearSpinner) clearSpinner.remove();
-
-        // Clean History
-        historyGrid.innerHTML = '';
-        historySection.classList.add('hidden-btn');
-
-        // Reset Buttons
-        downloadBtn.classList.add('hidden-btn');
-        downloadHistoryBtn.classList.add('hidden-btn');
-        stopBtn.classList.add('hidden-btn');
-    });
-
-    stopBtn.addEventListener('click', () => {
-        isStopping = true;
-        stopBtn.disabled = true;
-        stopBtn.textContent = 'Stopping...';
-    });
-
-    form.addEventListener('submit', async (e) => {
+    // 3. START GENERATION (The brain is now in the Backend)
+    elements.form.addEventListener('submit', async (e) => {
         e.preventDefault();
 
-        const prompts = document.getElementById('prompts').value.split('\n').filter(p => p.trim() !== '');
-        const filenames = document.getElementById('filenames').value.split('\n').filter(f => f.trim() !== '');
-        const style = document.getElementById('custom_style').value;
-        const model = document.getElementById('model').value;
-        const resolution = document.getElementById('resolution').value;
-        const format = document.getElementById('format').value;
-        const quality = 'standard';
-        const style_choice = 'vivid';
+        const prompts = elements.promptsInput.value.split('\n').filter(p => p.trim() !== '');
+        const filenames = elements.filenamesInput.value.split('\n').filter(f => f.trim() !== '');
 
         if (prompts.length === 0) return alert('Please enter at least one prompt');
 
-        // IMPORTANT: Move current results to history in DB and UI ONLY on Start
+        // Prepare UI
+        await ImageStorage.archiveAll();
+        loadGallery();
+        elements.imageGrid.innerHTML = '';
+        elements.generateBtn.disabled = true;
+        elements.generateBtn.textContent = 'Processing...';
+        elements.progressContainer.classList.remove('hidden-btn');
+        elements.progressBar.style.width = '0%';
+        elements.warningText.classList.remove('hidden-btn');
+        elements.stopBtn.classList.remove('hidden-btn');
+        elements.stopBtn.classList.add('d-flex');
+
+        // Communicate with Backend Brain via Streaming
+        controller = new AbortController();
         try {
-            await ImageStorage.archiveAll();
-        } catch (err) {
-            console.warn('Archive failed:', err);
-        }
+            const response = await fetch('api/process_batch.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                signal: controller.signal,
+                body: JSON.stringify({
+                    prompts,
+                    filenames,
+                    model: document.getElementById('model').value,
+                    resolution: document.getElementById('resolution').value,
+                    format: document.getElementById('format').value,
+                    custom_style: document.getElementById('custom_style').value
+                })
+            });
 
-        const currentCards = Array.from(imageGrid.querySelectorAll('.image-card'));
-        if (currentCards.length > 0) {
-            currentCards.forEach(card => historyGrid.append(card));
-            historySection.classList.remove('hidden-btn');
-            downloadHistoryBtn.classList.remove('hidden-btn');
-        }
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let totalImages = 0;
+            let completedImages = 0;
+            let buffer = ''; // BUFFER TO HANDLE PARTIAL CHUNKS
 
-        // Reset Results area for new generation
-        isStopping = false;
-        isGenerating = true;
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done) break;
 
-        // Show warning text
-        const warningText = document.getElementById('generation-warning-text');
-        if (warningText) warningText.classList.remove('hidden-btn');
+                buffer += decoder.decode(value, { stream: true });
 
-        imageGrid.innerHTML = '';
-        progressContainer.classList.remove('hidden-btn');
-        progressBar.style.width = '0%';
-        generationCounter.classList.remove('hidden-btn');
-        generationCounter.classList.add('d-inline-block');
-        generationCounter.textContent = `0 / ${prompts.length}`;
+                // SSE events are separated by double newlines (\n\n)
+                const parts = buffer.split('\n\n');
 
-        // Remove existing spinner if any
-        const existingSpinner = document.getElementById('main-spinner');
-        if (existingSpinner) existingSpinner.remove();
+                // Keep the last part in the buffer (it might be incomplete)
+                buffer = parts.pop();
 
-        // Add spinner next to counter
-        const spinner = document.createElement('div');
-        spinner.id = 'main-spinner';
-        generationCounter.after(spinner);
-        downloadBtn.classList.add('hidden-btn');
-        stopBtn.classList.remove('hidden-btn');
-        stopBtn.classList.add('d-flex');
-        stopBtn.disabled = false;
-        stopBtn.textContent = 'Stop';
+                for (const part of parts) {
+                    if (!part.trim()) continue;
 
-        // Button state during generation
-        generateBtn.disabled = true;
-        generateBtn.textContent = 'Generating...';
+                    const lines = part.split('\n');
+                    let eventData = '';
 
-        const total = prompts.length;
-        let completed = 0;
-
-        for (let i = 0; i < total; i++) {
-            generationCounter.textContent = `${completed} / ${total}`;
-
-            if (isStopping) {
-                const cancelMsg = document.createElement('p');
-                cancelMsg.className = 'text-center text-accent';
-                cancelMsg.style.gridColumn = '1/-1'; // Keep grid-column as it's layout specific and hard to utility class without bloat, but maybe just use a class if possible.
-                cancelMsg.textContent = 'Generation stopped by user.';
-                imageGrid.append(cancelMsg);
-                break;
-            }
-
-            const originalPrompt = prompts[i];
-            const fullPrompt = style ? `${originalPrompt}. ${style}` : originalPrompt;
-            const currentName = filenames[i] ? `${filenames[i]}.${format}` : `image_${i + 1}.${format}`;
-
-            try {
-                // Call Backend
-                const response = await fetch('api/generate.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        prompt: fullPrompt,
-                        model: model,
-                        resolution: resolution,
-                        format: format,
-                        quality: quality,
-                        style: style_choice
-                    })
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    try {
-                        const directRes = await fetch(data.image_url);
-                        const blob = await directRes.blob();
-
-                        // Save to IndexedDB
-                        await ImageStorage.saveImage(blob, currentName, originalPrompt);
-
-                        // CREATE AND SHOW CARD ONLY WHEN READY
-                        const card = createPlaceholder(currentName, originalPrompt);
-                        updateCard(card, URL.createObjectURL(blob), 'Completed', false, currentName, originalPrompt);
-                        imageGrid.append(card);
-
-                    } catch (corsErr) {
-                        const proxyRes = await fetch(`api/proxy_image.php?url=${encodeURIComponent(data.image_url)}`);
-                        const blob = await proxyRes.blob();
-
-                        await ImageStorage.saveImage(blob, currentName, originalPrompt);
-
-                        const card = createPlaceholder(currentName, originalPrompt);
-                        updateCard(card, URL.createObjectURL(blob), 'Completed', false, currentName, originalPrompt);
-                        imageGrid.append(card);
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            eventData = line.substring(6);
+                        }
                     }
-                } else {
-                    const card = createPlaceholder(currentName, originalPrompt);
-                    updateCard(card, null, 'Error: ' + (data.error || 'Unknown'), true, currentName, originalPrompt);
-                    imageGrid.append(card);
+
+                    if (eventData) {
+                        try {
+                            const data = JSON.parse(eventData);
+
+                            if (data.total) {
+                                totalImages = data.total;
+                                elements.generationCounter.classList.remove('hidden-btn');
+                                elements.generationCounter.classList.add('d-inline-block');
+                                elements.generationCounter.textContent = `0 / ${totalImages}`;
+                            }
+
+                            if (data.image) {
+                                // Process results from backend
+                                const blob = await (await fetch(data.image)).blob();
+                                await ImageStorage.saveImage(blob, data.fileName, data.prompt);
+
+                                const card = createCardElement(data.fileName, data.prompt, data.image);
+                                elements.imageGrid.append(card);
+
+                                completedImages++;
+                                elements.progressBar.style.width = `${(completedImages / totalImages) * 100}%`;
+                                elements.generationCounter.textContent = `${completedImages} / ${totalImages}`;
+                            } else if (data.success === false) {
+                                alert('Error generating image: ' + data.error);
+                            }
+                        } catch (parseErr) {
+                            console.error('JSON Parse Error on part:', parseErr, eventData);
+                        }
+                    }
                 }
-            } catch (err) {
-                const card = createPlaceholder(currentName, originalPrompt);
-                updateCard(card, null, 'Network error', true, currentName, originalPrompt);
-                imageGrid.append(card);
             }
-
-            completed++;
-            progressBar.style.width = `${(completed / total) * 100}%`;
-            generationCounter.textContent = `${completed} / ${total}`;
+        } catch (err) {
+            if (err.name !== 'AbortError') console.error('Batch error:', err);
+        } finally {
+            resetUI();
         }
-
-        stopBtn.classList.add('hidden-btn');
-        downloadBtn.classList.remove('hidden-btn');
-
-        // Hide warning text
-        if (warningText) warningText.classList.add('hidden-btn');
-
-        // Reset button and hide progress
-        isGenerating = false;
-        generateBtn.disabled = false;
-        generateBtn.innerHTML = 'Start Generation';
-        progressContainer.classList.add('hidden-btn');
-
-        // Remove spinner
-        const finalSpinner = document.getElementById('main-spinner');
-        if (finalSpinner) finalSpinner.remove();
     });
 
-    // ZIP Download Logic
-    downloadBtn.addEventListener('click', async () => {
-        const zip = new JSZip();
-        const images = await ImageStorage.getAllImages();
-
-        // Only download images that are NOT archived (the ones in Results)
-        images.filter(img => img.isArchived !== true).forEach((img) => {
-            zip.file(img.fileName, img.blob);
-        });
-
-        const content = await zip.generateAsync({ type: 'blob' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(content);
-        link.download = 'batch_images.zip';
-        link.click();
+    // 4. STOP BUTTON
+    elements.stopBtn.addEventListener('click', () => {
+        if (controller) controller.abort();
+        resetUI();
     });
 
-    // ZIP Download History Logic
-    downloadHistoryBtn.addEventListener('click', async () => {
-        const zip = new JSZip();
-        const images = await ImageStorage.getAllImages();
+    function resetUI() {
+        elements.generateBtn.disabled = false;
+        elements.generateBtn.textContent = 'Start Generation 🚀';
+        elements.progressContainer.classList.add('hidden-btn');
+        elements.warningText.classList.add('hidden-btn');
+        elements.stopBtn.classList.add('hidden-btn');
+        elements.generationCounter.classList.add('hidden-btn');
+        elements.downloadBtn.classList.remove('hidden-btn');
+    }
 
-        // Only download images that ARE archived
-        const historyImages = images.filter(img => img.isArchived === true);
-
-        if (historyImages.length === 0) return alert('No images in history');
-
-        historyImages.forEach((img) => {
-            zip.file(img.fileName, img.blob);
-        });
-
-        const content = await zip.generateAsync({ type: 'blob' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(content);
-        link.download = 'history_images_bulk.zip';
-        link.click();
-    });
-
-    function createPlaceholder(name, prompt) {
+    // UTILS: Card Creation
+    function createCardElement(name, prompt, url) {
         const div = document.createElement('div');
         div.className = 'image-card glass';
         div.innerHTML = `
             <div class="img-wrapper">
-                <div class="placeholder-content">
-                    <div class="spinner"></div>
-                </div>
-                <div class="status">Generating...</div>
+                <button class="btn-download-single" title="Download image"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg></button>
+                <img src="${url}" alt="Generated Image" class="fade-img loaded">
             </div>
             <div class="card-info">
-                <div class="image-name-tag">${name}</div>
-                <div class="image-prompt-tag">${prompt}</div>
-            </div>
-        `;
-        return div;
-    }
-
-    function updateCard(card, imgUrl, statusText, isError = false, fileName = '', prompt = '') {
-        if (isError) {
-            card.classList.add('status-error-border');
-            card.innerHTML = `
-                <div class="img-wrapper">
-                    <div class="status status-error">${statusText}</div>
-                    <div class="placeholder-content">
-                        <p class="placeholder-name text-accent">Error</p>
-                    </div>
-                </div>
-                <div class="card-info">
-                    <div class="image-name-tag">${fileName || 'Error'}</div>
-                    <div class="image-prompt-tag">${prompt}</div>
-                </div>
-            `;
-            return;
-        }
-
-        // Si no hay error, renderizamos la imagen limpia con el botón de descarga y su etiqueta de nombre
-        card.innerHTML = `
-            <div class="img-wrapper">
-                <button class="btn-download-single" title="Download image">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                </button>
-                <img src="${imgUrl}" alt="Generated Image" class="fade-img">
-            </div>
-            <div class="card-info">
-                <div class="image-name-tag" title="${fileName}">${fileName}</div>
+                <div class="image-name-tag" title="${name}">${name}</div>
                 <div class="image-prompt-tag" title="${prompt}">${prompt}</div>
             </div>
         `;
-
-        const img = card.querySelector('img');
-        img.onload = () => {
-            setTimeout(() => {
-                img.classList.add('loaded');
-            }, 50);
-        };
-
-        const downloadBtn = card.querySelector('.btn-download-single');
-        downloadBtn.addEventListener('click', (e) => {
+        div.querySelector('.btn-download-single').onclick = (e) => {
             e.stopPropagation();
-            const link = document.createElement('a');
-            link.href = imgUrl;
-            link.download = fileName || 'generated-image';
-            link.click();
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = name;
+            a.click();
+        };
+        return div;
+    }
+
+    // 5. ZIP DOWNLOADS
+    const createZip = async (isHistory) => {
+        const zip = new JSZip();
+        const images = await ImageStorage.getAllImages();
+
+        // Robust filtering: 
+        // Current images MUST have isArchived explicitly false.
+        // History images are everything else (true or undefined legacy records).
+        const filtered = images.filter(img => {
+            return isHistory ? (img.isArchived !== false) : (img.isArchived === false);
         });
+
+        if (filtered.length === 0) {
+            return alert(isHistory ? 'No images in history to download.' : 'No current results to download.');
+        }
+
+        filtered.forEach(img => {
+            // Use ID as prefix to ensure unique filenames in the ZIP
+            const uniqueName = `${img.id || Date.now()}_${img.fileName}`;
+            zip.file(uniqueName, img.blob);
+        });
+
+        const content = await zip.generateAsync({ type: 'blob' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(content);
+        a.download = isHistory ? 'history_images_bulk.zip' : 'batch_images_results.zip';
+        a.click();
+    };
+    elements.downloadBtn.onclick = () => createZip(false);
+    elements.downloadHistoryBtn.onclick = () => createZip(true);
+
+    // 6. CLEAR GALLERY
+    elements.clearGalleryBtn.onclick = async () => {
+        await ImageStorage.clear();
+        loadGallery();
+        elements.downloadBtn.classList.add('hidden-btn');
+        elements.downloadHistoryBtn.classList.add('hidden-btn');
+        elements.historySection.classList.add('hidden-btn');
+    };
+
+    // 7. CLEAR ONLY HISTORY
+    const clearHistoryBtn = document.getElementById('clear-history');
+    if (clearHistoryBtn) {
+        clearHistoryBtn.onclick = async () => {
+            await ImageStorage.clearHistory();
+            loadGallery();
+            elements.downloadHistoryBtn.classList.add('hidden-btn');
+            elements.historySection.classList.add('hidden-btn');
+        };
     }
 });

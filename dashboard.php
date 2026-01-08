@@ -209,7 +209,7 @@ $isPro = ($planType === 'pro' && $planStatus === 'active');
     <script>
         const CURRENT_USER_ID = <?php echo isset($_SESSION['user_id']) ? $_SESSION['user_id'] : "'guest'"; ?>;
     </script>
-    <script src="assets/js/storage.js"></script>
+    <script src="assets/js/storage.js?v=2"></script>
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
             const galleryGrid = document.getElementById('dashboard-gallery-grid');

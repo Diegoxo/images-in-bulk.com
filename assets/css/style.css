@@ -635,16 +635,29 @@ textarea::-webkit-scrollbar-thumb:hover,
 .header-right {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 10px;
+}
+
+.header-left h2 {
+    line-height: 1.2 !important;
+    margin: 0 !important;
+    font-size: 1.5rem;
 }
 
 .counter-badge {
     background: var(--primary);
-    padding: 4px 12px;
+    padding: 3px 10px 4px 10px;
+    /* Slightly more bottom padding for optical vertical centering of numbers */
     border-radius: 20px;
-    font-size: 0.8rem;
-    display: none;
-    font-weight: 600;
+    font-size: 0.75rem;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    height: auto;
+    letter-spacing: 0.5px;
+    font-variant-numeric: tabular-nums;
 }
 
 /* Shared grid layout for both areas */
@@ -866,7 +879,6 @@ textarea::-webkit-scrollbar-thumb:hover,
 /* -------------------------------------------------------------------------- */
 
 .progress-container {
-    display: none;
     background: rgba(0, 0, 0, 0.3);
     border-radius: 10px;
     height: 8px;
@@ -877,8 +889,25 @@ textarea::-webkit-scrollbar-thumb:hover,
 .progress-fill {
     width: 0%;
     height: 100%;
-    background: linear-gradient(90deg, var(--primary), var(--accent));
+    background: linear-gradient(90deg,
+            var(--primary) 0%,
+            var(--accent) 30%,
+            rgba(255, 255, 255, 0.5) 50%,
+            var(--accent) 70%,
+            var(--primary) 100%);
+    background-size: 200% 100%;
+    animation: progress-shimmer 2s infinite linear;
     transition: width 0.3s ease;
+}
+
+@keyframes progress-shimmer {
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
 }
 
 .placeholder-content {

@@ -163,7 +163,7 @@ if (isset($_SESSION['user_id'])) {
                     <div class="results-header">
                         <div class="header-left">
                             <h2 class="card-title m-0">Results</h2>
-                            <span id="generation-counter" class="counter-badge">0 / 0</span>
+                            <span id="generation-counter" class="counter-badge hidden-btn">0 / 0</span>
                         </div>
                         <div class="header-right">
                             <button id="clear-gallery" class="btn-auth glass btn-clear">Clear History</button>
@@ -176,7 +176,7 @@ if (isset($_SESSION['user_id'])) {
                         </p>
                     </div>
 
-                    <div id="progress-bar-container" class="progress-container">
+                    <div id="progress-bar-container" class="progress-container hidden-btn">
                         <div id="progress-bar" class="progress-fill"></div>
                     </div>
 
@@ -200,6 +200,7 @@ if (isset($_SESSION['user_id'])) {
                 <div class="glass animate-fade section-card">
                     <div class="results-header">
                         <h2 class="card-title m-0">Previous Generations</h2>
+                        <button id="clear-history" class="btn-auth glass btn-clear">Clear All History</button>
                     </div>
                     <div id="history-grid" class="image-grid">
                         <!-- Past images will be moved here -->

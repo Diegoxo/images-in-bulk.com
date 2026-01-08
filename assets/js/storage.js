@@ -139,5 +139,29 @@ const ImageStorage = {
             };
             request.onerror = () => reject('Error clearing images');
         });
+    },
+
+    async clearHistory() {
+        if (!this.db) await this.init();
+
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction([this.storeName], 'readwrite');
+            const store = transaction.objectStore(this.storeName);
+            const index = store.index('userId');
+            const request = index.openCursor(IDBKeyRange.only(this.currentUserId));
+
+            request.onsuccess = (event) => {
+                const cursor = event.target.result;
+                if (cursor) {
+                    if (cursor.value.isArchived === true) {
+                        cursor.delete();
+                    }
+                    cursor.continue();
+                } else {
+                    resolve();
+                }
+            };
+            request.onerror = () => reject('Error clearing history');
+        });
     }
 };

@@ -91,7 +91,7 @@ if (isset($resolutions[$modelKey][$resolution])) {
     $mappedResolution = $resolutions[$modelKey][$resolution];
 }
 
-// Prepare payload
+// Prepare payload with common parameters
 $payload = [
     'model' => $model,
     'prompt' => $prompt,
@@ -99,19 +99,19 @@ $payload = [
     'size' => $mappedResolution
 ];
 
-// Handle model-specific parameters based on implementacion.js logic
+// Handle model-specific parameters strictly
 if (strpos($model, 'dall-e') !== false) {
+    // DALL-E specific logic
     $payload['response_format'] = 'url';
     if ($model === 'dall-e-3') {
-        $payload['quality'] = 'standard'; // Forced to standard per implementation logic
+        $payload['quality'] = 'standard';
         $payload['style'] = $style;
     }
-} else if (strpos($model, 'gpt-image') !== false) {
-    // GPT Image models follow different parameter names
+} else {
+    // GPT Image models specific logic
+    $payload['quality'] = 'medium';
     $payload['output_format'] = $format;
-    $payload['quality'] = 'medium'; // 'medium' is equivalent to standard for these models
-    // GPT models might not support response_format='url' explicitly in some versions, 
-    // or return b64_json by default. We'll handle the response dynamically.
+    // CRITICAL: Ensure response_format is NEVER here for GPT models
 }
 
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
