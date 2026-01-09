@@ -35,12 +35,19 @@ if (!$data) {
     $data = $_POST;
 }
 
-$prompts = $data['prompts'] ?? [];
+$rawPrompts = $data['prompts'] ?? [];
+$prompts = array_map(function ($p) {
+    return htmlspecialchars(strip_tags(trim($p)));
+}, $rawPrompts);
+
 $filenames = $data['filenames'] ?? [];
-$model = $data['model'] ?? 'dall-e-3';
+$rawModel = $data['model'] ?? 'dall-e-3';
+// Strict whitelist-like regex for model
+$model = preg_replace('/[^a-z0-9\-\.]/', '', $rawModel);
+
 $resolution = $data['resolution'] ?? '1:1';
 $format = $data['format'] ?? 'png';
-$customStyle = $data['custom_style'] ?? '';
+$customStyle = htmlspecialchars(strip_tags($data['custom_style'] ?? ''));
 
 if (empty($prompts)) {
     sendEvent(['success' => false, 'error' => 'No prompts provided'], 'error');

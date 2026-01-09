@@ -10,12 +10,17 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 // Get input
+// Get input
 $data = json_decode(file_get_contents('php://input'), true);
-$prompt = $data['prompt'] ?? '';
-$model = $data['model'] ?? 'dall-e-3';
+$rawPrompt = $data['prompt'] ?? '';
+$prompt = htmlspecialchars(strip_tags(trim($rawPrompt)));
+
+$rawModel = $data['model'] ?? 'dall-e-3';
+$model = preg_replace('/[^a-z0-9\-\.]/', '', $rawModel);
+
 $resolution = $data['resolution'] ?? '1:1';
 $quality = $data['quality'] ?? 'standard';
-$style = $data['style'] ?? 'vivid';
+$style = htmlspecialchars(strip_tags($data['style'] ?? 'vivid'));
 $format = $data['format'] ?? 'png';
 
 if (empty($prompt)) {

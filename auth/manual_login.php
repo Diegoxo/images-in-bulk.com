@@ -12,7 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 $mode = $_POST['mode'] ?? 'login';
-$email = filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL);
+$email = filter_input(INPUT_POST, 'email', FILTER_VALIDATE_EMAIL);
 $password = $_POST['password'] ?? '';
 
 // Basic Validation
@@ -26,7 +26,10 @@ try {
 
     if ($mode === 'signup') {
         // --- SIGN UP LOGIC ---
-        $fullName = filter_input(INPUT_POST, 'full_name', FILTER_SANITIZE_STRING);
+        $initialName = filter_input(INPUT_POST, 'full_name', FILTER_SANITIZE_STRING);
+        // Clean name to allow only letters and spaces
+        $fullName = preg_replace("/[^a-zA-Z\s]/", "", $initialName);
+
         if (!$fullName) {
             header('Location: ../login?mode=signup&error=Name is required');
             exit;

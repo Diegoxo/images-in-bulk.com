@@ -236,10 +236,29 @@ document.addEventListener('DOMContentLoaded', async () => {
             return alert(isHistory ? 'No images in history to download.' : 'No current results to download.');
         }
 
+        const usedNames = new Set();
+
         filtered.forEach(img => {
-            // Use ID as prefix to ensure unique filenames in the ZIP
-            const uniqueName = `${img.id || Date.now()}_${img.fileName}`;
-            zip.file(uniqueName, img.blob);
+            let finalName = img.fileName;
+            let counter = 1;
+            let baseName = finalName;
+            let ext = '';
+
+            // Extract extension if present
+            const lastDot = finalName.lastIndexOf('.');
+            if (lastDot !== -1) {
+                baseName = finalName.substring(0, lastDot);
+                ext = finalName.substring(lastDot);
+            }
+
+            // If name exists, append counter until unique
+            while (usedNames.has(finalName)) {
+                finalName = `${baseName} (${counter})${ext}`;
+                counter++;
+            }
+
+            usedNames.add(finalName);
+            zip.file(finalName, img.blob);
         });
 
         const content = await zip.generateAsync({ type: 'blob' });
