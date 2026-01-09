@@ -1,5 +1,6 @@
 <?php
 require_once 'includes/config.php';
+require_once 'includes/utils/security_headers.php';
 include 'includes/pages-config/generator-config.php';
 
 // Verificamos el estado del usuario (sin bloquear acceso)

@@ -4,11 +4,17 @@
  */
 require_once '../includes/config.php';
 
+require_once '../includes/utils/csrf.php';
+
 session_start();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: ../login');
     exit;
+}
+
+if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
+    die("Security Error: Invalid or missing CSRF token.");
 }
 
 $mode = $_POST['mode'] ?? 'login';

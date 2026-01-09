@@ -1,4 +1,12 @@
-<?php include 'includes/pages-config/login-config.php'; ?>
+<?php
+include 'includes/pages-config/login-config.php';
+require_once 'includes/utils/security_headers.php';
+require_once 'includes/utils/csrf.php';
+// Ensure session is started for CSRF generation
+if (session_status() === PHP_SESSION_NONE) {
+session_start();
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -41,6 +49,7 @@
             <form action="auth/manual_login.php" method="POST"
                 style="width: 100%; display: flex; flex-direction: column; gap: 1rem;">
                 <input type="hidden" name="mode" value="<?php echo $isSignUp ? 'signup' : 'login'; ?>">
+                <?php renderCsrfField(); ?>
 
                 <?php if (isset($_GET['error'])): ?>
                     <div

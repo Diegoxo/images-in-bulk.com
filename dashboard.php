@@ -1,5 +1,6 @@
 <?php
 require_once 'includes/config.php';
+require_once 'includes/utils/security_headers.php';
 include 'includes/pages-config/dashboard-config.php';
 
 // 1. Seguridad: Verificar sesión
@@ -13,16 +14,16 @@ $db = getDB();
 try {
     // Info de Usuario y Suscripción
     $stmt = $db->prepare("
-        SELECT u.*, s.plan_type, s.status as sub_status, s.current_period_start, s.current_period_end 
-        FROM users u 
-        LEFT JOIN subscriptions s ON u.id = s.user_id 
-        WHERE u.id = ?
-    ");
+SELECT u.*, s.plan_type, s.status as sub_status, s.current_period_start, s.current_period_end
+FROM users u
+LEFT JOIN subscriptions s ON u.id = s.user_id
+WHERE u.id = ?
+");
     $stmt->execute([$_SESSION['user_id']]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     // Estadísticas de Uso (Total imágenes generadas)
-    // Nota: Si la tabla generations aún no tiene datos, dará 0.
+// Nota: Si la tabla generations aún no tiene datos, dará 0.
     $stmtStats = $db->prepare("SELECT COUNT(*) as total_images FROM generations WHERE user_id = ?");
     $stmtStats->execute([$_SESSION['user_id']]);
     $stats = $stmtStats->fetch(PDO::FETCH_ASSOC);

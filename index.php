@@ -1,5 +1,6 @@
 <?php
 require_once 'includes/config.php';
+require_once 'includes/utils/security_headers.php';
 include 'includes/pages-config/index-config.php';
 ?>
 <!DOCTYPE html>
