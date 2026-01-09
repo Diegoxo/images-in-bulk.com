@@ -3,29 +3,15 @@ require_once 'includes/config.php';
 require_once 'includes/utils/security_headers.php';
 include 'includes/pages-config/generator-config.php';
 
+require_once 'includes/utils/subscription_helper.php';
+
 // Verificamos el estado del usuario (sin bloquear acceso)
-$isPro = false;
-$freeImagesCount = 0;
-$freeLimit = 3;
+$userId = $_SESSION['user_id'] ?? null;
+$userStatus = getUserSubscriptionStatus($userId);
 
-if (isset($_SESSION['user_id'])) {
-    $db = getDB();
-
-    // Check Subscription
-    $stmt = $db->prepare("SELECT plan_type, status FROM subscriptions WHERE user_id = ? AND status = 'active'");
-    $stmt->execute([$_SESSION['user_id']]);
-    $sub = $stmt->fetch();
-    if ($sub && $sub['plan_type'] === 'pro') {
-        $isPro = true;
-    }
-
-    // Count Generated Images (for free users)
-    if (!$isPro) {
-        $stmtCount = $db->prepare("SELECT COUNT(*) FROM generations WHERE user_id = ?");
-        $stmtCount->execute([$_SESSION['user_id']]);
-        $freeImagesCount = $stmtCount->fetchColumn();
-    }
-}
+$isPro = $userStatus['isPro'];
+$freeImagesCount = $userStatus['freeImagesCount'];
+$freeLimit = $userStatus['freeLimit'];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -173,7 +159,7 @@ if (isset($_SESSION['user_id'])) {
 
                     <div id="generation-warning-text" class="alert-warning hidden-btn">
                         <p class="m-0 fs-sm">
-                            ⚠️ <strong>Generation in progress.</strong> Please don't close this tab or navigate away.
+                            <strong>Generation in progress. </strong>Don't close this tab or navigate away.
                         </p>
                     </div>
 

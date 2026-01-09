@@ -147,7 +147,17 @@ $response = json_decode($result, true);
 
 if ($httpCode !== 200) {
     $errorMsg = $response['error']['message'] ?? 'API Error ' . $httpCode;
-    echo json_encode(['success' => false, 'error' => $errorMsg]);
+
+    // Check if it's a safety/policy error
+    if (strpos(strtolower($errorMsg), 'safety') !== false || strpos(strtolower($errorMsg), 'policy') !== false) {
+        // Pass specific safety error to user
+        echo json_encode(['success' => false, 'error' => $errorMsg]);
+    } else {
+        // Log real error internally
+        error_log("OpenAI API Fail in generate.php: " . $errorMsg);
+        // Return generic error
+        echo json_encode(['success' => false, 'error' => 'Generation failed due to a processing error.']);
+    }
     exit;
 }
 

@@ -23,7 +23,7 @@ function applySecurityHeaders()
     // 'unsafe-inline' and 'unsafe-eval' are allowed strictly for current functionality compatibility,
     // but ideally should be removed in future refinements.
     // We allow connection to OpenAI and Google/Stripe APIs.
-    header("Content-Security-Policy: default-src 'self' https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https: blob:; connect-src 'self' https://api.openai.com https://api.stripe.com;");
+    header("Content-Security-Policy: default-src 'self' https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https: blob:; connect-src 'self' https://api.openai.com https://api.stripe.com data:;");
 
     // 5. Referrer Policy
     // Controls how much information is sent in the Referer header when navigating away.

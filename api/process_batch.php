@@ -196,14 +196,30 @@ for ($i = 0; $i < $total; $i++) {
             }
         } else {
             $errorMsg = $response['error']['message'] ?? 'OpenAI API Error (Code ' . $httpCode . ')';
-            sendEvent(['index' => $i, 'success' => false, 'error' => $errorMsg], 'generation');
+
+            // Check if it's a safety/policy error
+            if (strpos(strtolower($errorMsg), 'safety') !== false || strpos(strtolower($errorMsg), 'policy') !== false) {
+                // Pass specific safety error to user
+                throw new Exception($errorMsg);
+            }
+
+            // Log real error internally
+            error_log("OpenAI API Fail: " . $errorMsg);
+            // Throw generic for everything else
+            throw new Exception("Provider temporarily unavailable (Code $httpCode)");
         }
 
     } catch (Exception $e) {
-        // Log detailed error for admin
-        error_log("Generation Error: " . $e->getMessage());
-        // Send generic safe message to user
-        sendEvent(['index' => $i, 'success' => false, 'error' => 'Generation failed due to a processing error.'], 'generation');
+        $msg = $e->getMessage();
+        // Allow safety messages to pass through specific check above
+        if (strpos(strtolower($msg), 'safety') !== false || strpos(strtolower($msg), 'allowed') !== false) {
+            sendEvent(['index' => $i, 'success' => false, 'error' => $msg], 'generation');
+        } else {
+            // Log detailed error for admin
+            error_log("Generation Error: " . $msg);
+            // Send generic safe message to user
+            sendEvent(['index' => $i, 'success' => false, 'error' => 'Generation failed due to a processing error.'], 'generation');
+        }
     }
 
     usleep(100000);
