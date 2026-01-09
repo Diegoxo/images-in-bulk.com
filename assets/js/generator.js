@@ -21,7 +21,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         generationCounter: document.getElementById('generation-counter'),
         clearGalleryBtn: document.getElementById('clear-gallery'),
         generateBtn: document.getElementById('generate-btn'),
-        warningText: document.getElementById('generation-warning-text')
+        warningText: document.getElementById('generation-warning-text'),
+        spinner: document.getElementById('generation-spinner')
     };
 
     let controller = null; // For cancelling the stream
@@ -89,6 +90,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         elements.progressContainer.classList.remove('hidden-btn');
         elements.progressBar.style.width = '0%';
         elements.warningText.classList.remove('hidden-btn');
+        elements.spinner.classList.remove('hidden-btn');
         elements.stopBtn.classList.remove('hidden-btn');
         elements.stopBtn.classList.add('d-flex');
 
@@ -156,6 +158,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 await ImageStorage.saveImage(blob, data.fileName, data.prompt);
 
                                 const card = createCardElement(data.fileName, data.prompt, data.image);
+                                elements.spinner.classList.add('hidden-btn'); // Hide spinner on first image
                                 elements.imageGrid.append(card);
 
                                 completedImages++;
@@ -189,6 +192,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         elements.progressContainer.classList.add('hidden-btn');
         elements.warningText.classList.add('hidden-btn');
         elements.stopBtn.classList.add('hidden-btn');
+        elements.spinner.classList.add('hidden-btn');
         elements.generationCounter.classList.add('hidden-btn');
         elements.downloadBtn.classList.remove('hidden-btn');
     }

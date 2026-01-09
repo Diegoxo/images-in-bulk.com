@@ -180,6 +180,11 @@ if (isset($_SESSION['user_id'])) {
                         <div id="progress-bar" class="progress-fill"></div>
                     </div>
 
+                    <div id="generation-spinner" class="spinner-container hidden-btn">
+                        <div class="spinner"></div>
+                        <p class="mt-3 fs-sm opacity-75">Generating your images...</p>
+                    </div>
+
                     <div id="image-grid" class="image-grid">
                         <!-- Images will appear here -->
                         <div class="empty-state">
