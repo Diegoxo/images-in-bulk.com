@@ -158,7 +158,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 await ImageStorage.saveImage(blob, data.fileName, data.prompt);
 
                                 const card = createCardElement(data.fileName, data.prompt, data.image);
-                                elements.spinner.classList.add('hidden-btn'); // Hide spinner on first image
                                 elements.imageGrid.append(card);
 
                                 completedImages++;
