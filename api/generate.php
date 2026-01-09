@@ -18,6 +18,13 @@ $prompt = htmlspecialchars(strip_tags(trim($rawPrompt)));
 $rawModel = $data['model'] ?? 'dall-e-3';
 $model = preg_replace('/[^a-z0-9\-\.]/', '', $rawModel);
 
+// WHITELIST CHECK
+$allowed_models = ['dall-e-3', 'gpt-image-1.5', 'gpt-image-1-mini'];
+if (!in_array($model, $allowed_models)) {
+    echo json_encode(['success' => false, 'error' => 'Invalid model identifier.']);
+    exit;
+}
+
 $resolution = $data['resolution'] ?? '1:1';
 $quality = $data['quality'] ?? 'standard';
 $style = htmlspecialchars(strip_tags($data['style'] ?? 'vivid'));
@@ -131,7 +138,8 @@ $error = curl_error($ch);
 curl_close($ch);
 
 if ($error) {
-    echo json_encode(['success' => false, 'error' => 'CURL Error: ' . $error]);
+    error_log("CURL Error in generate.php: " . $error);
+    echo json_encode(['success' => false, 'error' => 'Connection error. Please try again later.']);
     exit;
 }
 

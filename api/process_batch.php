@@ -45,6 +45,13 @@ $rawModel = $data['model'] ?? 'dall-e-3';
 // Strict whitelist-like regex for model
 $model = preg_replace('/[^a-z0-9\-\.]/', '', $rawModel);
 
+// WHITELIST CHECK
+$allowed_models = ['dall-e-3', 'gpt-image-1.5', 'gpt-image-1-mini'];
+if (!in_array($model, $allowed_models)) {
+    sendEvent(['success' => false, 'error' => 'Invalid model identifier.'], 'error');
+    exit;
+}
+
 $resolution = $data['resolution'] ?? '1:1';
 $format = $data['format'] ?? 'png';
 $customStyle = htmlspecialchars(strip_tags($data['custom_style'] ?? ''));
@@ -193,7 +200,10 @@ for ($i = 0; $i < $total; $i++) {
         }
 
     } catch (Exception $e) {
-        sendEvent(['index' => $i, 'success' => false, 'error' => $e->getMessage()], 'generation');
+        // Log detailed error for admin
+        error_log("Generation Error: " . $e->getMessage());
+        // Send generic safe message to user
+        sendEvent(['index' => $i, 'success' => false, 'error' => 'Generation failed due to a processing error.'], 'generation');
     }
 
     usleep(100000);
