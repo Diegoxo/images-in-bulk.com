@@ -39,7 +39,8 @@ require_once 'includes/controllers/pricing_controller.php';
                 <div class="pricing-card glass popular">
                     <div class="popular-badge">Most Popular</div>
                     <h3>Pro Plan</h3>
-                    <div class="price">$21<span>/month</span></div>
+                    <div class="price" style="font-size: 2rem;">$21 USD <span style="font-size: 1rem; color: var(--text-muted);">/ $85.000 COP</span></div>
+                    <div style="font-size: 1rem; color: var(--text-muted); margin-bottom: 1.5rem;">/ month</div>
                     <ul class="pricing-features">
                         <li>Priority Queue</li>
                         <li>All resolutions (1:1, 16:9, 9:16)</li>
@@ -66,11 +67,11 @@ require_once 'includes/controllers/pricing_controller.php';
                                 </form>
                             </div>
                         <?php else: ?>
-                                    <div class="alert-danger" style="margin-top: 2rem;">
-                                        <p style="margin: 0; font-size: 0.9rem;">Unable to load payment system.</p>
-                                        <p style="margin: 0; font-size: 0.8rem; opacity: 0.7;">Please reload or contact support.</p>
-                                    </div>
-                            <?php endif; ?>
+                            <div class="alert-danger" style="margin-top: 2rem;">
+                                <p style="margin: 0; font-size: 0.9rem;">Unable to load payment system.</p>
+                                <p style="margin: 0; font-size: 0.8rem; opacity: 0.7;">Please reload or contact support.</p>
+                            </div>
+                        <?php endif; ?>
                     <?php else: ?>
                         <a href="login.php?mode=signup" class="btn-auth btn-primary full-width">Sign up to buy</a>
                     <?php endif; ?>
