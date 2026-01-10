@@ -1,6 +1,5 @@
 <?php
-require_once 'includes/config.php';
-include 'includes/pages-config/pricing-config.php';
+require_once 'includes/controllers/pricing_controller.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -40,52 +39,38 @@ include 'includes/pages-config/pricing-config.php';
                 <div class="pricing-card glass popular">
                     <div class="popular-badge">Most Popular</div>
                     <h3>Pro Plan</h3>
-                    <div class="price">$5<span>/month</span></div>
+                    <div class="price">$21<span>/month</span></div>
                     <ul class="pricing-features">
                         <li>Priority Queue</li>
                         <li>All resolutions (1:1, 16:9, 9:16)</li>
                         <li>Premium Support</li>
                     </ul>
-                    <?php
-                    if (isset($_SESSION['user_id'])):
-                        // Verificamos si ya es PRO
-                        $db = getDB();
-                        $stmt = $db->prepare("SELECT plan_type, status FROM subscriptions WHERE user_id = ? AND status = 'active'");
-                        $stmt->execute([$_SESSION['user_id']]);
-                        $userSub = $stmt->fetch();
-
-                        if ($userSub && $userSub['plan_type'] === 'pro'):
-                            ?>
+                    <?php if ($isLoggedIn): ?>
+                        <?php if ($isPro): ?>
                             <div class="subscription-status success-glass"
                                 style="margin-top: 2rem; padding: 1rem; border-radius: 12px; text-align: center;">
                                 <p style="color: #4ade80; font-weight: bold; margin-bottom: 0.5rem;">✨ You are a PRO member!</p>
                                 <a href="generator" class="btn-auth btn-primary full-width">Go to Generator</a>
                             </div>
-                        <?php else: ?>
-                            <?php
-                            // Configuramos los datos exactos del pago
-                            $amountInCents = 2000000; // 20.000 COP
-                            $currency = 'COP';
-                            // Referencia estable (BULK + ID + Fecha-Hora)
-                            $reference = 'BULK' . $_SESSION['user_id'] . '-' . date('YmdHi');
-
-                            // Firma SHA256 (Referencia + Monto + Moneda + Secreto)
-                            $rawString = $reference . $amountInCents . $currency . WOMPI_INTEGRITY_SECRET;
-                            $signature = hash('sha256', $rawString);
-                            ?>
+                        <?php elseif (isset($wompiData) && is_array($wompiData)): ?>
                             <div class="payment-box"
                                 style="margin-top: 2rem; border: 1px solid var(--primary); padding: 1rem; border-radius: 12px; display: flex; flex-direction: column; align-items: center;">
                                 <p style="margin-bottom: 1rem; font-size: 0.8rem; opacity: 0.8;">Secure Payment by Wompi</p>
                                 <form>
                                     <script src="https://checkout.wompi.co/widget.js" data-render="button"
-                                        data-public-key="<?php echo WOMPI_PUBLIC_KEY; ?>"
-                                        data-currency="<?php echo $currency; ?>"
-                                        data-amount-in-cents="<?php echo $amountInCents; ?>"
-                                        data-reference="<?php echo $reference; ?>"
-                                        data-signature:integrity="<?php echo $signature; ?>"></script>
+                                        data-public-key="<?php echo htmlspecialchars($wompiData['publicKey']); ?>"
+                                        data-currency="<?php echo htmlspecialchars($wompiData['currency']); ?>"
+                                        data-amount-in-cents="<?php echo htmlspecialchars($wompiData['amountInCents']); ?>"
+                                        data-reference="<?php echo htmlspecialchars($wompiData['reference']); ?>"
+                                        data-signature:integrity="<?php echo htmlspecialchars($wompiData['signature']); ?>"></script>
                                 </form>
                             </div>
-                        <?php endif; ?>
+                        <?php else: ?>
+                                    <div class="alert-danger" style="margin-top: 2rem;">
+                                        <p style="margin: 0; font-size: 0.9rem;">Unable to load payment system.</p>
+                                        <p style="margin: 0; font-size: 0.8rem; opacity: 0.7;">Please reload or contact support.</p>
+                                    </div>
+                            <?php endif; ?>
                     <?php else: ?>
                         <a href="login.php?mode=signup" class="btn-auth btn-primary full-width">Sign up to buy</a>
                     <?php endif; ?>

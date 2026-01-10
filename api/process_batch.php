@@ -4,6 +4,7 @@
  * Orchestrates the generation of multiple images and streams results.
  */
 require_once '../includes/config.php';
+require_once '../includes/utils/subscription_helper.php';
 
 // Disable time limit for bulk processing
 set_time_limit(0);
@@ -65,15 +66,15 @@ if (empty($prompts)) {
 session_start();
 $userId = $_SESSION['user_id'] ?? null;
 $isPro = false;
+$freeImagesCount = 0;
+$freeLimit = 3;
 
 if ($userId) {
-    $db = getDB();
-    $stmt = $db->prepare("SELECT plan_type, status FROM subscriptions WHERE user_id = ? AND status = 'active'");
-    $stmt->execute([$userId]);
-    $sub = $stmt->fetch();
-    if ($sub && $sub['plan_type'] === 'pro') {
-        $isPro = true;
-    }
+    // USE HELPER FOR CONSISTENT STATUS CHECK
+    $subStatus = getUserSubscriptionStatus($userId);
+    $isPro = $subStatus['isPro'];
+    $freeImagesCount = $subStatus['freeImagesCount'];
+    $freeLimit = $subStatus['freeLimit'];
 }
 session_write_close();
 
@@ -87,8 +88,16 @@ if (!$isPro) {
         sendEvent(['success' => false, 'error' => 'Resolutions restricted to PRO'], 'error');
         exit;
     }
-    if (count($prompts) > 3) {
-        sendEvent(['success' => false, 'error' => 'Free limit: 3 images per batch'], 'error');
+
+    // Check Total Usage Limits
+    $requestedCount = count($prompts);
+    if (($freeImagesCount + $requestedCount) > $freeLimit) {
+        $remaining = max(0, $freeLimit - $freeImagesCount);
+        if ($remaining === 0) {
+            sendEvent(['success' => false, 'error' => 'Free limit reaced. Please upgrade.'], 'error');
+        } else {
+            sendEvent(['success' => false, 'error' => "Limit reached. You can only generate $remaining more images."], 'error');
+        }
         exit;
     }
 }
