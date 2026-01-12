@@ -25,7 +25,7 @@ require_once 'includes/controllers/pricing_controller.php';
                 <!-- Free Plan -->
                 <div class="pricing-card glass">
                     <h3>Free</h3>
-                    <div class="price price-dual">$0</div>
+                    <div class="price-dual">$0</div>
                     <div class="price-billing"><span>month</span></div>
                     <ul class="pricing-features">
                         <li>3 images (One-time trial)</li>
@@ -40,7 +40,7 @@ require_once 'includes/controllers/pricing_controller.php';
                 <div class="pricing-card glass popular">
                     <div class="popular-badge">Most Popular</div>
                     <h3>Pro Plan</h3>
-                    <div class="price price-dual">$21 USD <span>/ $85.000 COP</span></div>
+                    <div class="price-dual">$21 USD <span>/ $85.000 COP</span></div>
                     <div class="price-billing">month</div>
                     <ul class="pricing-features">
                         <li>Priority Queue</li>

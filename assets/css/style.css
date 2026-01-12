@@ -1151,24 +1151,18 @@ textarea::-webkit-scrollbar-thumb:hover,
     font-weight: 700;
 }
 
-.price {
-    font-size: 3.5rem;
-    font-weight: 800;
-    margin: 1.5rem 0;
-}
-
-.price span {
-    font-size: 1rem;
-    color: var(--text-muted);
-}
-
 .price-dual {
-    font-size: 2rem !important;
+    font-size: 2rem;
     font-weight: 700;
+    margin: 1.5rem 0;
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 0.5rem;
 }
 
 .price-dual span {
-    font-size: 1rem !important;
+    font-size: 1rem;
     color: var(--text-muted);
 }
 
