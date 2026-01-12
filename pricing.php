@@ -43,7 +43,7 @@ require_once 'includes/controllers/pricing_controller.php';
                     <div class="price-dual">$21 USD <span>/ $85.000 COP</span></div>
                     <div class="price-billing">month</div>
                     <ul class="pricing-features">
-                        <li>Priority Queue</li>
+                        <li>50,000 Credits / month</li>
                         <li>All resolutions (1:1, 16:9, 9:16)</li>
                         <li>Premium Support</li>
                     </ul>
@@ -51,6 +51,9 @@ require_once 'includes/controllers/pricing_controller.php';
                         <?php if ($isPro): ?>
                             <div class="subscription-status success-glass">
                                 <p>✨ You are a PRO member!</p>
+                                <p style="font-size: 1.2rem; color: var(--primary); margin: 0.5rem 0;">
+                                    <?php echo number_format($credits); ?> Credits Left
+                                </p>
                                 <a href="generator" class="btn-auth btn-primary full-width">Go to Generator</a>
                             </div>
                         <?php elseif (isset($wompiData) && is_array($wompiData)): ?>

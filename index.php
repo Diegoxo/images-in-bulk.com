@@ -1,7 +1,5 @@
 <?php
-require_once 'includes/config.php';
-require_once 'includes/utils/security_headers.php';
-include 'includes/pages-config/index-config.php';
+require_once 'includes/controllers/index_controller.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">

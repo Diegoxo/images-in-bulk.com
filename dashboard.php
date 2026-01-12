@@ -1,41 +1,5 @@
 <?php
-require_once 'includes/config.php';
-require_once 'includes/utils/security_headers.php';
-include 'includes/pages-config/dashboard-config.php';
-
-// 1. Seguridad: Verificar sesión
-if (!isset($_SESSION['user_id'])) {
-    header('Location: login.php');
-    exit;
-}
-
-// 2. Obtener datos del usuario y suscripción
-$db = getDB();
-try {
-    // Info de Usuario y Suscripción
-    $stmt = $db->prepare("
-SELECT u.*, s.plan_type, s.status as sub_status, s.current_period_start, s.current_period_end
-FROM users u
-LEFT JOIN subscriptions s ON u.id = s.user_id
-WHERE u.id = ?
-");
-    $stmt->execute([$_SESSION['user_id']]);
-    $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    // Estadísticas de Uso (Total imágenes generadas)
-// Nota: Si la tabla generations aún no tiene datos, dará 0.
-    $stmtStats = $db->prepare("SELECT COUNT(*) as total_images FROM generations WHERE user_id = ?");
-    $stmtStats->execute([$_SESSION['user_id']]);
-    $stats = $stmtStats->fetch(PDO::FETCH_ASSOC);
-
-} catch (Exception $e) {
-    die("Error loading dashboard: " . $e->getMessage());
-}
-
-// Valores por defecto
-$planType = $user['plan_type'] ?? 'free';
-$planStatus = $user['sub_status'] ?? 'inactive';
-$isPro = ($planType === 'pro' && $planStatus === 'active');
+require_once 'includes/controllers/dashboard_controller.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -59,22 +23,7 @@ $isPro = ($planType === 'pro' && $planStatus === 'active');
         <!-- Profile Header -->
         <section class="animate-fade glass profile-section">
             <div class="profile-header">
-                <?php
-                $avatarExists = false;
-                $avatarUrl = $user['avatar_url'] ?? '';
 
-                if (!empty($avatarUrl)) {
-                    if (strpos($avatarUrl, 'http') === 0) {
-                        $avatarExists = true; // URL externa de Google/Microsoft
-                    } elseif (file_exists($avatarUrl)) {
-                        $avatarExists = true; // Archivo local que sí existe
-                    } else {
-                        // El archivo local no existe (lo borramos), limpiamos DB silenciosamente
-                        $db->prepare("UPDATE users SET avatar_url = NULL WHERE id = ?")->execute([$user['id']]);
-                        $avatarUrl = '';
-                    }
-                }
-                ?>
 
                 <?php if ($avatarExists): ?>
                     <img src="<?php echo htmlspecialchars($avatarUrl); ?>" alt="Google Profile Picture"

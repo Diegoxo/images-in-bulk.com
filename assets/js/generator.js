@@ -76,10 +76,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     elements.form.addEventListener('submit', async (e) => {
         e.preventDefault();
 
-        const prompts = elements.promptsInput.value.split('\n').filter(p => p.trim() !== '');
-        const filenames = elements.filenamesInput.value.split('\n').filter(f => f.trim() !== '');
-
-        if (prompts.length === 0) return alert('Please enter at least one prompt');
+        // Get raw values (let backend handle parsing and validation)
+        const rawPrompts = elements.promptsInput.value;
+        const rawFilenames = elements.filenamesInput.value;
 
         // Prepare UI
         await ImageStorage.archiveAll();
@@ -102,8 +101,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 headers: { 'Content-Type': 'application/json' },
                 signal: controller.signal,
                 body: JSON.stringify({
-                    prompts,
-                    filenames,
+                    prompts: rawPrompts,
+                    filenames: rawFilenames,
                     model: document.getElementById('model').value,
                     resolution: document.getElementById('resolution').value,
                     format: document.getElementById('format').value,

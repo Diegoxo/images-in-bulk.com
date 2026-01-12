@@ -9,64 +9,54 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-// Get input
-// Get input
+// 1. Get and Validate Input
+require_once '../includes/utils/validation_helper.php';
 $data = json_decode(file_get_contents('php://input'), true);
-$rawPrompt = $data['prompt'] ?? '';
-$prompt = htmlspecialchars(strip_tags(trim($rawPrompt)));
 
-$rawModel = $data['model'] ?? 'dall-e-3';
-$model = preg_replace('/[^a-z0-9\-\.]/', '', $rawModel);
-
-// WHITELIST CHECK
-$allowed_models = ['dall-e-3', 'gpt-image-1.5', 'gpt-image-1-mini'];
-if (!in_array($model, $allowed_models)) {
-    echo json_encode(['success' => false, 'error' => 'Invalid model identifier.']);
-    exit;
-}
-
-$resolution = $data['resolution'] ?? '1:1';
-$quality = $data['quality'] ?? 'standard';
-$style = htmlspecialchars(strip_tags($data['style'] ?? 'vivid'));
-$format = $data['format'] ?? 'png';
-
+$prompt = htmlspecialchars(strip_tags(trim($data['prompt'] ?? '')));
 if (empty($prompt)) {
     echo json_encode(['success' => false, 'error' => 'Prompt is required']);
     exit;
 }
 
-// Check user subscription and model access
-$isPro = false;
-if (isset($_SESSION['user_id'])) {
-    try {
-        $db = getDB();
-        $stmt = $db->prepare("SELECT plan_type, status FROM subscriptions WHERE user_id = ? AND status = 'active'");
-        $stmt->execute([$_SESSION['user_id']]);
-        $sub = $stmt->fetch();
-        if ($sub && $sub['plan_type'] === 'pro') {
-            $isPro = true;
-        }
-    } catch (Exception $e) {
-        error_log("Sub check error: " . $e->getMessage());
-    }
-}
+// Delegate validation to helper
+$modelCheck = ValidationHelper::validateModel($data['model'] ?? 'dall-e-3');
+$resCheck = ValidationHelper::validateResolution($data['resolution'] ?? '1:1');
+$formatCheck = ValidationHelper::validateFormat($data['format'] ?? 'png');
 
-// Restriction: Only Pro users can use GPT Image models
-if (!$isPro && $model !== 'dall-e-3') {
-    echo json_encode(['success' => false, 'error' => 'This model is only available for PRO users.']);
+if (!$modelCheck['success'] || !$resCheck['success'] || !$formatCheck['success']) {
+    $error = $modelCheck['error'] ?? ($resCheck['error'] ?? $formatCheck['error']);
+    echo json_encode(['success' => false, 'error' => $error]);
     exit;
 }
 
-// Restriction: Only Pro users can use non-square resolutions
-if (!$isPro && $resolution !== '1:1') {
-    echo json_encode(['success' => false, 'error' => 'Custom resolutions (16:9, 9:16) are only available for PRO users.']);
+$model = $modelCheck['data'];
+$resolution = $resCheck['data'];
+$format = $formatCheck['data'];
+$quality = $data['quality'] ?? 'standard';
+$style = htmlspecialchars(strip_tags($data['style'] ?? 'vivid'));
+
+// 2. Auth & Limit Checks
+require_once '../includes/utils/subscription_helper.php';
+
+session_start();
+$userId = $_SESSION['user_id'] ?? null;
+$access = validateUserAccess($userId, $model, $resolution);
+
+if (!$access['success']) {
+    echo json_encode(['success' => false, 'error' => $access['error']]);
     exit;
 }
 
-$apiKey = OPENAI_API_KEY;
+$isPro = $access['data']['isPro'];
+$subStatus = $access['data'];
+session_write_close();
 
-if ($apiKey === 'YOUR_API_KEY_HERE') {
-    echo json_encode(['success' => false, 'error' => 'Configura la API Key de OpenAI en includes/config.php']);
+$apiKey = defined('OPENAI_API_KEY') ? OPENAI_API_KEY : '';
+
+if (empty($apiKey)) {
+    error_log("OpenAI API Key not configured.");
+    echo json_encode(['success' => false, 'error' => 'The generation service is currently unavailable.']);
     exit;
 }
 
@@ -175,21 +165,10 @@ if (isset($response['data'][0]['url'])) {
             $stmt = $db->prepare("INSERT INTO generations (user_id, prompt, image_url, model, resolution) VALUES (?, ?, ?, ?, ?)");
             $stmt->execute([$userId, $prompt, $imageUrl, $model, $mappedResolution]);
 
-            // Update usage_log counter
-            $currentMonth = date('Y-m');
-            $stmtCheck = $db->prepare("SELECT id, images_count FROM usage_log WHERE user_id = ? AND month_year = ?");
-            $stmtCheck->execute([$userId, $currentMonth]);
-            $usageRow = $stmtCheck->fetch();
-
-            if ($usageRow) {
-                // Update existing record
-                $newCount = $usageRow['images_count'] + 1;
-                $stmtUpdate = $db->prepare("UPDATE usage_log SET images_count = ? WHERE id = ?");
-                $stmtUpdate->execute([$newCount, $usageRow['id']]);
-            } else {
-                // Create new record for this month
-                $stmtInsert = $db->prepare("INSERT INTO usage_log (user_id, images_count, month_year) VALUES (?, 1, ?)");
-                $stmtInsert->execute([$userId, $currentMonth]);
+            // DEDUCT CREDITS FOR PRO USERS
+            if ($isPro) {
+                $cost = calculateImageCost($model, $resolution);
+                deductCredits($userId, $cost);
             }
         } catch (Exception $e) {
             // Log error but don't fail the request
@@ -217,21 +196,10 @@ if (isset($response['data'][0]['url'])) {
             $stmt = $db->prepare("INSERT INTO generations (user_id, prompt, image_url, model, resolution) VALUES (?, ?, ?, ?, ?)");
             $stmt->execute([$userId, $prompt, 'base64_image', $model, $mappedResolution]);
 
-            // Update usage_log counter
-            $currentMonth = date('Y-m');
-            $stmtCheck = $db->prepare("SELECT id, images_count FROM usage_log WHERE user_id = ? AND month_year = ?");
-            $stmtCheck->execute([$userId, $currentMonth]);
-            $usageRow = $stmtCheck->fetch();
-
-            if ($usageRow) {
-                // Update existing record
-                $newCount = $usageRow['images_count'] + 1;
-                $stmtUpdate = $db->prepare("UPDATE usage_log SET images_count = ? WHERE id = ?");
-                $stmtUpdate->execute([$newCount, $usageRow['id']]);
-            } else {
-                // Create new record for this month
-                $stmtInsert = $db->prepare("INSERT INTO usage_log (user_id, images_count, month_year) VALUES (?, 1, ?)");
-                $stmtInsert->execute([$userId, $currentMonth]);
+            // DEDUCT CREDITS FOR PRO USERS
+            if ($isPro) {
+                $cost = calculateImageCost($model, $resolution);
+                deductCredits($userId, $cost);
             }
         } catch (Exception $e) {
             // Log error but don't fail the request

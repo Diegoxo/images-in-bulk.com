@@ -1,17 +1,5 @@
 <?php
-require_once 'includes/config.php';
-require_once 'includes/utils/security_headers.php';
-include 'includes/pages-config/generator-config.php';
-
-require_once 'includes/utils/subscription_helper.php';
-
-// Verificamos el estado del usuario (sin bloquear acceso)
-$userId = $_SESSION['user_id'] ?? null;
-$userStatus = getUserSubscriptionStatus($userId);
-
-$isPro = $userStatus['isPro'];
-$freeImagesCount = $userStatus['freeImagesCount'];
-$freeLimit = $userStatus['freeLimit'];
+require_once 'includes/controllers/generator_controller.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -68,11 +56,11 @@ $freeLimit = $userStatus['freeLimit'];
                         <label>Model</label>
                         <select id="model">
                             <option value="dall-e-3" selected>DALL-E 3</option>
-                            <option value="gpt-image-1.5" <?php echo !$isPro ? 'disabled' : ''; ?>>
-                                GPT Image 1.5 <?php echo !$isPro ? '(PRO)' : ''; ?>
+                            <option value="gpt-image-1.5" <?php echo $proDisabledAttr; ?>>
+                                GPT Image 1.5 <?php echo $proLabelSuffix; ?>
                             </option>
-                            <option value="gpt-image-1-mini" <?php echo !$isPro ? 'disabled' : ''; ?>>
-                                GPT Image 1.0 (Mini) <?php echo !$isPro ? '(PRO)' : ''; ?>
+                            <option value="gpt-image-1-mini" <?php echo $proDisabledAttr; ?>>
+                                GPT Image 1.0 (Mini) <?php echo $proLabelSuffix; ?>
                             </option>
                         </select>
                     </div>
@@ -87,124 +75,23 @@ $freeLimit = $userStatus['freeLimit'];
                         <label>Resolution</label>
                         <select id="resolution">
                             <option value="1:1" selected>1:1 (Square)</option>
-                            <option value="16:9" <?php echo !$isPro ? 'disabled' : ''; ?>>
-                                16:9 (Horizontal) <?php echo !$isPro ? '(PRO)' : ''; ?>
+                            <option value="16:9" <?php echo $proDisabledAttr; ?>>
+                                16:9 (Horizontal) <?php echo $proLabelSuffix; ?>
                             </option>
-                            <option value="9:16" <?php echo !$isPro ? 'disabled' : ''; ?>>
-                                9:16 (Vertical) <?php echo !$isPro ? '(PRO)' : ''; ?>
+                            <option value="9:16" <?php echo $proDisabledAttr; ?>>
+                                9:16 (Vertical) <?php echo $proLabelSuffix; ?>
                             </option>
                         </select>
                     </div>
                 </div>
 
                 <div class="btn-group-vertical">
-                    <?php if ($isPro): ?>
-                        <button type="submit" id="generate-btn" class="btn-auth btn-primary generate-main-btn">
-                            Start Generation 🚀
-                        </button>
-                        <button type="button" id="stop-btn" class="btn-auth glass btn-stop">
-                            Stop
-                        </button>
-                    <?php elseif (isset($_SESSION['user_id'])): ?>
-                        <!-- Usuario Logueado (Free) -->
-                        <?php if ($freeImagesCount < $freeLimit): ?>
-                            <div class="mb-1 text-center text-secondary fs-sm">
-                                Free Trial: <strong><?php echo $freeImagesCount; ?>/<?php echo $freeLimit; ?></strong> images
-                                used
-                                <div class="progress-small">
-                                    <div class="progress-small-fill <?php echo ($freeImagesCount >= $freeLimit - 1) ? 'bg-danger' : 'bg-primary'; ?>"
-                                        style="width: <?php echo ($freeImagesCount / $freeLimit) * 100; ?>%;">
-                                    </div>
-                                </div>
-                            </div>
-                            <button type="submit" id="generate-btn" class="btn-auth btn-primary generate-main-btn">
-                                Generate (Free) 🎨
-                            </button>
-                            <button type="button" id="stop-btn" class="btn-auth glass btn-stop">
-                                Stop
-                            </button>
-                        <?php else: ?>
-                            <!-- Limite Alcanzado -->
-                            <div class="alert-danger mb-1">
-                                <p class="mb-05 fs-sm">🔒 Free Limit Reached (3/3)</p>
-                                <a href="pricing" class="btn-auth btn-primary full-width">Upgrade for Unlimited</a>
-                            </div>
-                        <?php endif; ?>
-                    <?php else: ?>
-                        <!-- Usuario No Logueado -->
-                        <a href="login" class="btn-auth btn-primary generate-main-btn no-decor">
-                            Start Generation 🚀
-                        </a>
-                        <button type="button" class="btn-auth glass btn-stop not-allowed opacity-7" disabled>
-                            Stop
-                        </button>
-                    <?php endif; ?>
+                    <?php echo $renderButtonsHtml; ?>
                 </div>
             </form>
         </section>
 
-        <?php if (isset($_SESSION['user_id'])): ?>
-            <!-- Preview Section -->
-            <section class="preview-area">
-                <div class="glass animate-fade section-card">
-                    <div class="results-header">
-                        <div class="header-left">
-                            <h2 class="card-title m-0">Results</h2>
-                            <span id="generation-counter" class="counter-badge hidden-btn">0 / 0</span>
-                        </div>
-                        <div class="header-right">
-                            <button id="clear-gallery" class="btn-auth glass btn-clear">Clear History</button>
-                        </div>
-                    </div>
-
-                    <div id="generation-warning-text" class="alert-warning hidden-btn">
-                        <p class="m-0 fs-sm">
-                            <strong>Generation in progress. </strong>Don't close this tab or navigate away.
-                        </p>
-                    </div>
-
-                    <div id="progress-bar-container" class="progress-container hidden-btn">
-                        <div id="progress-bar" class="progress-fill"></div>
-                    </div>
-
-                    <div id="generation-spinner" class="spinner-container hidden-btn">
-                        <div class="spinner"></div>
-                        <p class="mt-3 fs-sm opacity-75">Generating your images...</p>
-                    </div>
-
-                    <div id="image-grid" class="image-grid">
-                        <!-- Images will appear here -->
-                        <div class="empty-state">
-                            Your generated images will appear here.
-                        </div>
-                    </div>
-
-                    <div class="btn-group download-area">
-                        <button id="download-zip" class="btn-auth btn-primary hidden-btn">
-                            Download Full Batch (ZIP)
-                        </button>
-                    </div>
-                </div>
-            </section>
-
-            <!-- History Section -->
-            <section id="history-section" class="preview-area hidden-btn">
-                <div class="glass animate-fade section-card">
-                    <div class="results-header">
-                        <h2 class="card-title m-0">Previous Generations</h2>
-                        <button id="clear-history" class="btn-auth glass btn-clear">Clear All History</button>
-                    </div>
-                    <div id="history-grid" class="image-grid">
-                        <!-- Past images will be moved here -->
-                    </div>
-                    <div class="btn-group download-area">
-                        <button id="download-zip-history" class="btn-auth btn-primary hidden-btn">
-                            Download All (.zip)
-                        </button>
-                    </div>
-                </div>
-            </section>
-        <?php endif; ?>
+        <?php echo $resultsSectionHtml; ?>
     </main>
 
     <!-- Main Footer Section -->
@@ -212,7 +99,7 @@ $freeLimit = $userStatus['freeLimit'];
 
     <!-- Modular Script Injection -->
     <script>
-        const CURRENT_USER_ID = <?php echo isset($_SESSION['user_id']) ? $_SESSION['user_id'] : "'guest'"; ?>;
+        const CURRENT_USER_ID = <?php echo $currentUserIdJs; ?>;
     </script>
     <?php include 'includes/layouts/main-scripts.php'; ?>
 </body>

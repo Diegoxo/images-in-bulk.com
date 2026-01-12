@@ -56,6 +56,10 @@ if ($transaction['status'] === 'APPROVED') {
                     VALUES (?, 'pro', 'active', DATE_ADD(NOW(), INTERVAL 1 MONTH), ?, ?)");
                 $stmt->execute([$userId, $paymentSourceId, $customerEmail]);
             }
+
+            // RESET CREDITS TO 50,000 on successful payment
+            $stmtCredits = $db->prepare("UPDATE users SET credits = 50000 WHERE id = ?");
+            $stmtCredits->execute([$userId]);
         } catch (Exception $e) {
             error_log("Webhook Error: " . $e->getMessage());
         }

@@ -15,6 +15,7 @@ include __DIR__ . '/../pages-config/pricing-config.php';
 // Initialize View Variables
 $isLoggedIn = isset($_SESSION['user_id']);
 $isPro = false;
+$credits = 0;
 $wompiData = null;
 
 // Execute Business Logic
@@ -25,6 +26,7 @@ if ($isLoggedIn) {
         // Check Subscription Status
         $subStatus = getUserSubscriptionStatus($userId);
         $isPro = $subStatus['isPro'];
+        $credits = $subStatus['credits'];
 
         // If not PRO, prepare Payment Data
         if (!$isPro) {

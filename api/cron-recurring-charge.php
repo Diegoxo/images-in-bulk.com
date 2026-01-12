@@ -44,16 +44,17 @@ try {
             $sub['wompi_customer_email'] ?? $sub['email']
         );
 
-        if (isset($res['data']['status']) && $res['data']['status'] === 'PENDING' || $res['data']['status'] === 'APPROVED') {
+        if (isset($res['data']['status']) && ($res['data']['status'] === 'PENDING' || $res['data']['status'] === 'APPROVED')) {
             // Si es aprobado o queda pendiente, extendemos el periodo
-            // Nota: En producción real, esperarías al Webhook para 'APPROVED', 
-            // pero para simplificar, si se inicia el proceso marcamos un avance.
-
             $stmtUpdate = $db->prepare("UPDATE subscriptions SET 
                 current_period_end = DATE_ADD(current_period_end, INTERVAL 1 MONTH),
                 updated_at = NOW() 
                 WHERE id = ?");
             $stmtUpdate->execute([$sub['id']]);
+
+            // RESET CREDITS TO 50,000 on successful renewal
+            $stmtCredits = $db->prepare("UPDATE users SET credits = 50000 WHERE id = ?");
+            $stmtCredits->execute([$sub['user_id']]);
 
             echo "¡Éxito! Nueva fecha: " . date('Y-m-d', strtotime('+1 month', strtotime($sub['current_period_end']))) . "\n";
         } else {

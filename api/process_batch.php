@@ -30,80 +30,60 @@ function sendEvent($data, $event = 'message')
 }
 
 // 1. Get and Validate Input
+require_once '../includes/utils/validation_helper.php';
 $data = json_decode(file_get_contents('php://input'), true);
-
-if (!$data) {
+if (!$data)
     $data = $_POST;
-}
 
-$rawPrompts = $data['prompts'] ?? [];
-$prompts = array_map(function ($p) {
-    return htmlspecialchars(strip_tags(trim($p)));
-}, $rawPrompts);
+// Parsing: handle both array and raw string (new behavior)
+$inputPrompts = is_array($data['prompts'] ?? null) ? $data['prompts'] : explode("\n", (string) ($data['prompts'] ?? ''));
+$inputFilenames = is_array($data['filenames'] ?? null) ? $data['filenames'] : explode("\n", (string) ($data['filenames'] ?? ''));
 
-$filenames = $data['filenames'] ?? [];
-$rawModel = $data['model'] ?? 'dall-e-3';
-// Strict whitelist-like regex for model
-$model = preg_replace('/[^a-z0-9\-\.]/', '', $rawModel);
-
-// WHITELIST CHECK
-$allowed_models = ['dall-e-3', 'gpt-image-1.5', 'gpt-image-1-mini'];
-if (!in_array($model, $allowed_models)) {
-    sendEvent(['success' => false, 'error' => 'Invalid model identifier.'], 'error');
-    exit;
-}
-
-$resolution = $data['resolution'] ?? '1:1';
-$format = $data['format'] ?? 'png';
-$customStyle = htmlspecialchars(strip_tags($data['custom_style'] ?? ''));
+$prompts = array_values(array_filter(array_map('trim', $inputPrompts)));
+$filenames = array_values(array_filter(array_map('trim', $inputFilenames)));
 
 if (empty($prompts)) {
     sendEvent(['success' => false, 'error' => 'No prompts provided'], 'error');
     exit;
 }
 
+// Delegate validation to helper
+$modelCheck = ValidationHelper::validateModel($data['model'] ?? 'dall-e-3');
+$resCheck = ValidationHelper::validateResolution($data['resolution'] ?? '1:1');
+$formatCheck = ValidationHelper::validateFormat($data['format'] ?? 'png');
+
+if (!$modelCheck['success'] || !$resCheck['success'] || !$formatCheck['success']) {
+    $error = $modelCheck['error'] ?? ($resCheck['error'] ?? $formatCheck['error']);
+    sendEvent(['success' => false, 'error' => $error], 'error');
+    exit;
+}
+
+$model = $modelCheck['data'];
+$resolution = $resCheck['data'];
+$format = $formatCheck['data'];
+$customStyle = htmlspecialchars(strip_tags($data['custom_style'] ?? ''));
+
 // 2. Auth Check
 session_start();
 $userId = $_SESSION['user_id'] ?? null;
-$isPro = false;
-$freeImagesCount = 0;
-$freeLimit = 3;
+$access = validateBatchAccess($userId, $model, $resolution, count($prompts));
 
-if ($userId) {
-    // USE HELPER FOR CONSISTENT STATUS CHECK
-    $subStatus = getUserSubscriptionStatus($userId);
-    $isPro = $subStatus['isPro'];
-    $freeImagesCount = $subStatus['freeImagesCount'];
-    $freeLimit = $subStatus['freeLimit'];
+if (!$access['success']) {
+    sendEvent(['success' => false, 'error' => $access['error']], 'error');
+    exit;
 }
+
+$isPro = $access['data']['isPro'];
+$subStatus = $access['data'];
 session_write_close();
 
-// 3. Restriction Checks
-if (!$isPro) {
-    if ($model !== 'dall-e-3') {
-        sendEvent(['success' => false, 'error' => 'Model restricted to PRO'], 'error');
-        exit;
-    }
-    if ($resolution !== '1:1') {
-        sendEvent(['success' => false, 'error' => 'Resolutions restricted to PRO'], 'error');
-        exit;
-    }
-
-    // Check Total Usage Limits
-    $requestedCount = count($prompts);
-    if (($freeImagesCount + $requestedCount) > $freeLimit) {
-        $remaining = max(0, $freeLimit - $freeImagesCount);
-        if ($remaining === 0) {
-            sendEvent(['success' => false, 'error' => 'Free limit reaced. Please upgrade.'], 'error');
-        } else {
-            sendEvent(['success' => false, 'error' => "Limit reached. You can only generate $remaining more images."], 'error');
-        }
-        exit;
-    }
-}
-
 // 4. OpenAI Setup
-$apiKey = OPENAI_API_KEY;
+$apiKey = defined('OPENAI_API_KEY') ? OPENAI_API_KEY : '';
+if (empty($apiKey)) {
+    error_log("OpenAI API Key not configured.");
+    sendEvent(['success' => false, 'error' => 'Generation service unavailable.'], 'error');
+    exit;
+}
 $apiUrl = 'https://api.openai.com/v1/images/generations';
 
 // Resolution mapping
@@ -191,6 +171,12 @@ for ($i = 0; $i < $total; $i++) {
                     $db = getDB();
                     $stmt = $db->prepare("INSERT INTO generations (user_id, prompt, image_url, model, resolution) VALUES (?, ?, ?, ?, ?)");
                     $stmt->execute([$userId, $originalPrompt, 'streamed_bulk', $model, $mappedRes]);
+
+                    // DEDUCT CREDITS FOR PRO USERS
+                    if ($isPro) {
+                        $cost = calculateImageCost($model, $resolution);
+                        deductCredits($userId, $cost);
+                    }
                 }
 
                 sendEvent([
