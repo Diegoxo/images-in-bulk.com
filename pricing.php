@@ -39,8 +39,8 @@ require_once 'includes/controllers/pricing_controller.php';
                 <div class="pricing-card glass popular">
                     <div class="popular-badge">Most Popular</div>
                     <h3>Pro Plan</h3>
-                    <div class="price" style="font-size: 2rem;">$21 USD <span style="font-size: 1rem; color: var(--text-muted);">/ $85.000 COP</span></div>
-                    <div style="font-size: 1rem; color: var(--text-muted); margin-bottom: 1.5rem;">/ month</div>
+                    <div class="price price-dual">$21 USD <span>/ $85.000 COP</span></div>
+                    <div class="price-billing">/ month</div>
                     <ul class="pricing-features">
                         <li>Priority Queue</li>
                         <li>All resolutions (1:1, 16:9, 9:16)</li>
@@ -48,15 +48,13 @@ require_once 'includes/controllers/pricing_controller.php';
                     </ul>
                     <?php if ($isLoggedIn): ?>
                         <?php if ($isPro): ?>
-                            <div class="subscription-status success-glass"
-                                style="margin-top: 2rem; padding: 1rem; border-radius: 12px; text-align: center;">
-                                <p style="color: #4ade80; font-weight: bold; margin-bottom: 0.5rem;">✨ You are a PRO member!</p>
+                            <div class="subscription-status success-glass">
+                                <p>✨ You are a PRO member!</p>
                                 <a href="generator" class="btn-auth btn-primary full-width">Go to Generator</a>
                             </div>
                         <?php elseif (isset($wompiData) && is_array($wompiData)): ?>
-                            <div class="payment-box"
-                                style="margin-top: 2rem; border: 1px solid var(--primary); padding: 1rem; border-radius: 12px; display: flex; flex-direction: column; align-items: center;">
-                                <p style="margin-bottom: 1rem; font-size: 0.8rem; opacity: 0.8;">Secure Payment by Wompi</p>
+                            <div class="payment-box">
+                                <p class="payment-label">Secure Payment by Wompi</p>
                                 <form>
                                     <script src="https://checkout.wompi.co/widget.js" data-render="button"
                                         data-public-key="<?php echo htmlspecialchars($wompiData['publicKey']); ?>"
@@ -67,9 +65,9 @@ require_once 'includes/controllers/pricing_controller.php';
                                 </form>
                             </div>
                         <?php else: ?>
-                            <div class="alert-danger" style="margin-top: 2rem;">
-                                <p style="margin: 0; font-size: 0.9rem;">Unable to load payment system.</p>
-                                <p style="margin: 0; font-size: 0.8rem; opacity: 0.7;">Please reload or contact support.</p>
+                            <div class="alert-danger mt-2">
+                                <p class="m-0 fs-sm">Unable to load payment system.</p>
+                                <p class="m-0 fs-sm opacity-7">Please reload or contact support.</p>
                             </div>
                         <?php endif; ?>
                     <?php else: ?>

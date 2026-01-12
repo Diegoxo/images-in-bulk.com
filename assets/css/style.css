@@ -1162,6 +1162,23 @@ textarea::-webkit-scrollbar-thumb:hover,
     color: var(--text-muted);
 }
 
+.price-dual {
+    font-size: 2rem !important;
+    font-weight: 700;
+}
+
+.price-dual span {
+    font-size: 1rem !important;
+    color: var(--text-muted);
+}
+
+.price-billing {
+    font-size: 1rem;
+    color: var(--text-muted);
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
 .pricing-features {
     list-style: none;
     padding: 0;
@@ -1195,6 +1212,44 @@ textarea::-webkit-scrollbar-thumb:hover,
 
 .full-width {
     width: 100%;
+}
+
+.subscription-status {
+    margin-top: 2rem;
+    padding: 1rem;
+    border-radius: 12px;
+    text-align: center;
+}
+
+.subscription-status p {
+    color: #4ade80;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.success-glass {
+    background: rgba(74, 222, 128, 0.1);
+    border: 1px solid rgba(74, 222, 128, 0.2);
+}
+
+.payment-box {
+    margin-top: 2rem;
+    border: 1px solid var(--primary);
+    padding: 1rem;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.payment-box .payment-label {
+    margin-bottom: 1rem;
+    font-size: 0.8rem;
+    opacity: 0.8;
+}
+
+.mt-2 {
+    margin-top: 2rem !important;
 }
 
 /* Legal Pages */
