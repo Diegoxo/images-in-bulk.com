@@ -56,6 +56,54 @@ try {
         }
     }
 
+    // 5. Pre-render UI Components (To keep view logic-free)
+    $cancelActionHtml = '';
+    $renderCancelButtonHtml = ''; // This will now contain the script
+
+    if ($isPro) {
+        // Determine HTML
+        $cancelActionHtml = '<div class="cancel-link-container">
+        <button id="cancel-subscription-btn" class="cancel-link">
+            Cancel subscription
+        </button>
+    </div>';
+
+        // Determine Script
+        ob_start();
+        ?>
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const btn = document.getElementById('cancel-subscription-btn');
+                if (!btn) return;
+                btn.addEventListener('click', async () => {
+                    if (!confirm('Are you sure you want to cancel your PRO subscription? You will lose access to PRO features immediately.')) return;
+
+                    btn.disabled = true;
+                    btn.innerText = 'Cancelling...';
+
+                    try {
+                        const res = await fetch('api/cancel-subscription.php', { method: 'POST' });
+                        const data = await res.json();
+                        if (data.success) {
+                            alert('Subscription cancelled successfully.');
+                            window.location.reload();
+                        } else {
+                            alert('Error: ' + data.error);
+                            btn.disabled = false;
+                            btn.innerText = 'Cancel subscription';
+                        }
+                    } catch (e) {
+                        alert('Network error. Please try again.');
+                        btn.disabled = false;
+                        btn.innerText = 'Cancel subscription';
+                    }
+                });
+            });
+        </script>
+        <?php
+        $renderCancelButtonHtml = ob_get_clean();
+    }
+
 } catch (Exception $e) {
     error_log("Dashboard Controller Error: " . $e->getMessage());
     die("A system error occurred while loading your profile.");

@@ -1727,3 +1727,28 @@ textarea::-webkit-scrollbar-thumb:hover,
         transform: rotate(360deg);
     }
 }
+
+/* Discrete Cancel Link */
+.cancel-link-container {
+    text-align: right;
+    width: 100%;
+    margin: 0.25rem 0;
+    display: block;
+}
+
+.cancel-link {
+    background: transparent;
+    border: none;
+    color: var(--accent);
+    font-size: 0.65rem;
+    opacity: 0.6;
+    padding: 0;
+    cursor: pointer;
+    font-weight: 500;
+    transition: var(--transition-base);
+}
+
+.cancel-link:hover {
+    opacity: 1;
+    text-decoration: underline;
+}

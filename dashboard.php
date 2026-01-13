@@ -77,6 +77,7 @@ require_once 'includes/controllers/dashboard_controller.php';
                                 </li>
                             <?php endif; ?>
                         </ul>
+                        <?php echo $renderCancelButtonHtml; ?>
                     <?php else: ?>
                         <p class="mb-1">You are currently on the Free plan.</p>
                         <ul class="list-none p-0 mb-1 text-secondary text-left w-100">
@@ -133,6 +134,8 @@ require_once 'includes/controllers/dashboard_controller.php';
             </div>
 
         </div>
+
+        <?php echo $cancelActionHtml; ?>
 
         <!-- Gallery Section -->
         <section class="glass animate-fade gallery-section">
@@ -266,6 +269,7 @@ require_once 'includes/controllers/dashboard_controller.php';
     <?php include 'includes/layouts/footer.php'; ?>
 
     <!-- Modular Script Injection -->
+    <?php echo $renderCancelButtonHtml; ?>
     <?php include 'includes/layouts/main-scripts.php'; ?>
 </body>
 
