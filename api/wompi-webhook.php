@@ -22,7 +22,10 @@ if ($transaction['status'] === 'APPROVED') {
     // Extraer referencia y user_id
     // La referencia la armamos como BULK{id}-{fecha} en pricing.php
     $reference = $transaction['reference'];
-    if (preg_match('/BULK(\d+)-/', $reference, $matches)) {
+    $isAddon = strpos($reference, 'ADDON') === 0;
+    $isAnnual = strpos($reference, 'ANNUAL') === 0;
+
+    if (preg_match('/(?:BULK|ADDON|ANNUAL)(\d+)-/', $reference, $matches)) {
         $userId = $matches[1];
         $customerEmail = $transaction['customer_email'];
 
@@ -38,28 +41,40 @@ if ($transaction['status'] === 'APPROVED') {
 
         // Actualizar base de datos
         try {
-            $stmt = $db->prepare("SELECT id FROM subscriptions WHERE user_id = ?");
-            $stmt->execute([$userId]);
-            $subscription = $stmt->fetch();
-
-            if ($subscription) {
-                $stmt = $db->prepare("UPDATE subscriptions SET 
-                    plan_type = 'pro', 
-                    status = 'active', 
-                    wompi_payment_source_id = COALESCE(?, wompi_payment_source_id), 
-                    wompi_customer_email = ?,
-                    current_period_end = DATE_ADD(NOW(), INTERVAL 1 MONTH) 
-                    WHERE user_id = ?");
-                $stmt->execute([$paymentSourceId, $customerEmail, $userId]);
+            if (isset($isAddon) && $isAddon) {
+                // ADD-ON logic: JUST ADD 55,000 CREDITS to current balance
+                $stmtCredits = $db->prepare("UPDATE users SET credits = credits + 55000 WHERE id = ?");
+                $stmtCredits->execute([$userId]);
             } else {
-                $stmt = $db->prepare("INSERT INTO subscriptions (user_id, plan_type, status, current_period_end, wompi_payment_source_id, wompi_customer_email) 
-                    VALUES (?, 'pro', 'active', DATE_ADD(NOW(), INTERVAL 1 MONTH), ?, ?)");
-                $stmt->execute([$userId, $paymentSourceId, $customerEmail]);
-            }
+                // SUBSCRIPTION logic (Original + Annual Support)
+                $cycle = (isset($isAnnual) && $isAnnual) ? 'yearly' : 'monthly';
+                $interval = (isset($isAnnual) && $isAnnual) ? '1 YEAR' : '1 MONTH';
 
-            // RESET CREDITS TO 50,000 on successful payment
-            $stmtCredits = $db->prepare("UPDATE users SET credits = 50000 WHERE id = ?");
-            $stmtCredits->execute([$userId]);
+                $stmt = $db->prepare("SELECT id FROM subscriptions WHERE user_id = ?");
+                $stmt->execute([$userId]);
+                $subscription = $stmt->fetch();
+
+                if ($subscription) {
+                    $stmt = $db->prepare("UPDATE subscriptions SET 
+                        plan_type = 'pro', 
+                        status = 'active', 
+                        billing_cycle = ?,
+                        last_credits_reset = NOW(),
+                        wompi_payment_source_id = COALESCE(?, wompi_payment_source_id), 
+                        wompi_customer_email = ?,
+                        current_period_end = DATE_ADD(NOW(), INTERVAL $interval) 
+                        WHERE user_id = ?");
+                    $stmt->execute([$cycle, $paymentSourceId, $customerEmail, $userId]);
+                } else {
+                    $stmt = $db->prepare("INSERT INTO subscriptions (user_id, plan_type, status, billing_cycle, last_credits_reset, current_period_end, wompi_payment_source_id, wompi_customer_email) 
+                        VALUES (?, 'pro', 'active', ?, NOW(), DATE_ADD(NOW(), INTERVAL $interval), ?, ?)");
+                    $stmt->execute([$userId, $cycle, $paymentSourceId, $customerEmail]);
+                }
+
+                // RESET CREDITS TO 50,000 on successful main subscription payment
+                $stmtCredits = $db->prepare("UPDATE users SET credits = 50000 WHERE id = ?");
+                $stmtCredits->execute([$userId]);
+            }
         } catch (Exception $e) {
             error_log("Webhook Error: " . $e->getMessage());
         }

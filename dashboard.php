@@ -77,7 +77,6 @@ require_once 'includes/controllers/dashboard_controller.php';
                                 </li>
                             <?php endif; ?>
                         </ul>
-                        <?php echo $renderCancelButtonHtml; ?>
                     <?php else: ?>
                         <p class="mb-1">You are currently on the Free plan.</p>
                         <ul class="list-none p-0 mb-1 text-secondary text-left w-100">
@@ -94,6 +93,22 @@ require_once 'includes/controllers/dashboard_controller.php';
                     <?php else: ?>
                         <a href="pricing" class="btn-auth btn-primary full-width">Upgrade to Pro</a>
                     <?php endif; ?>
+                </div>
+            </div>
+
+            <!-- Credits Card -->
+            <div class="glass dash-card">
+                <div class="card-content">
+                    <div class="stat-value">
+                        <?php echo number_format($credits); ?>
+                    </div>
+                    <div class="stat-label">Available Credits</div>
+                    <p class="mt-2 fs-sm text-muted">
+                        <?php echo ($isPro) ? 'Your monthly balance for high-quality images.' : 'Upgrade to get 50,000 monthly credits!'; ?>
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <a href="generator" class="btn-auth glass full-width">Use Credits</a>
                 </div>
             </div>
 
@@ -133,9 +148,8 @@ require_once 'includes/controllers/dashboard_controller.php';
                 </div>
             </div>
 
-        </div>
 
-        <?php echo $cancelActionHtml; ?>
+        </div>
 
         <!-- Gallery Section -->
         <section class="glass animate-fade gallery-section">
@@ -155,7 +169,6 @@ require_once 'includes/controllers/dashboard_controller.php';
             </div>
         </section>
 
-    </main>
 
     <!-- Scripts for Gallery -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -262,6 +275,7 @@ require_once 'includes/controllers/dashboard_controller.php';
         });
     </script>
 
+        <?php echo $cancelActionHtml; ?>
     </div>
     </main>
 

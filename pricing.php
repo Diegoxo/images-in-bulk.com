@@ -51,9 +51,6 @@ require_once 'includes/controllers/pricing_controller.php';
                         <?php if ($isPro): ?>
                             <div class="subscription-status success-glass">
                                 <p>✨ You are a PRO member!</p>
-                                <p style="font-size: 1.2rem; color: var(--primary); margin: 0.5rem 0;">
-                                    <?php echo number_format($credits); ?> Credits Left
-                                </p>
                                 <a href="generator" class="btn-auth btn-primary full-width">Go to Generator</a>
                             </div>
                         <?php elseif (isset($wompiData) && is_array($wompiData)): ?>
@@ -78,6 +75,73 @@ require_once 'includes/controllers/pricing_controller.php';
                         <a href="login.php?mode=signup" class="btn-auth btn-primary full-width">Sign up to buy</a>
                     <?php endif; ?>
                 </div>
+
+                <!-- Pro Annual Plan -->
+                <div class="pricing-card glass">
+                    <div class="popular-badge" style="background: var(--primary);">Best Value</div>
+                    <h3>Pro Annual</h3>
+                    <div class="price-dual">$210 USD <span>/ $850.000 COP</span></div>
+                    <div class="price-billing">year</div>
+                    <ul class="pricing-features">
+                        <li>50,000 Credits <strong>Monthly</strong></li>
+                        <li>Save 2 months!</li>
+                        <li>Priority Support</li>
+                    </ul>
+                    <?php if ($isLoggedIn): ?>
+                        <?php if ($isPro && $billingCycle === 'yearly'): ?>
+                            <div class="subscription-status success-glass">
+                                <p>✨ You are an ANNUAL PRO!</p>
+                                <a href="generator" class="btn-auth btn-primary full-width">Go to Generator</a>
+                            </div>
+                        <?php elseif ($isPro): ?>
+                            <div class="subscription-status success-glass opacity-7">
+                                <p>Plan: Monthly PRO</p>
+                            </div>
+                        <?php elseif (isset($wompiDataAnnual) && is_array($wompiDataAnnual)): ?>
+                            <div class="payment-box">
+                                <p class="payment-label">Pay Annually & Save</p>
+                                <form>
+                                    <script src="https://checkout.wompi.co/widget.js" data-render="button"
+                                        data-public-key="<?php echo htmlspecialchars($wompiDataAnnual['publicKey']); ?>"
+                                        data-currency="<?php echo htmlspecialchars($wompiDataAnnual['currency']); ?>"
+                                        data-amount-in-cents="<?php echo htmlspecialchars($wompiDataAnnual['amountInCents']); ?>"
+                                        data-reference="<?php echo htmlspecialchars($wompiDataAnnual['reference']); ?>"
+                                        data-signature:integrity="<?php echo htmlspecialchars($wompiDataAnnual['signature']); ?>"></script>
+                                </form>
+                            </div>
+                        <?php endif; ?>
+                    <?php else: ?>
+                        <a href="login.php?mode=signup" class="btn-auth btn-primary full-width">Sign up to buy</a>
+                    <?php endif; ?>
+                </div>
+
+                <?php if ($isPro): ?>
+                    <!-- Add-on Package for PRO users -->
+                    <div class="pricing-card glass">
+                        <div class="popular-badge" style="background: var(--accent);">PRO Extra</div>
+                        <h3>Extra Credits</h3>
+                        <div class="price-dual">$21 USD <span>/ $85.000 COP</span></div>
+                        <div class="price-billing">One-time payment</div>
+                        <ul class="pricing-features">
+                            <li>55,000 Additional Credits</li>
+                            <li>No expiration (Rolls over)</li>
+                            <li>Immediate activation</li>
+                        </ul>
+                        <?php if (isset($wompiDataAddon) && is_array($wompiDataAddon)): ?>
+                            <div class="payment-box">
+                                <p class="payment-label">Buy 55k Credits</p>
+                                <form>
+                                    <script src="https://checkout.wompi.co/widget.js" data-render="button"
+                                        data-public-key="<?php echo htmlspecialchars($wompiDataAddon['publicKey']); ?>"
+                                        data-currency="<?php echo htmlspecialchars($wompiDataAddon['currency']); ?>"
+                                        data-amount-in-cents="<?php echo htmlspecialchars($wompiDataAddon['amountInCents']); ?>"
+                                        data-reference="<?php echo htmlspecialchars($wompiDataAddon['reference']); ?>"
+                                        data-signature:integrity="<?php echo htmlspecialchars($wompiDataAddon['signature']); ?>"></script>
+                                </form>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                <?php endif; ?>
             </div>
         </section>
     </main>

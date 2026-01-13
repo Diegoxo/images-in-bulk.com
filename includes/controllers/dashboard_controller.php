@@ -20,25 +20,29 @@ $db = getDB();
 
 try {
     // 1. Fetch User and Subscription Info
-    $stmt = $db->prepare("
-        SELECT u.*, s.plan_type, s.status as sub_status, s.current_period_start, s.current_period_end
-        FROM users u
+    // We use the central helper to ensure expiration logic is applied
+    $subStatus = getUserSubscriptionStatus($userId);
+
+    // Also fetch user data and subscription dates
+    $stmtData = $db->prepare("
+        SELECT u.*, s.current_period_start, s.current_period_end 
+        FROM users u 
         LEFT JOIN subscriptions s ON u.id = s.user_id AND s.status = 'active'
         WHERE u.id = ?
     ");
-    $stmt->execute([$userId]);
-    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+    $stmtData->execute([$userId]);
+    $user = $stmtData->fetch(PDO::FETCH_ASSOC);
 
     // 2. Statistics
     $stmtStats = $db->prepare("SELECT COUNT(*) as total_images FROM generations WHERE user_id = ?");
     $stmtStats->execute([$userId]);
     $stats = $stmtStats->fetch(PDO::FETCH_ASSOC);
 
-    // 3. User State Variables
-    $planType = $user['plan_type'] ?? 'free';
-    $planStatus = $user['sub_status'] ?? 'inactive';
-    $isPro = ($planType === 'pro' && $planStatus === 'active');
-    $credits = $user['credits'] ?? 0;
+    // 3. User State Variables (Validated via Helper)
+    $isPro = $subStatus['isPro'];
+    $credits = $subStatus['credits'];
+    $freeImagesCount = $subStatus['freeImagesCount'];
+    $freeLimit = $subStatus['freeLimit'];
 
     // 4. Avatar Logic
     $avatarExists = false;

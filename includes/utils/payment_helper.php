@@ -4,15 +4,14 @@
  * Handles logic for generating payment signatures and configurations.
  */
 
-function generateWompiSignature($userId, $amountInCents, $currency)
+function generateWompiSignature($userId, $amountInCents, $currency, $prefix = 'BULK')
 {
     if (!$userId) {
         return null;
     }
 
-    // Stable reference: BULK + ID + Date-Time
-    // Note: In a real app key uniqueness logic might need to be stricter or tracked in DB
-    $reference = 'BULK' . $userId . '-' . date('YmdHi');
+    // Stable reference: PREFIX + ID + Date-Time
+    $reference = $prefix . $userId . '-' . date('YmdHi');
 
     // Signature SHA256 (Reference + Amount + Currency + Secret)
     // WOMPI_INTEGRITY_SECRET must be defined in config
