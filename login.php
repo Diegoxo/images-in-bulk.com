@@ -4,7 +4,7 @@ require_once 'includes/utils/security_headers.php';
 require_once 'includes/utils/csrf.php';
 // Ensure session is started for CSRF generation
 if (session_status() === PHP_SESSION_NONE) {
-session_start();
+    session_start();
 }
 ?>
 <!DOCTYPE html>

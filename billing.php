@@ -172,7 +172,8 @@ $pageTitle = "Billing & Payments";
                 </div>
             <?php else: ?>
                 <div style="text-align: center; padding: 2rem;">
-                    <p style="color: var(--text-muted); margin-bottom: 2rem;">You don't have any registered payment methods yet.</p>
+                    <p style="color: var(--text-muted); margin-bottom: 2rem;">You don't have any registered payment methods
+                        yet.</p>
                     <button onclick="toggleAddCard()" class="btn-auth btn-primary">
                         Add New Card
                     </button>

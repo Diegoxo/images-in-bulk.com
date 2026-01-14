@@ -1118,24 +1118,31 @@ textarea::-webkit-scrollbar-thumb:hover,
 }
 
 /* Pricing Section */
+.pricing-section {
+    padding-bottom: 5rem;
+}
+
 .pricing-grid {
     display: flex;
     justify-content: center;
-    gap: 2rem;
+    gap: 1.5rem;
     margin-top: 3rem;
     flex-wrap: wrap;
 }
 
 .pricing-card {
-    padding: 3rem;
-    width: 350px;
+    padding: 2.5rem 2rem;
+    width: 320px;
     text-align: center;
     position: relative;
+    display: flex;
+    flex-direction: column;
 }
 
 .pricing-card.popular {
     border: 2px solid var(--primary);
     transform: scale(1.05);
+    z-index: 2;
 }
 
 .popular-badge {
@@ -1152,17 +1159,18 @@ textarea::-webkit-scrollbar-thumb:hover,
 }
 
 .price-dual {
-    font-size: 2rem;
+    font-size: 1.8rem;
     font-weight: 700;
     margin: 1.5rem 0;
     display: flex;
     align-items: baseline;
     justify-content: center;
-    gap: 0.5rem;
+    gap: 0.4rem;
+    white-space: nowrap;
 }
 
 .price-dual span {
-    font-size: 1rem;
+    font-size: 0.9rem;
     color: var(--text-muted);
 }
 

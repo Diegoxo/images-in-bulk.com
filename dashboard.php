@@ -170,46 +170,46 @@ require_once 'includes/controllers/dashboard_controller.php';
         </section>
 
 
-    <!-- Scripts for Gallery -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script>
-        const CURRENT_USER_ID = <?php echo isset($_SESSION['user_id']) ? $_SESSION['user_id'] : "'guest'"; ?>;
-    </script>
-    <script src="assets/js/storage.js?v=2"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', async () => {
-            const galleryGrid = document.getElementById('dashboard-gallery-grid');
-            const downloadBtn = document.getElementById('download-all-btn');
+        <!-- Scripts for Gallery -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+        <script>
+            const CURRENT_USER_ID = <?php echo isset($_SESSION['user_id']) ? $_SESSION['user_id'] : "'guest'"; ?>;
+        </script>
+        <script src="assets/js/storage.js?v=2"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', async () => {
+                const galleryGrid = document.getElementById('dashboard-gallery-grid');
+                const downloadBtn = document.getElementById('download-all-btn');
 
-            // --- Gallery Logic ---
-            try {
-                // Initialize Storage
-                const images = await ImageStorage.getAllImages();
+                // --- Gallery Logic ---
+                try {
+                    // Initialize Storage
+                    const images = await ImageStorage.getAllImages();
 
-                // Note: ImageStorage.getAllImages() already filters by CURRENT_USER_ID if updated properly,
-                // otherwise strictly filter here just in case:
-                const myImages = images.filter(img => img.userId == CURRENT_USER_ID);
+                    // Note: ImageStorage.getAllImages() already filters by CURRENT_USER_ID if updated properly,
+                    // otherwise strictly filter here just in case:
+                    const myImages = images.filter(img => img.userId == CURRENT_USER_ID);
 
-                galleryGrid.innerHTML = '';
+                    galleryGrid.innerHTML = '';
 
-                if (myImages.length === 0) {
-                    galleryGrid.innerHTML = '<p class="text-center text-muted p-2">No images found in this browser.</p>';
-                    downloadBtn.classList.add('hidden-btn');
-                    return;
-                }
+                    if (myImages.length === 0) {
+                        galleryGrid.innerHTML = '<p class="text-center text-muted p-2">No images found in this browser.</p>';
+                        downloadBtn.classList.add('hidden-btn');
+                        return;
+                    }
 
-                downloadBtn.classList.remove('hidden-btn');
+                    downloadBtn.classList.remove('hidden-btn');
 
-                // Render Images
-                myImages.forEach(img => {
-                    const url = URL.createObjectURL(img.blob);
-                    const fileName = img.fileName || 'image.png';
-                    const prompt = img.prompt || '';
+                    // Render Images
+                    myImages.forEach(img => {
+                        const url = URL.createObjectURL(img.blob);
+                        const fileName = img.fileName || 'image.png';
+                        const prompt = img.prompt || '';
 
-                    const card = document.createElement('div');
-                    card.className = 'image-card glass';
+                        const card = document.createElement('div');
+                        card.className = 'image-card glass';
 
-                    card.innerHTML = `
+                        card.innerHTML = `
                         <div class="img-wrapper">
                             <button class="btn-download-single" title="Download image">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
@@ -222,61 +222,61 @@ require_once 'includes/controllers/dashboard_controller.php';
                         </div>
                     `;
 
-                    // Single Download Logic
-                    const singleDownloadBtn = card.querySelector('.btn-download-single');
-                    singleDownloadBtn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        const link = document.createElement('a');
-                        link.href = url;
-                        link.download = fileName;
-                        link.click();
-                    });
-
-                    galleryGrid.appendChild(card);
-                });
-
-                // Handle Download All
-                downloadBtn.addEventListener('click', async () => {
-                    const originalText = downloadBtn.innerText;
-                    downloadBtn.innerText = 'Zipping... ⏳';
-                    downloadBtn.disabled = true;
-
-                    try {
-                        const zip = new JSZip();
-                        const folder = zip.folder("my_images_bulk");
-
-                        myImages.forEach((img, index) => {
-                            const name = img.fileName || `image_${index + 1}.png`;
-                            folder.file(name, img.blob);
+                        // Single Download Logic
+                        const singleDownloadBtn = card.querySelector('.btn-download-single');
+                        singleDownloadBtn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            const link = document.createElement('a');
+                            link.href = url;
+                            link.download = fileName;
+                            link.click();
                         });
 
-                        const content = await zip.generateAsync({ type: "blob" });
+                        galleryGrid.appendChild(card);
+                    });
 
-                        // Trigger Download
-                        const a = document.createElement("a");
-                        a.href = URL.createObjectURL(content);
-                        a.download = "my_images_bulk.zip";
-                        document.body.appendChild(a);
-                        a.click();
-                        document.body.removeChild(a);
+                    // Handle Download All
+                    downloadBtn.addEventListener('click', async () => {
+                        const originalText = downloadBtn.innerText;
+                        downloadBtn.innerText = 'Zipping... ⏳';
+                        downloadBtn.disabled = true;
 
-                    } catch (err) {
-                        alert('Error creating zip: ' + err);
-                    } finally {
-                        downloadBtn.innerText = originalText;
-                        downloadBtn.disabled = false;
-                    }
-                });
+                        try {
+                            const zip = new JSZip();
+                            const folder = zip.folder("my_images_bulk");
 
-            } catch (err) {
-                console.error(err);
-                galleryGrid.innerHTML = '<p class="text-center p-2" style="color: #ef4444;">Error loading gallery.</p>';
-            }
-        });
-    </script>
+                            myImages.forEach((img, index) => {
+                                const name = img.fileName || `image_${index + 1}.png`;
+                                folder.file(name, img.blob);
+                            });
+
+                            const content = await zip.generateAsync({ type: "blob" });
+
+                            // Trigger Download
+                            const a = document.createElement("a");
+                            a.href = URL.createObjectURL(content);
+                            a.download = "my_images_bulk.zip";
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+
+                        } catch (err) {
+                            alert('Error creating zip: ' + err);
+                        } finally {
+                            downloadBtn.innerText = originalText;
+                            downloadBtn.disabled = false;
+                        }
+                    });
+
+                } catch (err) {
+                    console.error(err);
+                    galleryGrid.innerHTML = '<p class="text-center p-2" style="color: #ef4444;">Error loading gallery.</p>';
+                }
+            });
+        </script>
 
         <?php echo $cancelActionHtml; ?>
-    </div>
+        </div>
     </main>
 
     <!-- Main Footer Section -->
