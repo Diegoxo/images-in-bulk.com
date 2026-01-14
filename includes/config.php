@@ -1,46 +1,53 @@
 <?php
-// Configuration file for images-in-bulk.com
-
-define('DB_HOST', 'localhost');
-define('DB_NAME', 'images_in_bulk');
-define('DB_USER', 'root');
-define('DB_PASS', '');
-
-define('OPENAI_API_KEY', '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');
-
-// Error reporting for development
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+/**
+ * Global Configuration Handler
+ * Loads environment variables from .env and defines system constants.
+ */
 
 // Load Composer Autoloader
 require_once dirname(__DIR__) . '/vendor/autoload.php';
 
-// Auth Configuration (Placeholders for USER to fill)
-define('GOOGLE_CLIENT_ID', '76050295586-8br8il909i5k4m5gr4orcsi221qncdt4.apps.googleusercontent.com');
-define('GOOGLE_CLIENT_SECRET', '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');
+// Initialize Environment Variables
+try {
+    $dotenv = Dotenv\Dotenv::createImmutable(dirname(__DIR__));
+    $dotenv->load();
+} catch (Exception $e) {
+    // In production, you might want to handle this differently
+    // if the .env file is missing.
+}
 
-define('MICROSOFT_CLIENT_ID', 'YOUR_MICROSOFT_CLIENT_ID');
-define('MICROSOFT_CLIENT_SECRET', 'YOUR_MICROSOFT_CLIENT_SECRET');
+// Database Configuration
+define('DB_HOST', $_ENV['DB_HOST'] ?? 'localhost');
+define('DB_NAME', $_ENV['DB_NAME'] ?? 'images_in_bulk');
+define('DB_USER', $_ENV['DB_USER'] ?? 'root');
+define('DB_PASS', $_ENV['DB_PASS'] ?? '');
+
+// OpenAI Configuration
+define('OPENAI_API_KEY', $_ENV['OPENAI_API_KEY'] ?? '');
+
+// Auth Configuration
+define('GOOGLE_CLIENT_ID', $_ENV['GOOGLE_CLIENT_ID'] ?? '');
+define('GOOGLE_CLIENT_SECRET', $_ENV['GOOGLE_CLIENT_SECRET'] ?? '');
+define('MICROSOFT_CLIENT_ID', $_ENV['MICROSOFT_CLIENT_ID'] ?? '');
+define('MICROSOFT_CLIENT_SECRET', $_ENV['MICROSOFT_CLIENT_SECRET'] ?? '');
 
 // Wompi Configuration
-define('WOMPI_PUBLIC_KEY', 'pub_test_LeIVGZlLS7OylHnwFTA2N5UAVNSXpn9N');
-define('WOMPI_PRIVATE_KEY', 'prv_prod_E05G4AOHXGG2eT1FGa8aIzQqoujmphdt'); // <-- LLAVE PRIVADA (Empieza por prv_)
-define('WOMPI_INTEGRITY_SECRET', 'test_integrity_pyVnUdqtCgQN0rjWv3nUGt8rb2wPB3CI');
+define('WOMPI_PUBLIC_KEY', $_ENV['WOMPI_PUBLIC_KEY'] ?? '');
+define('WOMPI_PRIVATE_KEY', $_ENV['WOMPI_PRIVATE_KEY'] ?? '');
+define('WOMPI_INTEGRITY_SECRET', $_ENV['WOMPI_INTEGRITY_SECRET'] ?? '');
 
-// Secret for automated tasks (Cron)
-define('RECURRING_CHARGE_SECRET', 'RECURRING_SECRET_123');
+// Security & URLs
+define('RECURRING_CHARGE_SECRET', $_ENV['RECURRING_CHARGE_SECRET'] ?? 'RECURRING_SECRET_123');
+define('AUTH_CALLBACK_URL', $_ENV['AUTH_CALLBACK_URL'] ?? 'http://localhost/images-in-bulk.com/auth/callback.php');
 
-// Redirect URLs
-define('AUTH_CALLBACK_URL', 'http://localhost/images-in-bulk.com/auth/callback.php');
+// Error reporting
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
 // Start session
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
-
-// Temporary login hack for development
-// $_SESSION['user_id'] = 1;
-// $_SESSION['user_name'] = 'Diego';
 
 /**
  * Database connection helper using PDO
@@ -62,4 +69,3 @@ function getDB()
     }
     return $pdo;
 }
-?>
