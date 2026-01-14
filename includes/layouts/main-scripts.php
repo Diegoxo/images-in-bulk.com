@@ -3,6 +3,6 @@
  * Main script injection logic
  */
 if (isset($pageScripts)) {
-    include 'includes/layouts/scripts/' . $pageScripts . '.php';
+    include __DIR__ . '/scripts/' . $pageScripts . '.php';
 }
 ?>

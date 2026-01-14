@@ -1,13 +1,15 @@
+<?php $prefix = $pathPrefix ?? ''; ?>
 <header class="main-header">
     <nav>
-        <a href="./" class="logo">
-            <img src="assets/img/bulk-image-generator-logo.avif" alt="bulk-image-generator-logo" height="32">
+        <a href="<?php echo $prefix; ?>./" class="logo">
+            <img src="<?php echo $prefix; ?>assets/img/bulk-image-generator-logo.avif" alt="bulk-image-generator-logo"
+                height="32">
             <span>Images In Bulks</span>
         </a>
         <div class="nav-links">
-            <a href="./" class="btn-auth glass">Home</a>
-            <a href="generator" class="btn-auth glass">Generator</a>
-            <a href="pricing" class="btn-auth glass">Pricing</a>
+            <a href="<?php echo $prefix; ?>./" class="btn-auth glass">Home</a>
+            <a href="<?php echo $prefix; ?>generator" class="btn-auth glass">Generator</a>
+            <a href="<?php echo $prefix; ?>pricing" class="btn-auth glass">Pricing</a>
             <?php if (isset($_SESSION['user_id'])): ?>
                 <?php
                 // Self-healing session: If avatar is missing but user is logged in, fetch it.
@@ -35,7 +37,8 @@
                     <div class="user-menu-trigger btn-auth glass" onclick="toggleUserDropdown()"
                         style="padding: 0.5rem 1rem;">
                         <?php if ($displayAvatar): ?>
-                            <img src="<?php echo htmlspecialchars($displayAvatar); ?>" alt="User"
+                            <?php $avatarSrc = (strpos($displayAvatar, 'http') === 0) ? $displayAvatar : $prefix . $displayAvatar; ?>
+                            <img src="<?php echo htmlspecialchars($avatarSrc); ?>" alt="User"
                                 style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary);"
                                 referrerpolicy="no-referrer">
                         <?php else: ?>
@@ -53,14 +56,14 @@
                         <div style="padding: 0.75rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.1);">
                             <div style="font-weight: bold;"><?php echo htmlspecialchars($displayName); ?></div>
                         </div>
-                        <a href="dashboard" class="dropdown-item">
+                        <a href="<?php echo $prefix; ?>dashboard" class="dropdown-item">
                             <span>📊</span> Dashboard
                         </a>
-                        <a href="pricing" class="dropdown-item">
+                        <a href="<?php echo $prefix; ?>pricing" class="dropdown-item">
                             <span>💎</span> My Plan
                         </a>
                         <div class="dropdown-divider"></div>
-                        <a href="logout" class="dropdown-item text-danger">
+                        <a href="<?php echo $prefix; ?>logout" class="dropdown-item text-danger">
                             <span>🚪</span> Logout
                         </a>
                     </div>
@@ -82,8 +85,8 @@
                     });
                 </script>
             <?php else: ?>
-                <a href="login" class="btn-auth glass">Login</a>
-                <a href="login?mode=signup" class="btn-auth btn-primary">Sign up</a>
+                <a href="<?php echo $prefix; ?>login" class="btn-auth glass">Login</a>
+                <a href="<?php echo $prefix; ?>login?mode=signup" class="btn-auth btn-primary">Sign up</a>
             <?php endif; ?>
         </div>
     </nav>

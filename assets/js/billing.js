@@ -17,7 +17,8 @@ async function deleteCard() {
     }
 
     try {
-        const response = await fetch('api/delete-payment-method.php', { method: 'POST' });
+        const prefix = window.API_PREFIX || '';
+        const response = await fetch(prefix + 'api/delete-payment-method.php', { method: 'POST' });
         const result = await response.json();
 
         if (result.success) {
@@ -68,9 +69,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const cardToken = tokenData.data.id;
+            const prefix = window.API_PREFIX || '';
 
             // 2. Send token to our backend
-            const saveRes = await fetch('api/add-payment-method.php', {
+            const saveRes = await fetch(prefix + 'api/add-payment-method.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ token: cardToken })

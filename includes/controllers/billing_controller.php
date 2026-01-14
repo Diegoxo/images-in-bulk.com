@@ -10,7 +10,8 @@ require_once __DIR__ . '/../wompi-helper.php';
 
 // 1. Auth Guard
 if (!isset($_SESSION['user_id'])) {
-    header('Location: login.php');
+    $redirectPrefix = $pathPrefix ?? '';
+    header('Location: ' . $redirectPrefix . 'login.php');
     exit;
 }
 
@@ -47,23 +48,23 @@ try {
                     <div class="card-details">
                         <span class="card-icon">💳</span>
                         <div>
-                            <p style="font-weight: 600;">' . $brand . ' ending in **** ' . $lastFour . '</p>
-                            <p style="font-size: 0.85rem; color: var(--text-muted);">Used for your PRO subscription renewals.</p>
+                            <p class="card-brand-name">' . $brand . ' ending in **** ' . $lastFour . '</p>
+                            <p class="card-usage-tip">Used for your PRO subscription renewals.</p>
                         </div>
                     </div>
-                    <button onclick="deleteCard()" class="btn-auth btn-danger" style="padding: 0.5rem 1rem;">
+                    <button onclick="deleteCard()" class="btn-auth btn-danger card-remove-btn">
                         Remove Card
                     </button>
                 </div>
-                <div style="background: rgba(var(--primary-rgb), 0.1); padding: 1rem; border-radius: 12px; border-left: 4px solid var(--primary);">
-                    <p style="font-size: 0.9rem;">
+                <div class="card-removal-note">
+                    <p>
                         💡 <strong>Note:</strong> If you remove this card, your PRO subscription will not renew next month.
                     </p>
                 </div>';
 
             $paymentMethodActionHtml = '
-                <section class="animate-fade" style="margin-top: 2rem; text-align: center;">
-                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">Want to change your card?</p>
+                <section class="animate-fade replace-card-section">
+                    <p>Want to change your card?</p>
                     <button onclick="toggleAddCard()" class="btn-auth glass" id="toggle-btn">
                         Replace Primary Card
                     </button>
@@ -72,12 +73,12 @@ try {
     } else {
         // Empty State
         $cardDetailsHtml = '
-            <div style="text-align: center; padding: 2rem;">
-                <p style="color: var(--text-muted); margin-bottom: 2rem;">You don\'t have any registered payment methods yet.</p>
+            <div class="billing-empty-state">
+                <p class="empty-text">You don\'t have any registered payment methods yet.</p>
                 <button onclick="toggleAddCard()" class="btn-auth btn-primary">
                     Add New Card
                 </button>
-                <p style="margin-top: 1rem; font-size: 0.8rem; color: var(--text-muted);">
+                <p class="footer-tip">
                     * This will securely save your card for future PRO renewals.
                 </p>
             </div>';
@@ -96,7 +97,8 @@ require_once __DIR__ . '/../utils/subscription_helper.php';
 $subStatus = getUserSubscriptionStatus($userId);
 
 if ($subStatus['isPro']) {
-    $cancelActionHtml = '<div class="cancel-link-container" style="margin-top: 2rem;">
+    $cancelActionHtml = '
+    <div class="cancel-subscription-row">
         <button id="cancel-subscription-btn" class="cancel-link">Cancel subscription</button>
     </div>';
 
@@ -111,7 +113,8 @@ if ($subStatus['isPro']) {
                 btn.disabled = true;
                 btn.innerText = 'Cancelling...';
                 try {
-                    const res = await fetch('api/cancel-subscription.php', { method: 'POST' });
+                    const prefix = window.API_PREFIX || '';
+                    const res = await fetch(prefix + 'api/cancel-subscription.php', { method: 'POST' });
                     const data = await res.json();
                     if (data.success) {
                         alert('Subscription cancelled successfully.');

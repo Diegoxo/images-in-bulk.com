@@ -1875,3 +1875,110 @@ textarea::-webkit-scrollbar-thumb:hover,
         font-size: 0.8rem;
     }
 }
+
+/* --- Billing Page Styles --- */
+.billing-header {
+    margin-bottom: 2rem;
+}
+
+.back-link {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 1rem;
+}
+
+.billing-section {
+    padding: 2.5rem;
+    border-radius: 20px;
+}
+
+.billing-section-title {
+    margin-bottom: 1.5rem;
+    font-size: 1.2rem;
+}
+
+.form-field-group {
+    margin-bottom: 1rem;
+}
+
+.form-label-small {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.form-actions-row {
+    display: flex;
+    gap: 1rem;
+}
+
+.btn-flex {
+    flex: 1;
+}
+
+.form-footer-tip {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-align: center;
+    margin-top: 1rem;
+}
+
+/* Controller-driven components */
+.card-brand-name {
+    font-weight: 600;
+}
+
+.card-usage-tip {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.card-removal-note {
+    background: rgba(var(--primary-rgb), 0.1);
+    padding: 1rem;
+    border-radius: 12px;
+    border-left: 4px solid var(--primary);
+    margin-top: 1rem;
+}
+
+.card-removal-note p {
+    font-size: 0.9rem;
+}
+
+.replace-card-section {
+    margin-top: 2rem;
+    text-align: center;
+}
+
+.replace-card-section p {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+}
+
+.billing-empty-state {
+    text-align: center;
+    padding: 2rem;
+}
+
+.billing-empty-state .empty-text {
+    color: var(--text-muted);
+    margin-bottom: 2rem;
+}
+
+.billing-empty-state .footer-tip {
+    margin-top: 1rem;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.cancel-subscription-row {
+    margin-top: 2rem;
+    display: flex;
+    justify-content: center;
+}

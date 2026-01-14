@@ -11,7 +11,8 @@ include __DIR__ . '/../pages-config/dashboard-config.php';
 
 // Auth Guard
 if (!isset($_SESSION['user_id'])) {
-    header('Location: login.php');
+    $redirectPrefix = $pathPrefix ?? '';
+    header('Location: ' . $redirectPrefix . 'login.php');
     exit;
 }
 

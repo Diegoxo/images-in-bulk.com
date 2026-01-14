@@ -1,5 +1,6 @@
 <?php
-require_once 'includes/controllers/dashboard_controller.php';
+$pathPrefix = '../';
+require_once '../includes/controllers/dashboard_controller.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -10,13 +11,13 @@ require_once 'includes/controllers/dashboard_controller.php';
     <title>
         <?php echo $pageTitle; ?> | Images In Bulks
     </title>
-    <link rel="icon" type="image/x-icon" href="assets/img/favicon.ico">
-    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="icon" type="image/x-icon" href="../assets/img/favicon.ico">
+    <link rel="stylesheet" href="../assets/css/style.css">
 </head>
 
 <body>
     <!-- Main Header Section -->
-    <?php include 'includes/layouts/header.php'; ?>
+    <?php include '../includes/layouts/header.php'; ?>
 
     <main class="container">
 
@@ -64,7 +65,7 @@ require_once 'includes/controllers/dashboard_controller.php';
                     </p>
                 </div>
                 <div class="card-footer">
-                    <a href="generator" class="btn-auth glass full-width">Use Credits</a>
+                    <a href="../generator" class="btn-auth glass full-width">Use Credits</a>
                 </div>
             </div>
 
@@ -80,7 +81,7 @@ require_once 'includes/controllers/dashboard_controller.php';
                     </p>
                 </div>
                 <div class="card-footer">
-                    <a href="generator" class="btn-auth glass full-width">View Generator</a>
+                    <a href="../generator" class="btn-auth glass full-width">View Generator</a>
                 </div>
             </div>
 
@@ -89,7 +90,7 @@ require_once 'includes/controllers/dashboard_controller.php';
                 <div class="card-content">
                     <h3 class="section-title mb-15 fs-15">User Actions</h3>
                     <div class="w-100 d-flex flex-column gap-1">
-                        <a href="pricing" class="btn-auth glass full-width">
+                        <a href="../pricing" class="btn-auth glass full-width">
                             View Pricing
                         </a>
                         <a href="billing" class="btn-auth glass full-width">
@@ -98,7 +99,7 @@ require_once 'includes/controllers/dashboard_controller.php';
                     </div>
                 </div>
                 <div class="card-footer">
-                    <a href="generator" class="btn-auth btn-primary full-width">
+                    <a href="../generator" class="btn-auth btn-primary full-width">
                         Go to Generator ✨
                     </a>
                 </div>
@@ -130,15 +131,15 @@ require_once 'includes/controllers/dashboard_controller.php';
 
         <!-- External Libraries & Dashboard Scripts -->
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-        <script src="assets/js/storage.js?v=2"></script>
-        <script src="assets/js/dashboard-gallery.js?v=1"></script>
+        <script src="../assets/js/storage.js?v=2"></script>
+        <script src="../assets/js/dashboard-gallery.js?v=1"></script>
 
     </main>
 
     <!-- Main Footer Section -->
-    <?php include 'includes/layouts/footer.php'; ?>
+    <?php include '../includes/layouts/footer.php'; ?>
 
-    <?php include 'includes/layouts/main-scripts.php'; ?>
+    <?php include '../includes/layouts/main-scripts.php'; ?>
 </body>
 
 </html>
