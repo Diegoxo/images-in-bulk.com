@@ -7,7 +7,7 @@ require_once 'includes/controllers/index_controller.php';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo $pageTitle; ?> | Images In Bulk</title>
+    <title><?php echo $pageTitle; ?> | Images In Bulks</title>
     <link rel="icon" type="image/x-icon" href="assets/img/favicon.ico">
     <link rel="stylesheet" href="assets/css/style.css">
 </head>
@@ -46,7 +46,7 @@ require_once 'includes/controllers/index_controller.php';
 
         <!-- Features Section -->
         <section id="features" class="features-section container">
-            <h2 class="section-title text-center">Why choose <span class="gradient-text">Images In Bulk</span>?</h2>
+            <h2 class="section-title text-center">Why choose <span class="gradient-text">Images In Bulks</span>?</h2>
             <div class="features-grid">
                 <div class="feature-card glass">
                     <div class="feature-icon">🚀</div>

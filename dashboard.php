@@ -8,7 +8,7 @@ require_once 'includes/controllers/dashboard_controller.php';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>
-        <?php echo $pageTitle; ?> | Images In Bulk
+        <?php echo $pageTitle; ?> | Images In Bulks
     </title>
     <link rel="icon" type="image/x-icon" href="assets/img/favicon.ico">
     <link rel="stylesheet" href="assets/css/style.css">

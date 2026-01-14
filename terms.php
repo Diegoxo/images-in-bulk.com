@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo $pageTitle; ?> | Images In Bulk</title>
+    <title><?php echo $pageTitle; ?> | Images In Bulks</title>
     <link rel="icon" type="image/x-icon" href="assets/img/favicon.ico">
     <link rel="stylesheet" href="assets/css/style.css">
 </head>
@@ -20,7 +20,7 @@
             <p class="last-updated">Last Updated: December 2025</p>
 
             <h3>1. Acceptence of terms</h3>
-            <p>By using Images In Bulk, you agree to these terms. If you do not agree, please do not use our services.
+            <p>By using Images In Bulks, you agree to these terms. If you do not agree, please do not use our services.
             </p>
 
             <h3>2. Use of AI</h3>

@@ -2,7 +2,7 @@
     <nav>
         <a href="./" class="logo">
             <img src="assets/img/bulk-image-generator-logo.avif" alt="bulk-image-generator-logo" height="32">
-            <span>images in bulk</span>
+            <span>Images In Bulks</span>
         </a>
         <div class="nav-links">
             <a href="./" class="btn-auth glass">Home</a>
