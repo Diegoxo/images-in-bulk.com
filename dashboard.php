@@ -23,25 +23,12 @@ require_once 'includes/controllers/dashboard_controller.php';
         <!-- Profile Header -->
         <section class="animate-fade glass profile-section">
             <div class="profile-header">
-
-
-                <?php if ($avatarExists): ?>
-                    <img src="<?php echo htmlspecialchars($avatarUrl); ?>" alt="Google Profile Picture"
-                        class="profile-avatar" referrerpolicy="no-referrer">
-                <?php else: ?>
-                    <div class="profile-avatar">
-                        <?php echo !empty($user['full_name']) ? strtoupper(substr($user['full_name'], 0, 1)) : '?'; ?>
-                    </div>
-                <?php endif; ?>
+                <?php echo $avatarHtml; ?>
 
                 <div class="profile-info">
                     <h1>
                         <?php echo htmlspecialchars($user['full_name']); ?>
-                        <?php if ($isPro): ?>
-                            <span class="badge badge-pro">PRO Member</span>
-                        <?php else: ?>
-                            <span class="badge badge-free">Free Plan</span>
-                        <?php endif; ?>
+                        <?php echo $profileBadgeHtml; ?>
                     </h1>
                     <p>
                         <?php echo htmlspecialchars($user['email']); ?>
@@ -57,42 +44,11 @@ require_once 'includes/controllers/dashboard_controller.php';
             <div class="glass dash-card">
                 <div class="card-content">
                     <h3 class="section-title mb-15 fs-15">Current Plan</h3>
-
-                    <?php if ($isPro): ?>
-                        <p class="mb-1">You have access to all premium features.</p>
-                        <ul class="list-none p-0 mb-1 text-secondary text-left w-100">
-                            <li class="mb-05">✅ All Resolutions (1:1, 16:9, 9:16)</li>
-                            <li class="mb-05">✅ Priority Support</li>
-                            <?php if ($user['current_period_start']): ?>
-                                <li class="mt-1 fs-sm text-muted">
-                                    📅 Paid on:
-                                    <strong>
-                                        <?php echo date('d M, Y', strtotime($user['current_period_start'])); ?></strong>
-                                </li>
-                            <?php endif; ?>
-                            <?php if ($user['current_period_end']): ?>
-                                <li class="fs-sm text-muted">
-                                    ⏳ Expires on:
-                                    <strong><?php echo date('d M, Y', strtotime($user['current_period_end'])); ?></strong>
-                                </li>
-                            <?php endif; ?>
-                        </ul>
-                    <?php else: ?>
-                        <p class="mb-1">You are currently on the Free plan.</p>
-                        <ul class="list-none p-0 mb-1 text-secondary text-left w-100">
-                            <li class="mb-05">❌ Limited Generations</li>
-                            <li class="mb-05">❌ Standard Resolution Only</li>
-                            <li class="mb-05 opacity-0">Spacer</li>
-                        </ul>
-                    <?php endif; ?>
+                    <?php echo $planDetailsHtml; ?>
                 </div>
 
                 <div class="card-footer">
-                    <?php if ($isPro): ?>
-                        <button class="btn-auth glass full-width opacity-7 cursor-default" disabled>Active</button>
-                    <?php else: ?>
-                        <a href="pricing" class="btn-auth btn-primary full-width">Upgrade to Pro</a>
-                    <?php endif; ?>
+                    <?php echo $planActionHtml; ?>
                 </div>
             </div>
 
@@ -104,7 +60,7 @@ require_once 'includes/controllers/dashboard_controller.php';
                     </div>
                     <div class="stat-label">Available Credits</div>
                     <p class="mt-2 fs-sm text-muted">
-                        <?php echo ($isPro) ? 'Your monthly balance for high-quality images.' : 'Upgrade to get 50,000 monthly credits!'; ?>
+                        <?php echo $creditsTipHtml; ?>
                     </p>
                 </div>
                 <div class="card-footer">
@@ -148,7 +104,6 @@ require_once 'includes/controllers/dashboard_controller.php';
                 </div>
             </div>
 
-
         </div>
 
         <!-- Gallery Section -->
@@ -158,7 +113,6 @@ require_once 'includes/controllers/dashboard_controller.php';
             </div>
 
             <div id="dashboard-gallery-grid" class="dashboard-image-grid">
-                <!-- Images will be loaded here via JS -->
                 <p class="text-center text-muted p-2">Loading your images...</p>
             </div>
 
@@ -169,121 +123,21 @@ require_once 'includes/controllers/dashboard_controller.php';
             </div>
         </section>
 
+        <!-- Pass PHP environment to Global JS -->
+        <script>
+            const CURRENT_USER_ID = <?php echo $userId; ?>;
+        </script>
 
-        <!-- Scripts for Gallery -->
+        <!-- External Libraries & Dashboard Scripts -->
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-        <script>
-            const CURRENT_USER_ID = <?php echo isset($_SESSION['user_id']) ? $_SESSION['user_id'] : "'guest'"; ?>;
-        </script>
         <script src="assets/js/storage.js?v=2"></script>
-        <script>
-            document.addEventListener('DOMContentLoaded', async () => {
-                const galleryGrid = document.getElementById('dashboard-gallery-grid');
-                const downloadBtn = document.getElementById('download-all-btn');
+        <script src="assets/js/dashboard-gallery.js?v=1"></script>
 
-                // --- Gallery Logic ---
-                try {
-                    // Initialize Storage
-                    const images = await ImageStorage.getAllImages();
-
-                    // Note: ImageStorage.getAllImages() already filters by CURRENT_USER_ID if updated properly,
-                    // otherwise strictly filter here just in case:
-                    const myImages = images.filter(img => img.userId == CURRENT_USER_ID);
-
-                    galleryGrid.innerHTML = '';
-
-                    if (myImages.length === 0) {
-                        galleryGrid.innerHTML = '<p class="text-center text-muted p-2">No images found in this browser.</p>';
-                        downloadBtn.classList.add('hidden-btn');
-                        return;
-                    }
-
-                    downloadBtn.classList.remove('hidden-btn');
-
-                    // Render Images
-                    myImages.forEach(img => {
-                        const url = URL.createObjectURL(img.blob);
-                        const fileName = img.fileName || 'image.png';
-                        const prompt = img.prompt || '';
-
-                        const card = document.createElement('div');
-                        card.className = 'image-card glass';
-
-                        card.innerHTML = `
-                        <div class="img-wrapper">
-                            <button class="btn-download-single" title="Download image">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                            </button>
-                            <img src="${url}" alt="Generated Image" class="fade-img loaded">
-                        </div>
-                        <div class="card-info">
-                            <div class="image-name-tag" title="${fileName}">${fileName}</div>
-                            <div class="image-prompt-tag" title="${prompt}">${prompt}</div>
-                        </div>
-                    `;
-
-                        // Single Download Logic
-                        const singleDownloadBtn = card.querySelector('.btn-download-single');
-                        singleDownloadBtn.addEventListener('click', (e) => {
-                            e.stopPropagation();
-                            const link = document.createElement('a');
-                            link.href = url;
-                            link.download = fileName;
-                            link.click();
-                        });
-
-                        galleryGrid.appendChild(card);
-                    });
-
-                    // Handle Download All
-                    downloadBtn.addEventListener('click', async () => {
-                        const originalText = downloadBtn.innerText;
-                        downloadBtn.innerText = 'Zipping... ⏳';
-                        downloadBtn.disabled = true;
-
-                        try {
-                            const zip = new JSZip();
-                            const folder = zip.folder("my_images_bulk");
-
-                            myImages.forEach((img, index) => {
-                                const name = img.fileName || `image_${index + 1}.png`;
-                                folder.file(name, img.blob);
-                            });
-
-                            const content = await zip.generateAsync({ type: "blob" });
-
-                            // Trigger Download
-                            const a = document.createElement("a");
-                            a.href = URL.createObjectURL(content);
-                            a.download = "my_images_bulk.zip";
-                            document.body.appendChild(a);
-                            a.click();
-                            document.body.removeChild(a);
-
-                        } catch (err) {
-                            alert('Error creating zip: ' + err);
-                        } finally {
-                            downloadBtn.innerText = originalText;
-                            downloadBtn.disabled = false;
-                        }
-                    });
-
-                } catch (err) {
-                    console.error(err);
-                    galleryGrid.innerHTML = '<p class="text-center p-2" style="color: #ef4444;">Error loading gallery.</p>';
-                }
-            });
-        </script>
-
-        <?php echo $cancelActionHtml; ?>
-        </div>
     </main>
 
     <!-- Main Footer Section -->
     <?php include 'includes/layouts/footer.php'; ?>
 
-    <!-- Modular Script Injection -->
-    <?php echo $renderCancelButtonHtml; ?>
     <?php include 'includes/layouts/main-scripts.php'; ?>
 </body>
 

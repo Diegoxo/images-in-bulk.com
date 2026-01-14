@@ -40,6 +40,12 @@ define('WOMPI_INTEGRITY_SECRET', $_ENV['WOMPI_INTEGRITY_SECRET'] ?? '');
 define('RECURRING_CHARGE_SECRET', $_ENV['RECURRING_CHARGE_SECRET'] ?? 'RECURRING_SECRET_123');
 define('AUTH_CALLBACK_URL', $_ENV['AUTH_CALLBACK_URL'] ?? 'http://localhost/images-in-bulk.com/auth/callback.php');
 
+// Determinar URL_BASE dinámicamente o desde .env
+$scriptName = str_replace('\\', '/', $_SERVER['SCRIPT_NAME']);
+$dirName = str_replace('\\', '/', dirname($scriptName));
+$base = ($dirName === '/' || $dirName === '\\') ? '' : $dirName;
+define('URL_BASE', $_ENV['URL_BASE'] ?? $base);
+
 // Error reporting
 error_reporting(E_ALL);
 ini_set('display_errors', 1);

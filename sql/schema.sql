@@ -9,11 +9,12 @@ USE images_in_bulk;
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     email VARCHAR(255) NOT NULL UNIQUE,
-    password_hash VARCHAR(255) NULL, -- Null for social login users
+    password_hash VARCHAR(255) NULL,
     full_name VARCHAR(255),
-    auth_provider VARCHAR(50) DEFAULT 'local', -- 'local', 'google', 'microsoft'
-    provider_id VARCHAR(255) NULL, -- Null for local users
+    auth_provider VARCHAR(50) DEFAULT 'local',
+    provider_id VARCHAR(255) NULL,
     avatar_url TEXT,
+    credits INT DEFAULT 0, -- User's available credits
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -21,8 +22,10 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS subscriptions (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
-    plan_type VARCHAR(20) DEFAULT 'free', -- 'free', 'pro'
-    status VARCHAR(50) DEFAULT 'inactive', -- 'active', 'inactive'
+    plan_type VARCHAR(20) DEFAULT 'free',
+    status VARCHAR(50) DEFAULT 'inactive',
+    billing_cycle ENUM('monthly', 'yearly') DEFAULT 'monthly',
+    last_credits_reset DATETIME DEFAULT CURRENT_TIMESTAMP,
     wompi_payment_source_id VARCHAR(255),
     wompi_customer_email VARCHAR(255),
     current_period_start DATETIME,

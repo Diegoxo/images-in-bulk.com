@@ -59,6 +59,8 @@ body {
     line-height: 1.5;
     display: flex;
     flex-direction: column;
+    width: 100%;
+    position: relative;
 }
 
 main {
@@ -1126,13 +1128,17 @@ textarea::-webkit-scrollbar-thumb:hover,
     display: flex;
     justify-content: center;
     gap: 1.5rem;
+    row-gap: 4rem;
+    /* Specific vertical spacing for wrapped cards */
     margin-top: 3rem;
     flex-wrap: wrap;
 }
 
 .pricing-card {
-    padding: 2.5rem 2rem;
-    width: 320px;
+    padding: 2.5rem 1.5rem;
+    /* Reduced horizontal padding for mobile */
+    width: 100%;
+    max-width: 320px;
     text-align: center;
     position: relative;
     display: flex;
@@ -1464,7 +1470,8 @@ textarea::-webkit-scrollbar-thumb:hover,
 }
 
 .dash-card {
-    padding: 2.5rem 2rem;
+    padding: 2.5rem 1.5rem;
+    /* Reduced padding for mobile */
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -1759,4 +1766,112 @@ textarea::-webkit-scrollbar-thumb:hover,
 .cancel-link:hover {
     opacity: 1;
     text-decoration: underline;
+}
+
+/* -------------------------------------------------------------------------- */
+/* 11. BILLING PAGE STYLES                                                    */
+/* -------------------------------------------------------------------------- */
+
+.billing-container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 0 1.5rem;
+}
+
+.card-management {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.payment-method-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+}
+
+.card-details {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.card-icon {
+    font-size: 1.5rem;
+    color: var(--primary);
+}
+
+.btn-danger {
+    background: rgba(var(--accent-rgb), 0.1);
+    color: var(--accent) !important;
+    border: 1px solid var(--accent);
+}
+
+.btn-danger:hover {
+    background: var(--accent);
+    color: white !important;
+}
+
+/* New Card Form Styles */
+#add-card-section {
+    display: none;
+    margin-top: 2rem;
+    padding: 2rem;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px dashed var(--glass-border);
+    border-radius: var(--radius-md);
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.form-control {
+    background: var(--bg-input);
+    border: 1px solid var(--glass-border);
+    padding: 0.8rem;
+    color: white;
+    border-radius: 8px;
+    width: 100%;
+}
+
+@media (max-width: 600px) {
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .payment-method-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1.5rem;
+    }
+
+    .payment-method-card .btn-danger {
+        width: 100%;
+    }
+
+}
+
+@media (max-width: 400px) {
+
+    .pricing-card,
+    .dash-card {
+        padding: 2rem 1rem;
+    }
+
+    .section-title {
+        font-size: 1.8rem;
+    }
+
+    .btn-auth {
+        padding: 0.6rem 0.8rem;
+        font-size: 0.8rem;
+    }
 }
