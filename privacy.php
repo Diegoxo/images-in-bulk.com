@@ -1,4 +1,7 @@
-<?php include 'includes/pages-config/privacy-config.php'; ?>
+<?php
+require_once 'includes/config.php';
+include 'includes/pages-config/privacy-config.php';
+?>
 <!DOCTYPE html>
 <html lang="en">
 

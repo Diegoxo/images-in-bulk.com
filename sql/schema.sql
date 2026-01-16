@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS subscriptions (
     wompi_customer_email VARCHAR(255),
     current_period_start DATETIME,
     current_period_end DATETIME,
+    images_in_period INT DEFAULT 0, -- Counter for the current billing cycle
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE

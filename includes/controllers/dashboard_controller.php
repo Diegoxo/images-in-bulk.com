@@ -24,9 +24,9 @@ try {
     $subStatus = getUserSubscriptionStatus($userId);
 
     $stmtData = $db->prepare("
-        SELECT u.*, s.current_period_start, s.current_period_end 
+        SELECT u.*, s.current_period_start, s.current_period_end, s.images_in_period
         FROM users u 
-        LEFT JOIN subscriptions s ON u.id = s.user_id AND s.status = 'active'
+        LEFT JOIN subscriptions s ON u.id = s.user_id AND s.status IN ('active', 'cancelled')
         WHERE u.id = ?
     ");
     $stmtData->execute([$userId]);
@@ -35,7 +35,11 @@ try {
     // 2. Statistics
     $stmtStats = $db->prepare("SELECT COUNT(*) as total_images FROM generations WHERE user_id = ?");
     $stmtStats->execute([$userId]);
-    $stats = $stmtStats->fetch(PDO::FETCH_ASSOC);
+    $dbStats = $stmtStats->fetch(PDO::FETCH_ASSOC);
+
+    // Use images_in_period for the dashboard display if available, otherwise fallback to total
+    $imagesToDisplay = isset($user['images_in_period']) ? (int) $user['images_in_period'] : (int) $dbStats['total_images'];
+    $stats = ['total_images' => $imagesToDisplay];
 
     // 3. Variables
     $isPro = $subStatus['isPro'];

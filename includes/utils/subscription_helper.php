@@ -24,7 +24,7 @@ function getUserSubscriptionStatus($userId)
         $stmt = $db->prepare("
             SELECT s.id as sub_id, s.plan_type, s.status, s.current_period_end, u.credits 
             FROM users u
-            LEFT JOIN subscriptions s ON u.id = s.user_id AND s.status = 'active'
+            LEFT JOIN subscriptions s ON u.id = s.user_id AND s.status IN ('active', 'cancelled')
             WHERE u.id = ?
         ");
         $stmt->execute([$userId]);
@@ -33,7 +33,7 @@ function getUserSubscriptionStatus($userId)
         if ($data) {
             $result['credits'] = (int) ($data['credits'] ?? 0);
 
-            // Check for expiration
+            // Check for expiration (only if they are pro)
             $isExpired = false;
             if ($data['plan_type'] === 'pro' && !empty($data['current_period_end'])) {
                 if (strtotime($data['current_period_end']) < time()) {
@@ -41,12 +41,18 @@ function getUserSubscriptionStatus($userId)
                 }
             }
 
-            if ($isExpired) {
-                // AUTO-CLEANUP: If expired, set credits to 0 and status to inactive
-                $db->prepare("UPDATE users SET credits = 0 WHERE id = ?")->execute([$userId]);
-                $db->prepare("UPDATE subscriptions SET status = 'inactive' WHERE id = ?")->execute([$data['sub_id']]);
-
-                $result['credits'] = 0;
+            // User loses PRO access if:
+            // 1. Period is met (Expired)
+            // 2. Credits run out (<= 0)
+            if ($isExpired || $result['credits'] <= 0) {
+                // AUTO-CLEANUP: If expired or no credits, deactivate sub if it was pro
+                if ($data['plan_type'] === 'pro') {
+                    $db->prepare("UPDATE subscriptions SET status = 'inactive' WHERE id = ?")->execute([$data['sub_id']]);
+                    if ($isExpired) {
+                        $db->prepare("UPDATE users SET credits = 0 WHERE id = ?")->execute([$userId]);
+                        $result['credits'] = 0;
+                    }
+                }
                 $result['isPro'] = false;
             } else {
                 if ($data['plan_type'] === 'pro') {

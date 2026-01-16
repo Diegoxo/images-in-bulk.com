@@ -20,27 +20,21 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
+// CSRF Validation
+require_once '../includes/utils/security.php';
+$clientToken = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
+if (!CSRF::validate($clientToken)) {
+    echo json_encode(['success' => false, 'error' => 'Security validation failed (CSRF mismatch)']);
+    exit;
+}
+
 try {
     $db = getDB();
 
-    // We set status to 'inactive'. This stops the CRON from charging again.
-    // The SubscriptionHelper already handles 'current_period_end' vs NOW() 
-    // but the status='active' is a prerequisite in the SubscriptionHelper's check 
-    // for the PRO benefits. 
-    // To allow them to keep using it until the end of the month, we'd need a 'cancelled' status.
-    // However, to keep it simple and safe for business, cancelling usually means 
-    // "I want out now". 
-    // But a friendlier way is to just set it so Cron doesn't pick it up.
-
-    // Let's mark it as 'inactive'. 
-    // Note: If we mark it inactive, they lose benefits immediately based on our Helper.
-    // If the user wants them to keep it until the end of the month, we need a 
-    // status like 'active_no_renew'.
-
-    // For now, let's follow the simple 'inactive' approach which is safer and 
-    // avoids complex state management.
-
-    $stmt = $db->prepare("UPDATE subscriptions SET status = 'inactive' WHERE user_id = ? AND status = 'active'");
+    // We set status to 'cancelled'. This stops the CRON from charging again.
+    // The SubscriptionHelper will allow them to keep PRO benefits 
+    // until 'current_period_end' is reached or credits run out.
+    $stmt = $db->prepare("UPDATE subscriptions SET status = 'cancelled' WHERE user_id = ? AND status = 'active'");
     $stmt->execute([$userId]);
 
     echo json_encode(['success' => true, 'message' => 'Subscription cancelled successfully']);

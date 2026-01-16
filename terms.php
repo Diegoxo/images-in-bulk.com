@@ -1,4 +1,7 @@
-<?php include 'includes/pages-config/terms-config.php'; ?>
+<?php
+require_once 'includes/config.php';
+include 'includes/pages-config/terms-config.php';
+?>
 <!DOCTYPE html>
 <html lang="en">
 

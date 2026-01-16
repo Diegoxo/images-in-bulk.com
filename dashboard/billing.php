@@ -12,7 +12,7 @@ require_once '../includes/controllers/billing_controller.php';
         <?php echo $pageTitle; ?> | Images In Bulks
     </title>
     <link rel="icon" type="image/x-icon" href="../assets/img/favicon.ico">
-    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/style.css?v=1.1">
 </head>
 
 <body>
@@ -94,17 +94,38 @@ require_once '../includes/controllers/billing_controller.php';
 
     <!-- Global Variables for external JS -->
     <script>
-        const WOMPI_PUB_KEY = '<?php echo $wompiPubKey; ?>';
-        const WOMPI_API_URL = '<?php echo $wompiApiUrl; ?>';
-        const API_PREFIX = '../';
+        window.WOMPI_PUB_KEY = '<?php echo $wompiPubKey; ?>';
+        window.WOMPI_API_URL = '<?php echo $wompiApiUrl; ?>';
+        window.API_PREFIX = '<?php echo $pathPrefix; ?>';
+        window.CSRF_TOKEN = '<?php echo $csrfToken; ?>';
     </script>
 
     <!-- Scripts -->
     <script src="../assets/js/billing.js?v=2"></script>
+    <!-- Cancellation Modal Overlay -->
+    <div id="cancel-subscription-modal" class="custom-modal" style="display: none;">
+        <div class="modal-overlay" onclick="closeModal('cancel-subscription-modal')"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Cancel Subscription</h2>
+                <button class="close-modal" onclick="closeModal('cancel-subscription-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to cancel your PRO plan? You will no longer be charged automatically.</p>
+                <div class="policy-badge">
+                    <span class="icon">🛡️</span>
+                    <span>You will keep your PRO benefits and credits until the end of your current period.</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-auth glass" onclick="closeModal('cancel-subscription-modal')">No, Stay PRO</button>
+                <button class="btn-auth btn-danger" id="confirm-cancel-btn">Yes, Cancel Plan</button>
+            </div>
+        </div>
+    </div>
+
     <?php include '../includes/layouts/footer.php'; ?>
 
-    <!-- Modular Script Injection -->
-    <?php echo $renderCancelButtonHtml; ?>
     <?php include '../includes/layouts/main-scripts.php'; ?>
 </body>
 

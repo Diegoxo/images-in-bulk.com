@@ -60,14 +60,15 @@ if ($transaction['status'] === 'APPROVED') {
                         status = 'active', 
                         billing_cycle = ?,
                         last_credits_reset = NOW(),
+                        images_in_period = 0,
                         wompi_payment_source_id = COALESCE(?, wompi_payment_source_id), 
                         wompi_customer_email = ?,
                         current_period_end = DATE_ADD(NOW(), INTERVAL $interval) 
                         WHERE user_id = ?");
                     $stmt->execute([$cycle, $paymentSourceId, $customerEmail, $userId]);
                 } else {
-                    $stmt = $db->prepare("INSERT INTO subscriptions (user_id, plan_type, status, billing_cycle, last_credits_reset, current_period_end, wompi_payment_source_id, wompi_customer_email) 
-                        VALUES (?, 'pro', 'active', ?, NOW(), DATE_ADD(NOW(), INTERVAL $interval), ?, ?)");
+                    $stmt = $db->prepare("INSERT INTO subscriptions (user_id, plan_type, status, billing_cycle, last_credits_reset, current_period_end, images_in_period, wompi_payment_source_id, wompi_customer_email) 
+                        VALUES (?, 'pro', 'active', ?, NOW(), DATE_ADD(NOW(), INTERVAL $interval), 0, ?, ?)");
                     $stmt->execute([$userId, $cycle, $paymentSourceId, $customerEmail]);
                 }
 

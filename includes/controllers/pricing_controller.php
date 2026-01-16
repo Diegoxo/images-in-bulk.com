@@ -34,6 +34,10 @@ if ($isLoggedIn) {
         $wompiDataAnnual = generateWompiSignature($userId, 85000000, 'COP', 'ANNUAL');
     } else {
         $wompiDataAddon = generateWompiSignature($userId, 8500000, 'COP', 'ADDON');
+        // If they are PRO but NOT yearly, allow them to upgrade to Annual
+        if ($billingCycle !== 'yearly') {
+            $wompiDataAnnual = generateWompiSignature($userId, 85000000, 'COP', 'ANNUAL');
+        }
     }
 }
 
@@ -69,11 +73,9 @@ if (!$isLoggedIn) {
             <p>✨ You are an ANNUAL PRO!</p>
             <a href="generator" class="btn-auth btn-primary full-width">Go to Generator</a>
         </div>';
-} elseif ($isPro) {
-    $proAnnualAction = '
-        <div class="subscription-status success-glass opacity-7">
-            <p>Plan: Monthly PRO</p>
-        </div>';
+} elseif ($isPro && $billingCycle !== 'yearly' && $wompiDataAnnual) {
+    // Upgrade path for Monthly PRO to Annual PRO
+    $proAnnualAction = renderWompiButton($wompiDataAnnual, 'Upgrade to Annual & Save 🚀');
 } elseif ($wompiDataAnnual) {
     $proAnnualAction = renderWompiButton($wompiDataAnnual, 'Pay Annually & Save');
 } else {

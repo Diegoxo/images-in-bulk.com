@@ -23,6 +23,7 @@ try {
         JOIN subscriptions s ON u.id = s.user_id
         SET u.credits = 50000, 
             s.last_credits_reset = DATE_ADD(s.last_credits_reset, INTERVAL 1 MONTH),
+            s.images_in_period = 0,
             s.updated_at = NOW()
         WHERE s.status = 'active'
         AND s.plan_type = 'pro'
@@ -65,6 +66,7 @@ try {
             $stmtUpdate = $db->prepare("UPDATE subscriptions SET 
                 current_period_end = DATE_ADD(current_period_end, INTERVAL $interval),
                 last_credits_reset = NOW(),
+                images_in_period = 0,
                 updated_at = NOW() 
                 WHERE id = ?");
             $stmtUpdate->execute([$sub['id']]);

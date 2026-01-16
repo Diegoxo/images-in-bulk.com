@@ -172,11 +172,13 @@ for ($i = 0; $i < $total; $i++) {
                     $stmt = $db->prepare("INSERT INTO generations (user_id, prompt, image_url, model, resolution) VALUES (?, ?, ?, ?, ?)");
                     $stmt->execute([$userId, $originalPrompt, 'streamed_bulk', $model, $mappedRes]);
 
-                    // DEDUCT CREDITS FOR PRO USERS
+                    // DEDUCT CREDITS FOR PRO USERS & Increment cycle counter
                     if ($isPro) {
                         $cost = calculateImageCost($model, $resolution);
                         deductCredits($userId, $cost);
                     }
+                    // Increment cycle counter for everyone (active/cancelled)
+                    $db->prepare("UPDATE subscriptions SET images_in_period = images_in_period + 1 WHERE user_id = ? AND status IN ('active', 'cancelled')")->execute([$userId]);
                 }
 
                 sendEvent([

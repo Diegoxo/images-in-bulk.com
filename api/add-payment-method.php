@@ -12,6 +12,14 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
+// CSRF Validation
+require_once '../includes/utils/security.php';
+$clientToken = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
+if (!CSRF::validate($clientToken)) {
+    echo json_encode(['success' => false, 'error' => 'Security validation failed (CSRF mismatch)']);
+    exit;
+}
+
 $data = json_decode(file_get_contents('php://input'), true);
 $cardToken = $data['token'] ?? null;
 
