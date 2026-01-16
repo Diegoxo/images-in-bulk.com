@@ -100,6 +100,7 @@ require_once 'includes/controllers/generator_controller.php';
     <!-- Modular Script Injection -->
     <script>
         const CURRENT_USER_ID = <?php echo $currentUserIdJs; ?>;
+        window.CSRF_TOKEN = '<?php echo $csrfToken; ?>';
     </script>
     <?php include 'includes/layouts/main-scripts.php'; ?>
 </body>

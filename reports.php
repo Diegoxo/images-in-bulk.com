@@ -11,6 +11,9 @@ include 'includes/pages-config/reports-config.php';
     <title><?php echo $pageTitle; ?> | Images In Bulks</title>
     <link rel="icon" type="image/x-icon" href="assets/img/favicon.ico">
     <link rel="stylesheet" href="assets/css/style.css">
+    <script>
+        window.CSRF_TOKEN = '<?php echo CSRF::generate(); ?>';
+    </script>
 </head>
 
 <body>
@@ -72,6 +75,9 @@ include 'includes/pages-config/reports-config.php';
                 try {
                     const res = await fetch('api/contact-handler.php', {
                         method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': window.CSRF_TOKEN || ''
+                        },
                         body: formData
                     });
                     const data = await res.json();

@@ -7,7 +7,11 @@
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../utils/security_headers.php';
 require_once __DIR__ . '/../utils/subscription_helper.php';
+require_once __DIR__ . '/../utils/security.php';
 include __DIR__ . '/../pages-config/generator-config.php';
+
+// Generate/Get CSRF Token
+$csrfToken = CSRF::generate();
 
 // Auth Check
 $userId = $_SESSION['user_id'] ?? null;
@@ -90,56 +94,56 @@ $historySectionHtml = '';
 if ($showResultsSection) {
     ob_start();
     ?>
-        <section class="preview-area">
-            <div class="glass animate-fade section-card">
-                <div class="results-header">
-                    <div class="header-left">
-                        <h2 class="card-title m-0">Results</h2>
-                        <span id="generation-counter" class="counter-badge hidden-btn">0 / 0</span>
-                    </div>
-                    <div class="header-right">
-                        <button id="clear-gallery" class="btn-auth glass btn-clear">Clear History</button>
-                    </div>
+    <section class="preview-area">
+        <div class="glass animate-fade section-card">
+            <div class="results-header">
+                <div class="header-left">
+                    <h2 class="card-title m-0">Results</h2>
+                    <span id="generation-counter" class="counter-badge hidden-btn">0 / 0</span>
                 </div>
-
-                <div id="generation-warning-text" class="alert-warning hidden-btn">
-                    <p class="m-0 fs-sm">
-                        <strong>Generation in progress. </strong>Don't close this tab or navigate away.
-                    </p>
-                </div>
-
-                <div id="progress-bar-container" class="progress-container hidden-btn">
-                    <div id="progress-bar" class="progress-fill"></div>
-                </div>
-
-                <div id="generation-spinner" class="spinner-container hidden-btn">
-                    <div class="spinner"></div>
-                    <p class="mt-3 fs-sm opacity-75">Generating your images...</p>
-                </div>
-
-                <div id="image-grid" class="image-grid">
-                    <div class="empty-state">Your generated images will appear here.</div>
-                </div>
-
-                <div class="btn-group download-area">
-                    <button id="download-zip" class="btn-auth btn-primary hidden-btn">Download Full Batch (ZIP)</button>
+                <div class="header-right">
+                    <button id="clear-gallery" class="btn-auth glass btn-clear">Clear History</button>
                 </div>
             </div>
-        </section>
 
-        <section id="history-section" class="preview-area hidden-btn">
-            <div class="glass animate-fade section-card">
-                <div class="results-header">
-                    <h2 class="card-title m-0">Previous Generations</h2>
-                    <button id="clear-history" class="btn-auth glass btn-clear">Clear All History</button>
-                </div>
-                <div id="history-grid" class="image-grid"></div>
-                <div class="btn-group download-area">
-                    <button id="download-zip-history" class="btn-auth btn-primary hidden-btn">Download All (.zip)</button>
-                </div>
+            <div id="generation-warning-text" class="alert-warning hidden-btn">
+                <p class="m-0 fs-sm">
+                    <strong>Generation in progress. </strong>Don't close this tab or navigate away.
+                </p>
             </div>
-        </section>
-        <?php
-        $resultsSectionHtml = ob_get_clean();
+
+            <div id="progress-bar-container" class="progress-container hidden-btn">
+                <div id="progress-bar" class="progress-fill"></div>
+            </div>
+
+            <div id="generation-spinner" class="spinner-container hidden-btn">
+                <div class="spinner"></div>
+                <p class="mt-3 fs-sm opacity-75">Generating your images...</p>
+            </div>
+
+            <div id="image-grid" class="image-grid">
+                <div class="empty-state">Your generated images will appear here.</div>
+            </div>
+
+            <div class="btn-group download-area">
+                <button id="download-zip" class="btn-auth btn-primary hidden-btn">Download Full Batch (ZIP)</button>
+            </div>
+        </div>
+    </section>
+
+    <section id="history-section" class="preview-area hidden-btn">
+        <div class="glass animate-fade section-card">
+            <div class="results-header">
+                <h2 class="card-title m-0">Previous Generations</h2>
+                <button id="clear-history" class="btn-auth glass btn-clear">Clear All History</button>
+            </div>
+            <div id="history-grid" class="image-grid"></div>
+            <div class="btn-group download-area">
+                <button id="download-zip-history" class="btn-auth btn-primary hidden-btn">Download All (.zip)</button>
+            </div>
+        </div>
+    </section>
+    <?php
+    $resultsSectionHtml = ob_get_clean();
 }
 ?>

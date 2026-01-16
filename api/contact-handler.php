@@ -11,6 +11,19 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
+// CSRF & Rate Limiting Validation
+require_once '../includes/utils/security.php';
+$clientToken = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
+if (!CSRF::validate($clientToken)) {
+    echo json_encode(['success' => false, 'error' => 'Security validation failed (CSRF mismatch)']);
+    exit;
+}
+
+if (!RateLimiter::check('contact_form', 60)) {
+    echo json_encode(['success' => false, 'error' => 'Please wait a minute before sending another message.']);
+    exit;
+}
+
 // Get POST data
 $email = filter_var($_POST['email'] ?? '', FILTER_VALIDATE_EMAIL);
 $subject = htmlspecialchars($_POST['subject'] ?? '');
@@ -46,6 +59,6 @@ if (!$mailSent) {
 }
 
 echo json_encode([
-    'success' => true, 
+    'success' => true,
     'message' => 'Your message has been sent successfully. We will contact you soon.'
 ]);

@@ -5,6 +5,23 @@
  */
 require_once '../includes/config.php';
 require_once '../includes/utils/subscription_helper.php';
+require_once '../includes/utils/security.php';
+
+// --- SECURITY GUARDS ---
+// 1. CSRF Validation
+$clientToken = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
+if (!CSRF::validate($clientToken)) {
+    header('HTTP/1.1 403 Forbidden');
+    echo json_encode(['success' => false, 'error' => 'Security validation failed (CSRF mismatch)']);
+    exit;
+}
+
+// 2. Rate Limiting (Prevent session locking + spamming)
+if (!RateLimiter::check('process_batch', 10)) {
+    header('HTTP/1.1 429 Too Many Requests');
+    echo json_encode(['success' => false, 'error' => 'Please wait at least 10 seconds between generations.']);
+    exit;
+}
 
 // Disable time limit for bulk processing
 set_time_limit(0);

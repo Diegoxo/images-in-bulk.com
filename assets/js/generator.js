@@ -99,7 +99,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             const response = await fetch('api/process_batch.php', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': window.CSRF_TOKEN || ''
+                },
                 signal: controller.signal,
                 body: JSON.stringify({
                     prompts: rawPrompts,
