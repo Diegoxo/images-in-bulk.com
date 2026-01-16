@@ -17,21 +17,14 @@ if (isset($_GET['provider'])) {
 
 // Configuration for HybridAuth
 $config = [
-    // URL EXACTA registrada en Google/Microsoft (sin ?provider=...)
-    'callback' => 'http://localhost/images-in-bulk.com/auth/callback.php',
+    // EXACT URL registered in Google (without ?provider=...)
+    'callback' => URL_BASE . '/auth/callback.php',
     'providers' => [
         'Google' => [
             'enabled' => true,
             'keys' => [
                 'id' => GOOGLE_CLIENT_ID,
                 'secret' => GOOGLE_CLIENT_SECRET,
-            ],
-        ],
-        'MicrosoftGraph' => [
-            'enabled' => false, // Desactivado por restricciones de Azure
-            'keys' => [
-                'id' => MICROSOFT_CLIENT_ID,
-                'secret' => MICROSOFT_CLIENT_SECRET,
             ],
         ],
     ],

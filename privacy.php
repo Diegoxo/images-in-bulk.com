@@ -24,7 +24,7 @@ include 'includes/pages-config/privacy-config.php';
 
             <h3>1. Data we collect</h3>
             <p>We respect your privacy. We only collect the necessary information to provide our services, such as your
-                email address and name through Google or Microsoft authentication.</p>
+                email address and name through Google authentication.</p>
 
             <h3>2. How we use your data</h3>
             <p>Your information is used only to manage your subscription, keep your generation history (locally), and

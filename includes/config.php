@@ -28,8 +28,6 @@ define('OPENAI_API_KEY', $_ENV['OPENAI_API_KEY'] ?? '');
 // Auth Configuration
 define('GOOGLE_CLIENT_ID', $_ENV['GOOGLE_CLIENT_ID'] ?? '');
 define('GOOGLE_CLIENT_SECRET', $_ENV['GOOGLE_CLIENT_SECRET'] ?? '');
-define('MICROSOFT_CLIENT_ID', $_ENV['MICROSOFT_CLIENT_ID'] ?? '');
-define('MICROSOFT_CLIENT_SECRET', $_ENV['MICROSOFT_CLIENT_SECRET'] ?? '');
 
 // Wompi Configuration
 define('WOMPI_PUBLIC_KEY', $_ENV['WOMPI_PUBLIC_KEY'] ?? '');
@@ -46,9 +44,15 @@ $dirName = str_replace('\\', '/', dirname($scriptName));
 $base = ($dirName === '/' || $dirName === '\\') ? '' : $dirName;
 define('URL_BASE', $_ENV['URL_BASE'] ?? $base);
 
-// Error reporting
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+// Error reporting based on environment
+$appEnv = $_ENV['APP_ENV'] ?? 'local';
+if ($appEnv === 'production') {
+    error_reporting(0);
+    ini_set('display_errors', 0);
+} else {
+    error_reporting(E_ALL);
+    ini_set('display_errors', 1);
+}
 
 // Start session
 if (session_status() === PHP_SESSION_NONE) {
