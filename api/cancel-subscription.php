@@ -28,8 +28,22 @@ if (!CSRF::validate($clientToken)) {
     exit;
 }
 
+// Rate Limiting (Prevent spamming cancellations)
+if (!RateLimiter::check('cancel_subscription', 30)) {
+    echo json_encode(['success' => false, 'error' => 'Too many requests. Please wait a moment.']);
+    exit;
+}
+
 try {
     $db = getDB();
+
+    // Extra validation: Ensure the user actually has an active plan to cancel
+    $checkStmt = $db->prepare("SELECT id FROM subscriptions WHERE user_id = ? AND status = 'active'");
+    $checkStmt->execute([$userId]);
+    if (!$checkStmt->fetch()) {
+        echo json_encode(['success' => false, 'error' => 'No active subscription found to cancel.']);
+        exit;
+    }
 
     // We set status to 'cancelled'. This stops the CRON from charging again.
     // The SubscriptionHelper will allow them to keep PRO benefits 

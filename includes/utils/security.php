@@ -39,3 +39,32 @@ class CSRF
         return $_SESSION['csrf_token'] ?? self::generate();
     }
 }
+
+/**
+ * Rate Limiting Utility
+ * Prevents multiple rapid requests to sensitive actions.
+ */
+class RateLimiter
+{
+    /**
+     * Check if the user is exceeding request limits for a specific action
+     * @param string $action Key for the action (e.g. 'delete_card')
+     * @param int $secondsCooldown Time to wait between requests
+     * @return bool True if allowed, False if throttled
+     */
+    public static function check($action, $secondsCooldown = 10)
+    {
+        $key = "throttle_{$action}";
+        $currentTime = time();
+
+        if (isset($_SESSION[$key])) {
+            $lastRequest = $_SESSION[$key];
+            if (($currentTime - $lastRequest) < $secondsCooldown) {
+                return false;
+            }
+        }
+
+        $_SESSION[$key] = $currentTime;
+        return true;
+    }
+}

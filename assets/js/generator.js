@@ -62,11 +62,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             if (hasCurrent) {
                 elements.downloadBtn.classList.remove('hidden-btn');
-            } else if (!hasHistory) {
-                // ONLY show the message if both grids are totally empty
+            } else {
+                // If there are NO current images (only history), show expectation message in Results
                 elements.imageGrid.innerHTML = '<div class="empty-state">Your generated images will appear here.</div>';
             }
         } else {
+            // Totally empty database
             elements.imageGrid.innerHTML = '<div class="empty-state">Your generated images will appear here.</div>';
         }
     };
@@ -82,7 +83,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Prepare UI
         await ImageStorage.archiveAll();
-        loadGallery();
+        await loadGallery(); // Await to ensure it finishes before clearing
         elements.imageGrid.innerHTML = '';
         elements.generateBtn.disabled = true;
         elements.generateBtn.textContent = 'Processing...';

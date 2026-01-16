@@ -20,6 +20,12 @@ if (!CSRF::validate($clientToken)) {
     exit;
 }
 
+// Rate Limiting
+if (!RateLimiter::check('add_payment_method', 20)) {
+    echo json_encode(['success' => false, 'error' => 'Too many card update attempts. Please wait 20 seconds.']);
+    exit;
+}
+
 $data = json_decode(file_get_contents('php://input'), true);
 $cardToken = $data['token'] ?? null;
 
