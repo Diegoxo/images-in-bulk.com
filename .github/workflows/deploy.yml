@@ -1,0 +1,35 @@
+name: 🚀 Deploy App to Hostinger
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  web-deploy:
+    name: 🚚 Deployment Task
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📦 Get latest code
+        uses: actions/checkout@v4
+
+      - name: 📂 Sync files to Server
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftp
+          port: 21
+          # These files/folders will be in GitHub but NOT uploaded to Hostinger
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/sql/**
+            **/.agent/**
+            **/.env*
+            **/vendor/**
+            README.md
+            docker-compose.yml
+            phpunit.xml
+            tests/**

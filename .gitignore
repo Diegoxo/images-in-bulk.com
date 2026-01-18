@@ -1,20 +1,13 @@
-# Composer
-/vendor/
-composer.phar
+# --- FAITHFUL GITIGNORE FOR IMAGES-IN-BULK.COM ---
 
-# Environment & Secrets
+# 1. Local Secrets (NEVER upload to GitHub)
 .env
-includes/config.php
 
-# PHP & Logs
+# 2. Dependencies (Too large for GitHub, reconstruction via composer.json)
+/vendor/
+
+# 3. System & Logs (Prevention: these might not be visible now but could be created later)
 *.log
 error_log
-
-# OS & IDE
 .DS_Store
 Thumbs.db
-.vscode/
-.idea/
-
-# project specific
-/assets/img/generations/
