@@ -1,0 +1,20 @@
+name: 🔍 Test FTP Connection
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test-connection:
+    name: 🛡️ Connection Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📦 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🌐 Test FTP Login
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          dry-run: true # This avoids uploading anything. Just tests the connection.
