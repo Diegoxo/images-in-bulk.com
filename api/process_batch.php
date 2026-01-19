@@ -160,6 +160,7 @@ for ($i = 0; $i < $total; $i++) {
             'Authorization: Bearer ' . $apiKey
         ]);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
 
         $result = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -171,9 +172,17 @@ for ($i = 0; $i < $total; $i++) {
             $base64 = '';
 
             if (isset($response['data'][0]['url'])) {
-                // Handle URL response (DALL-E style)
+                // Handle URL response (DALL-E style) - Use CURL to download image data
                 $imageUrl = $response['data'][0]['url'];
-                $imgData = @file_get_contents($imageUrl);
+
+                $ch_img = curl_init($imageUrl);
+                curl_setopt($ch_img, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch_img, CURLOPT_SSL_VERIFYPEER, false);
+                curl_setopt($ch_img, CURLOPT_SSL_VERIFYHOST, 0);
+                curl_setopt($ch_img, CURLOPT_FOLLOWLOCATION, true);
+                $imgData = curl_exec($ch_img);
+                curl_close($ch_img);
+
                 if ($imgData) {
                     $base64 = 'data:image/' . $format . ';base64,' . base64_encode($imgData);
                 }

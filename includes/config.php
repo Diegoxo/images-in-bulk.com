@@ -47,8 +47,10 @@ define('URL_BASE', $_ENV['URL_BASE'] ?? $base);
 // Error reporting based on environment
 $appEnv = $_ENV['APP_ENV'] ?? 'local';
 if ($appEnv === 'production') {
-    error_reporting(0);
+    error_reporting(E_ALL);
     ini_set('display_errors', 0);
+    ini_set('log_errors', 1);
+    // The log file will be usually named 'error_log' in the same directory by PHP defaults in most hostings
 } else {
     error_reporting(E_ALL);
     ini_set('display_errors', 1);
