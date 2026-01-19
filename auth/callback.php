@@ -17,8 +17,8 @@ if (isset($_GET['provider'])) {
 
 // Configuration for HybridAuth
 $config = [
-    // EXACT URL registered in Google (without ?provider=...)
-    'callback' => URL_BASE . '/auth/callback.php',
+    // EXACT URL registered in Google (must match exactly)
+    'callback' => AUTH_CALLBACK_URL,
     'providers' => [
         'Google' => [
             'enabled' => true,
