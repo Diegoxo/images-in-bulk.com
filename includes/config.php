@@ -50,7 +50,8 @@ if ($appEnv === 'production') {
     error_reporting(E_ALL);
     ini_set('display_errors', 0);
     ini_set('log_errors', 1);
-    // The log file will be usually named 'error_log' in the same directory by PHP defaults in most hostings
+    // Force a specific log file in the root directory for easier access
+    ini_set('error_log', dirname(__DIR__) . '/debug_images.log');
 } else {
     error_reporting(E_ALL);
     ini_set('display_errors', 1);
