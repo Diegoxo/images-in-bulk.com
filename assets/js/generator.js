@@ -22,7 +22,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         clearGalleryBtn: document.getElementById('clear-gallery'),
         generateBtn: document.getElementById('generate-btn'),
         warningText: document.getElementById('generation-warning-text'),
-        spinner: document.getElementById('generation-spinner')
+        spinner: document.getElementById('generation-spinner'),
+        freeTrialText: document.getElementById('free-trial-counter-text'),
+        freeTrialBar: document.getElementById('free-trial-progress-bar')
     };
 
     let controller = null; // For cancelling the stream
@@ -166,6 +168,22 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 completedImages++;
                                 elements.progressBar.style.width = `${(completedImages / totalImages) * 100}%`;
                                 elements.generationCounter.textContent = `${completedImages} / ${totalImages}`;
+
+                                // Update Free Trial UI if applicable
+                                if (window.FREE_LIMIT > 0 && elements.freeTrialText) {
+                                    window.CURRENT_FREE_COUNT++;
+                                    const newCount = window.CURRENT_FREE_COUNT;
+                                    const limit = window.FREE_LIMIT;
+                                    elements.freeTrialText.textContent = `${newCount}/${limit}`;
+
+                                    const progress = (newCount / limit) * 100;
+                                    elements.freeTrialBar.style.width = `${progress}%`;
+
+                                    if (newCount >= limit - 1) {
+                                        elements.freeTrialBar.classList.remove('bg-primary');
+                                        elements.freeTrialBar.classList.add('bg-danger');
+                                    }
+                                }
                             } else if (data.success === false) {
                                 alert('Error generating image: ' + data.error);
                             }

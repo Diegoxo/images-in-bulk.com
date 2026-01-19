@@ -52,6 +52,8 @@ $viewTitle = $pageTitle ?? 'AI Image Generator';
 // 5. Client-side Config
 $currentUserIdJs = $userId ? $userId : "'guest'";
 $isUserLoggedIn = (bool) $userId;
+$freeLimitJs = (int) $freeLimit;
+$freeCountJs = (int) $freeImagesCount;
 
 // 6. Pre-render Button Group HTML (To keep view logic-free)
 ob_start();
@@ -63,9 +65,10 @@ if ($generatorState === 'PRO') {
 } elseif ($generatorState === 'FREE_ACTIVE') {
     ?>
     <div class="mb-1 text-center text-secondary fs-sm">
-        Free Trial: <strong><?php echo $freeImagesCount; ?>/<?php echo $freeLimit; ?></strong> used
+        Free Trial: <strong id="free-trial-counter-text"><?php echo $freeImagesCount; ?>/<?php echo $freeLimit; ?></strong>
+        used
         <div class="progress-small">
-            <div class="progress-small-fill <?php echo $freeTrialColorClass; ?>"
+            <div id="free-trial-progress-bar" class="progress-small-fill <?php echo $freeTrialColorClass; ?>"
                 style="width: <?php echo $freeTrialProgress; ?>%;"></div>
         </div>
     </div>

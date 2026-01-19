@@ -101,6 +101,8 @@ require_once 'includes/controllers/generator_controller.php';
     <script>
         const CURRENT_USER_ID = <?php echo $currentUserIdJs; ?>;
         window.CSRF_TOKEN = '<?php echo $csrfToken; ?>';
+        window.FREE_LIMIT = <?php echo $freeLimitJs; ?>;
+        window.CURRENT_FREE_COUNT = <?php echo $freeCountJs; ?>;
     </script>
     <?php include 'includes/layouts/main-scripts.php'; ?>
 </body>
