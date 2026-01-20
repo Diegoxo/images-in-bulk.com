@@ -13,7 +13,7 @@ require_once __DIR__ . '/../utils/security.php';
 $csrfToken = CSRF::generate();
 if (!isset($_SESSION['user_id'])) {
     $redirectPrefix = $pathPrefix ?? '';
-    header('Location: ' . $redirectPrefix . 'login.php');
+    header('Location: ' . $redirectPrefix . 'login');
     exit;
 }
 

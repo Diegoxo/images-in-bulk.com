@@ -19,7 +19,9 @@ require_once '../includes/controllers/billing_controller.php';
     <!-- Main Header Section -->
     <?php include '../includes/layouts/header.php'; ?>
 
-    <main class="billing-container">
+    <main class="billing-container" data-wompi-pub="<?php echo $wompiPubKey; ?>"
+        data-wompi-url="<?php echo $wompiApiUrl; ?>" data-prefix="<?php echo $pathPrefix; ?>"
+        data-csrf="<?php echo $csrfToken; ?>">
         <header class="animate-fade billing-header">
             <a href="./" class="back-link">
                 ← Back to Dashboard
@@ -39,69 +41,71 @@ require_once '../includes/controllers/billing_controller.php';
         <!-- Action Section (Replace/Change Card) -->
         <?php echo $paymentMethodActionHtml; ?>
 
-        <!-- Add/Replace Card Form -->
-        <section id="add-card-section" class="animate-fade">
-            <h3 class="billing-section-title">Enter New Card Details</h3>
-            <form id="wompi-card-form">
-                <div class="form-field-group">
-                    <label class="form-label-small">Card Holder Name</label>
-                    <input type="text" id="card-holder" class="form-control" placeholder="NAME AS IT APPEARS ON CARD"
-                        required>
+        <!-- Add/Replace Card Form Modal -->
+        <div id="add-card-modal" class="custom-modal hidden">
+            <div class="modal-overlay" onclick="closeModal('add-card-modal')"></div>
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Enter Card Details</h2>
+                    <button class="close-modal" onclick="closeModal('add-card-modal')">&times;</button>
                 </div>
-                <div class="form-field-group">
-                    <label class="form-label-small">Card Number</label>
-                    <input type="text" id="card-number" class="form-control" placeholder="0000 0000 0000 0000"
-                        maxlength="16" required>
-                </div>
-                <div class="form-grid">
-                    <div>
-                        <label class="form-label-small">Exp. Month</label>
-                        <select id="exp-month" class="form-control" required>
-                            <option value="">Month</option>
-                            <?php for ($i = 1; $i <= 12; $i++)
-                                echo "<option value='" . str_pad($i, 2, '0', STR_PAD_LEFT) . "'>" . str_pad($i, 2, '0', STR_PAD_LEFT) . "</option>"; ?>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="form-label-small">Exp. Year</label>
-                        <select id="exp-year" class="form-control" required>
-                            <option value="">Year</option>
-                            <?php for ($i = date('y'); $i <= date('y') + 10; $i++)
-                                echo "<option value='$i'>20$i</option>"; ?>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="form-label-small">CVC</label>
-                        <input type="text" id="card-cvc" class="form-control" placeholder="123" maxlength="4" required>
-                    </div>
-                </div>
+                <div class="modal-body p-2">
+                    <form id="wompi-card-form">
+                        <div class="form-field-group">
+                            <label class="form-label-small">Card Holder Name</label>
+                            <input type="text" id="card-holder" class="form-control"
+                                placeholder="NAME AS IT APPEARS ON CARD" required>
+                        </div>
+                        <div class="form-field-group">
+                            <label class="form-label-small">Card Number</label>
+                            <input type="text" id="card-number" class="form-control" placeholder="0000 0000 0000 0000"
+                                maxlength="16" required>
+                        </div>
+                        <div class="form-grid">
+                            <div>
+                                <label class="form-label-small">Exp. Month</label>
+                                <select id="exp-month" class="form-control" required>
+                                    <option value="">Month</option>
+                                    <?php for ($i = 1; $i <= 12; $i++)
+                                        echo "<option value='" . str_pad($i, 2, '0', STR_PAD_LEFT) . "'>" . str_pad($i, 2, '0', STR_PAD_LEFT) . "</option>"; ?>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="form-label-small">Exp. Year</label>
+                                <select id="exp-year" class="form-control" required>
+                                    <option value="">Year</option>
+                                    <?php for ($i = date('y'); $i <= date('y') + 10; $i++)
+                                        echo "<option value='$i'>20$i</option>"; ?>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="form-label-small">CVC</label>
+                                <input type="text" id="card-cvc" class="form-control" placeholder="123" maxlength="4"
+                                    required>
+                            </div>
+                        </div>
 
-                <div class="form-actions-row">
-                    <button type="submit" id="save-card-btn" class="btn-auth btn-primary btn-flex">
-                        Save Card Securely
-                    </button>
-                    <button type="button" onclick="toggleAddCard()" class="btn-auth glass">Cancel</button>
-                </div>
+                        <div class="form-actions-row">
+                            <button type="submit" id="save-card-btn" class="btn-auth btn-primary btn-flex">
+                                Save Card Securely
+                            </button>
+                            <button type="button" onclick="closeModal('add-card-modal')"
+                                class="btn-auth glass">Cancel</button>
+                        </div>
 
-                <p class="form-footer-tip">
-                    🔒 Your card data is encrypted and sent directly to Wompi.
-                </p>
-            </form>
-        </section>
+                        <p class="form-footer-tip">
+                            🔒 Your card data is encrypted and sent directly to Wompi.
+                        </p>
+                    </form>
+                </div>
+            </div>
+        </div>
 
         <?php echo $cancelActionHtml; ?>
     </main>
 
-    <!-- Global Variables for external JS -->
-    <script>
-        window.WOMPI_PUB_KEY = '<?php echo $wompiPubKey; ?>';
-        window.WOMPI_API_URL = '<?php echo $wompiApiUrl; ?>';
-        window.API_PREFIX = '<?php echo $pathPrefix; ?>';
-        window.CSRF_TOKEN = '<?php echo $csrfToken; ?>';
-    </script>
-
     <!-- Scripts -->
-    <script src="../assets/js/billing.js?v=2"></script>
+    <script src="../assets/js/billing.js?v=3"></script>
     <!-- Cancellation Modal Overlay -->
     <div id="cancel-subscription-modal" class="custom-modal hidden">
         <div class="modal-overlay" onclick="closeModal('cancel-subscription-modal')"></div>

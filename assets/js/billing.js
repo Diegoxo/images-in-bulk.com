@@ -28,24 +28,7 @@ function closeModal(modalId) {
 }
 
 function toggleAddCard() {
-    const section = document.getElementById('add-card-section');
-    const emptyState = document.querySelector('.billing-empty-state');
-    const replaceSection = document.querySelector('.replace-card-section');
-
-    if (!section) return;
-
-    const isVisible = !section.classList.contains('hidden');
-
-    if (isVisible) {
-        section.classList.add('hidden');
-        if (emptyState) emptyState.classList.remove('hidden');
-        if (replaceSection) replaceSection.classList.remove('hidden');
-    } else {
-        section.classList.remove('hidden');
-        if (emptyState) emptyState.classList.add('hidden');
-        if (replaceSection) replaceSection.classList.add('hidden');
-        section.scrollIntoView({ behavior: 'smooth' });
-    }
+    openModal('add-card-modal');
 }
 
 async function deleteCard() {
@@ -54,8 +37,9 @@ async function deleteCard() {
     }
 
     try {
-        const prefix = window.API_PREFIX || '';
-        const token = window.CSRF_TOKEN || '';
+        const container = document.querySelector('.billing-container');
+        const prefix = container.dataset.prefix || '';
+        const token = container.dataset.csrf || '';
 
         const response = await fetch(prefix + 'api/delete-payment-method.php', {
             method: 'POST',
@@ -95,11 +79,15 @@ document.addEventListener('DOMContentLoaded', () => {
             };
 
             try {
+                const container = document.querySelector('.billing-container');
+                const wompiUrl = container.dataset.wompiUrl;
+                const wompiPub = container.dataset.wompiPub;
+
                 // 1. Tokenize directly with Wompi
-                const tokenRes = await fetch(`${WOMPI_API_URL}/tokens/cards`, {
+                const tokenRes = await fetch(`${wompiUrl}/tokens/cards`, {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${WOMPI_PUB_KEY}`,
+                        'Authorization': `Bearer ${wompiPub}`,
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify(cardData)
@@ -113,8 +101,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 const cardToken = tokenData.data.id;
-                const prefix = window.API_PREFIX || '';
-                const csrfToken = window.CSRF_TOKEN || '';
+                const prefix = container.dataset.prefix || '';
+                const csrfToken = container.dataset.csrf || '';
 
                 // 2. Send token to our backend
                 const saveRes = await fetch(prefix + 'api/add-payment-method.php', {
@@ -162,8 +150,9 @@ document.addEventListener('DOMContentLoaded', () => {
             confirmCancelBtn.innerText = 'Cancelling...';
 
             try {
-                const prefix = window.API_PREFIX || '';
-                const csrfToken = window.CSRF_TOKEN || '';
+                const container = document.querySelector('.billing-container');
+                const prefix = container.dataset.prefix || '';
+                const csrfToken = container.dataset.csrf || '';
 
                 const res = await fetch(prefix + 'api/cancel-subscription.php', {
                     method: 'POST',

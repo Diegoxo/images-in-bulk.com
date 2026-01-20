@@ -2094,9 +2094,9 @@ textarea::-webkit-scrollbar-thumb:hover,
 
 .modal-content {
     position: relative;
-    background: var(--card-bg);
+    background: var(--bg-card);
     backdrop-filter: blur(20px);
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--glass-border);
     border-radius: 24px;
     max-width: 480px;
     width: 100%;
@@ -2114,7 +2114,7 @@ textarea::-webkit-scrollbar-thumb:hover,
 
 .modal-header {
     padding: 20px 25px;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--glass-border);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -2124,7 +2124,7 @@ textarea::-webkit-scrollbar-thumb:hover,
     margin: 0;
     font-size: 1.3rem;
     font-weight: 700;
-    color: var(--text-primary);
+    color: var(--text-main);
 }
 
 .close-modal {
@@ -2143,7 +2143,7 @@ textarea::-webkit-scrollbar-thumb:hover,
 }
 
 .close-modal:hover {
-    background: var(--accent-red);
+    background: var(--accent);
     color: white;
     transform: rotate(90deg);
 }
