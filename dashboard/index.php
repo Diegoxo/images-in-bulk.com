@@ -108,8 +108,8 @@ require_once '../includes/controllers/dashboard_controller.php';
         </div>
 
         <!-- Gallery Section -->
-        <section class="glass animate-fade gallery-section">
-            <div class="mb-15">
+        <section class="glass animate-fade gallery-section mb-4">
+            <div class="mb-15 text-center">
                 <h2 class="section-title m-0">Your Gallery</h2>
             </div>
 

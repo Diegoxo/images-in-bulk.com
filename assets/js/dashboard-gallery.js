@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         galleryGrid.innerHTML = '';
 
         if (myImages.length === 0) {
-            galleryGrid.innerHTML = '<p class="text-center text-muted p-2">No images found in this browser.</p>';
+            galleryGrid.innerHTML = '<p class="text-center text-muted p-2 grid-full-width">No images found in this browser.</p>';
             downloadBtn.classList.add('hidden-btn');
             return;
         }
@@ -104,6 +104,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     } catch (err) {
         console.error('Gallery Fetch Error:', err);
-        galleryGrid.innerHTML = '<p class="text-center p-2 text-danger">Could not load gallery.</p>';
+        galleryGrid.innerHTML = '<p class="text-center p-2 text-danger grid-full-width">Could not load gallery.</p>';
     }
 });

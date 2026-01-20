@@ -104,7 +104,7 @@ $historySectionHtml = '';
 if ($showResultsSection) {
     ob_start();
     ?>
-    <section class="preview-area">
+    <section class="preview-area mb-4">
         <div class="glass animate-fade section-card">
             <div class="results-header">
                 <div class="header-left">
@@ -141,7 +141,7 @@ if ($showResultsSection) {
         </div>
     </section>
 
-    <section id="history-section" class="preview-area hidden-btn">
+    <section id="history-section" class="preview-area hidden-btn mb-4">
         <div class="glass animate-fade section-card">
             <div class="results-header">
                 <h2 class="card-title m-0">Previous Generations</h2>

@@ -4,8 +4,7 @@ require_once __DIR__ . '/../utils/header_helper.php';
 <header class="main-header">
     <nav>
         <a href="<?php echo $prefix; ?>./" class="logo">
-            <img src="<?php echo $prefix; ?>assets/img/bulk-image-generator-logo.avif" alt="bulk-image-generator-logo"
-                height="32">
+            <img src="<?php echo $prefix; ?>assets/img/bulk-image-generator-logo.avif" alt="bulk-image-generator-logo">
             <span>Images In Bulks</span>
         </a>
         <div class="nav-links">

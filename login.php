@@ -1,11 +1,5 @@
 <?php
-include 'includes/pages-config/login-config.php';
-require_once 'includes/utils/security_headers.php';
-require_once 'includes/utils/csrf.php';
-// Ensure session is started for CSRF generation
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+require_once 'includes/controllers/login_controller.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -23,21 +17,13 @@ if (session_status() === PHP_SESSION_NONE) {
     <?php include 'includes/layouts/header.php'; ?>
 
     <main class="container auth-page-main">
-        <?php
-        $isSignUp = isset($_GET['mode']) && $_GET['mode'] === 'signup';
-        $title = $isSignUp ? "Create your account" : "Welcome back";
-        $subtitle = $isSignUp ? "Join us and start generating images in bulk." : "Sign in to start creating magic with AI.";
-        $footerText = $isSignUp ? "Already have an account?" : "Don't have an account?";
-        $footerLink = $isSignUp ? "login.php" : "login.php?mode=signup";
-        $footerAction = $isSignUp ? "Login here" : "Sign up here";
-        ?>
         <section class="glass animate-fade section-card auth-card">
-            <h1 class="section-title"><?php echo $title; ?></h1>
-            <p class="subtitle"><?php echo $subtitle; ?></p>
+            <h1 class="section-title"><?php echo $authTitle; ?></h1>
+            <p class="subtitle"><?php echo $authSubtitle; ?></p>
 
             <a href="auth/callback.php?provider=Google" class="btn-auth btn-google">
                 <img src="https://www.google.com/favicon.ico" alt="Google" width="18">
-                <?php echo $isSignUp ? "Sign up with Google" : "Sign in with Google"; ?>
+                <?php echo $googleActionText; ?>
             </a>
 
             <div class="dropdown-divider auth-divider">
@@ -45,16 +31,12 @@ if (session_status() === PHP_SESSION_NONE) {
             </div>
 
             <form action="auth/manual_login.php" method="POST" class="auth-form">
-                <input type="hidden" name="mode" value="<?php echo $isSignUp ? 'signup' : 'login'; ?>">
+                <input type="hidden" name="mode" value="<?php echo $modeValue; ?>">
                 <?php renderCsrfField(); ?>
 
-                <?php if (isset($_GET['error'])): ?>
-                    <div class="auth-error-alert">
-                        <?php echo htmlspecialchars($_GET['error']); ?>
-                    </div>
-                <?php endif; ?>
+                <?php echo $errorHtml; ?>
 
-                <?php if ($isSignUp): ?>
+                <?php if ($showNameField): ?>
                     <div class="form-group">
                         <label for="full_name">Full Name</label>
                         <input type="text" id="full_name" name="full_name" placeholder="John Doe" required
@@ -75,7 +57,7 @@ if (session_status() === PHP_SESSION_NONE) {
                 </div>
 
                 <button type="submit" class="btn-auth btn-primary full-width mt-05">
-                    <?php echo $isSignUp ? "Create Account" : "Sign In"; ?>
+                    <?php echo $submitButtonText; ?>
                 </button>
             </form>
             </div>
@@ -86,7 +68,7 @@ if (session_status() === PHP_SESSION_NONE) {
             </p>
 
             <p class="auth-footer auth-footer-disclaimer">
-                By continuing, you agree to our <a href="terms.php">Terms</a> and <a href="privacy.php">Privacy
+                By continuing, you agree to our <a href="terms">Terms</a> and <a href="privacy">Privacy
                     Policy</a>.
             </p>
         </section>

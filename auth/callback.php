@@ -74,7 +74,7 @@ try {
         $_SESSION['user_avatar'] = $userAvatar;
 
         // 3. Redirect back to home or generator
-        header('Location: ../generator.php?login=success');
+        header('Location: ../generator?login=success');
         exit;
     }
 
