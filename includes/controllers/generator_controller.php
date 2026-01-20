@@ -58,12 +58,12 @@ $freeCountJs = (int) $freeImagesCount;
 // 6. Pre-render Button Group HTML (To keep view logic-free)
 ob_start();
 
-// Show Free Trial counter to ALL non-pro logged in users
-if ($userId && !$isPro) {
+// Show Free Trial counter to ALL non-pro users (including guests/free)
+if (!$isPro) {
     ?>
-    <div class="mb-1 text-center text-secondary fs-sm">
-        Free Trial: <strong id="free-trial-counter-text"><?php echo $freeImagesCount; ?>/<?php echo $freeLimit; ?></strong>
-        used
+    <div id="free-trial-status-container" class="mb-1 text-center text-secondary fs-sm">
+        Free Trial: <strong
+            id="free-trial-counter-text"><?php echo (int) $freeImagesCount; ?>/<?php echo (int) $freeLimit; ?></strong> used
         <div class="progress-small">
             <div id="free-trial-progress-bar" class="progress-small-fill <?php echo $freeTrialColorClass; ?>"
                 style="width: <?php echo $freeTrialProgress; ?>%;"></div>

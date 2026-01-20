@@ -27,6 +27,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         freeTrialBar: document.getElementById('free-trial-progress-bar')
     };
 
+    console.log('[Generator] Free Trial UI found:', {
+        text: !!elements.freeTrialText,
+        bar: !!elements.freeTrialBar,
+        limit: window.FREE_LIMIT,
+        count: window.CURRENT_FREE_COUNT
+    });
+
     let controller = null; // For cancelling the stream
 
     // Initialize Storage
