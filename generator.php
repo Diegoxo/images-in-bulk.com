@@ -55,12 +55,14 @@ require_once 'includes/controllers/generator_controller.php';
                     <div class="form-group">
                         <label>Model</label>
                         <select id="model">
-                            <option value="dall-e-3" selected>DALL-E 3</option>
-                            <option value="gpt-image-1.5" <?php echo $proDisabledAttr; ?>>
-                                GPT Image 1.5 <?php echo $proLabelSuffix; ?>
+                            <option value="dall-e-3" <?php echo $dalleSelected; ?> <?php echo $dalleDisabled; ?>>
+                                DALL-E 3 <?php echo $dalleLabelSuffix; ?>
                             </option>
-                            <option value="gpt-image-1-mini" <?php echo $proDisabledAttr; ?>>
-                                GPT Image 1.0 (Mini) <?php echo $proLabelSuffix; ?>
+                            <option value="gpt-image-1.5" <?php echo $gpt15Disabled; ?>>
+                                GPT Image 1.5 <?php echo $gpt15LabelSuffix; ?>
+                            </option>
+                            <option value="gpt-image-1-mini" <?php echo $gptMiniSelected; ?> <?php echo $gptMiniDisabled; ?>>
+                                GPT Image 1.0 (Mini)
                             </option>
                         </select>
                     </div>

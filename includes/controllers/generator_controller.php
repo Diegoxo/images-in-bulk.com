@@ -39,6 +39,18 @@ if (!$userId) {
 // 2. Common UI Helper Flags
 $proDisabledAttr = !$isPro ? 'disabled' : '';
 $proLabelSuffix = !$isPro ? ' (PRO)' : '';
+
+// Model selection flags based on Plan
+$dalleSelected = $isPro ? 'selected' : '';
+$dalleDisabled = !$isPro ? 'disabled' : '';
+$dalleLabelSuffix = !$isPro ? ' (PRO)' : '';
+
+$gpt15Disabled = !$isPro ? 'disabled' : '';
+$gpt15LabelSuffix = !$isPro ? ' (PRO)' : '';
+
+$gptMiniSelected = !$isPro ? 'selected' : '';
+$gptMiniDisabled = ''; // GPT Mini is the default for FREE
+
 $freeTrialProgress = ($freeLimit > 0) ? ($freeImagesCount / $freeLimit) * 100 : 0;
 $freeTrialColorClass = ($freeImagesCount >= $freeLimit - 1) ? 'bg-danger' : 'bg-primary';
 

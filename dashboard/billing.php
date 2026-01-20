@@ -64,19 +64,13 @@ require_once '../includes/controllers/billing_controller.php';
                         <div class="form-grid">
                             <div>
                                 <label class="form-label-small">Exp. Month</label>
-                                <select id="exp-month" class="form-control" required>
-                                    <option value="">Month</option>
-                                    <?php for ($i = 1; $i <= 12; $i++)
-                                        echo "<option value='" . str_pad($i, 2, '0', STR_PAD_LEFT) . "'>" . str_pad($i, 2, '0', STR_PAD_LEFT) . "</option>"; ?>
-                                </select>
+                                <input type="text" id="exp-month" class="form-control" placeholder="MM" maxlength="2"
+                                    inputmode="numeric" required>
                             </div>
                             <div>
                                 <label class="form-label-small">Exp. Year</label>
-                                <select id="exp-year" class="form-control" required>
-                                    <option value="">Year</option>
-                                    <?php for ($i = date('y'); $i <= date('y') + 10; $i++)
-                                        echo "<option value='$i'>20$i</option>"; ?>
-                                </select>
+                                <input type="text" id="exp-year" class="form-control" placeholder="YY" maxlength="2"
+                                    inputmode="numeric" required>
                             </div>
                             <div>
                                 <label class="form-label-small">CVC</label>

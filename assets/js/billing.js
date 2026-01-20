@@ -63,8 +63,27 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Card Update Logic ---
     const cardForm = document.getElementById('wompi-card-form');
     if (cardForm) {
+        // --- Real-time validation for numeric fields ---
+        const numericInputs = ['exp-month', 'exp-year', 'card-cvc', 'card-number'];
+        numericInputs.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('input', (e) => {
+                    e.target.value = e.target.value.replace(/\D/g, '');
+                });
+            }
+        });
+
         cardForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+
+            // Validate Month range
+            const month = parseInt(document.getElementById('exp-month').value);
+            if (month < 1 || month > 12) {
+                alert('Please enter a valid month (01-12)');
+                return;
+            }
+
             const btn = document.getElementById('save-card-btn');
             const originalText = btn.innerText;
             btn.innerText = 'Securing Card... 🔒';
