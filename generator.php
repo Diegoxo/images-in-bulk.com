@@ -97,6 +97,26 @@ require_once 'includes/controllers/generator_controller.php';
     <!-- Main Footer Section -->
     <?php include 'includes/layouts/footer.php'; ?>
 
+    <!-- Limit Reached Modal -->
+    <div id="limit-modal" class="custom-modal hidden">
+        <div class="modal-overlay" onclick="closeModal('limit-modal')"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="limit-modal-title">Limit Reached</h2>
+                <button class="close-modal" onclick="closeModal('limit-modal')">&times;</button>
+            </div>
+            <div class="modal-body p-2 text-center">
+                <div class="mb-15" style="font-size: 3rem;">🔒</div>
+                <p id="limit-modal-message" class="mb-2">You have reached the free limit. Upgrade to PRO for unlimited
+                    generations.</p>
+                <div class="btn-group-vertical">
+                    <a href="pricing" class="btn-auth btn-primary no-decor">🚀 Upgrade to PRO</a>
+                    <button class="btn-auth glass" onclick="closeModal('limit-modal')">Maybe later</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modular Script Injection -->
     <script>
         const CURRENT_USER_ID = <?php echo $currentUserIdJs; ?>;

@@ -2,6 +2,30 @@
  * Generator UI Controller (Minimal JS)
  * This script only handles UI interaction and communicates with the Backend "Brain".
  */
+
+// --- Modal Helpers ---
+window.openModal = function (modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('d-flex');
+        setTimeout(() => modal.classList.add('active'), 10);
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+window.closeModal = function (modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.remove('active');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            modal.classList.remove('d-flex');
+        }, 300);
+        document.body.style.overflow = '';
+    }
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
     // UI Elements
     const elements = {
@@ -189,7 +213,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                                     }
                                 }
                             } else if (data.success === false) {
-                                alert('Error generating image: ' + data.error);
+                                if (data.error.toLowerCase().includes('limit')) {
+                                    document.getElementById('limit-modal-message').innerHTML = data.error;
+                                    window.openModal('limit-modal');
+                                } else {
+                                    alert('Error: ' + data.error);
+                                }
                             }
                         } catch (parseErr) {
                             console.error('JSON Parse Error on part:', parseErr, eventData);
