@@ -225,7 +225,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                     document.getElementById('limit-modal-message').innerHTML = data.error;
                                     window.openModal('limit-modal');
                                 } else {
-                                    alert('Error: ' + data.error);
+                                    Toast.error('Error: ' + data.error);
                                 }
                             }
                         } catch (parseErr) {
@@ -295,7 +295,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
 
         if (filtered.length === 0) {
-            return alert(isHistory ? 'No images in history to download.' : 'No current results to download.');
+            Toast.info(isHistory ? 'No images in history to download.' : 'No current results to download.');
+            return;
         }
 
         const usedNames = new Set();
@@ -334,8 +335,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 6. CLEAR GALLERY
     elements.clearGalleryBtn.onclick = async () => {
+        const confirmed = await Confirm.show('Are you sure you want to clear your entire local gallery? This action cannot be undone.', 'Clear Gallery');
+        if (!confirmed) return;
+
         await ImageStorage.clear();
         loadGallery();
+        Toast.success('Gallery cleared.');
         elements.downloadBtn.classList.add('hidden-btn');
         elements.downloadHistoryBtn.classList.add('hidden-btn');
         elements.historySection.classList.add('hidden-btn');

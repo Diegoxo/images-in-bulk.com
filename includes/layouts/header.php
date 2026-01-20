@@ -15,4 +15,5 @@ require_once __DIR__ . '/../utils/header_helper.php';
         </div>
     </nav>
 </header>
+<script src="<?php echo $prefix; ?>assets/js/notifications.js"></script>
 <script src="<?php echo $prefix; ?>assets/js/header.js"></script>

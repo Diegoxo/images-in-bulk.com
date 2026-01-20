@@ -32,9 +32,8 @@ function toggleAddCard() {
 }
 
 async function deleteCard() {
-    if (!confirm('Are you sure you want to remove your primary payment method? Your subscription will not be automatically renewed.')) {
-        return;
-    }
+    const confirmed = await Confirm.show('Are you sure you want to remove your primary payment method? Your subscription will not be automatically renewed.', 'Deactivate Card');
+    if (!confirmed) return;
 
     try {
         const container = document.querySelector('.billing-container');
@@ -52,10 +51,10 @@ async function deleteCard() {
         if (result.success) {
             location.reload();
         } else {
-            alert('Error: ' + (result.error || 'Could not remove card'));
+            Toast.error('Error: ' + (result.error || 'Could not remove card'));
         }
     } catch (err) {
-        alert('Connection error. Please try again.');
+        Toast.error('Connection error. Please try again.');
     }
 }
 
@@ -80,7 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Validate Month range
             const month = parseInt(document.getElementById('exp-month').value);
             if (month < 1 || month > 12) {
-                alert('Please enter a valid month (01-12)');
+                Toast.error('Please enter a valid month (01-12)');
                 return;
             }
 
@@ -136,15 +135,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 const saveResult = await saveRes.json();
 
                 if (saveResult.success) {
-                    alert('Success! Your payment method has been updated.');
-                    location.reload();
+                    Toast.success('Success! Your payment method has been updated.');
+                    setTimeout(() => location.reload(), 2000);
                 } else {
-                    alert('Error saving card: ' + saveResult.error);
+                    Toast.error('Error saving card: ' + saveResult.error);
                 }
 
             } catch (err) {
                 console.error('Wompi Tokenization Error:', err);
-                alert('Could not secure card: ' + err.message);
+                Toast.error('Could not secure card: ' + err.message);
             } finally {
                 btn.innerText = originalText;
                 btn.disabled = false;
@@ -183,15 +182,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (data.success) {
                     closeModal('cancel-subscription-modal');
-                    alert('Subscription cancelled successfully.');
-                    window.location.reload();
+                    Toast.success('Subscription cancelled successfully.');
+                    setTimeout(() => window.location.reload(), 2000);
                 } else {
-                    alert('Error: ' + data.error);
+                    Toast.error('Error: ' + data.error);
                     confirmCancelBtn.disabled = false;
                     confirmCancelBtn.innerText = originalText;
                 }
             } catch (e) {
-                alert('Network error. Please try again.');
+                Toast.error('Network error. Please try again.');
                 confirmCancelBtn.disabled = false;
                 confirmCancelBtn.innerText = originalText;
             }

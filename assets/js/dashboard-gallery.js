@@ -95,7 +95,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             } catch (err) {
                 console.error('ZIP Error:', err);
-                alert('Error creating zip file.');
+                Toast.error('Error creating zip file.');
             } finally {
                 downloadBtn.innerText = originalText;
                 downloadBtn.disabled = false;
