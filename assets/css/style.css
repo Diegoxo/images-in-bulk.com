@@ -2165,6 +2165,16 @@ textarea::-webkit-scrollbar-thumb:hover,
     font-size: 0.8rem;
 }
 
+.btn-google {
+    background: white !important;
+    color: #1f2937 !important;
+    margin-bottom: 0.5rem;
+}
+
+.btn-google img {
+    margin-right: 10px;
+}
+
 .auth-input {
     width: 100%;
     padding: 0.8rem;
