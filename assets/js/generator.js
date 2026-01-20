@@ -172,14 +172,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 // Update Free Trial UI if applicable
                                 if (window.FREE_LIMIT > 0 && elements.freeTrialText) {
                                     window.CURRENT_FREE_COUNT++;
-                                    const newCount = window.CURRENT_FREE_COUNT;
-                                    const limit = window.FREE_LIMIT;
-                                    elements.freeTrialText.textContent = `${newCount}/${limit}`;
-
-                                    const progress = (newCount / limit) * 100;
+                                    elements.freeTrialText.textContent = `${window.CURRENT_FREE_COUNT}/${window.FREE_LIMIT}`;
+                                    const progress = (window.CURRENT_FREE_COUNT / window.FREE_LIMIT) * 100;
                                     elements.freeTrialBar.style.width = `${progress}%`;
 
-                                    if (newCount >= limit - 1) {
+                                    if (window.CURRENT_FREE_COUNT >= window.FREE_LIMIT) {
                                         elements.freeTrialBar.classList.remove('bg-primary');
                                         elements.freeTrialBar.classList.add('bg-danger');
                                     }
