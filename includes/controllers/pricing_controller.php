@@ -61,7 +61,7 @@ if (!$isLoggedIn) {
 } elseif ($wompiData) {
     $proPlanAction = renderWompiButton($wompiData, 'Secure Payment by Wompi');
 } else {
-    $proPlanAction = '<div class="alert-danger mt-2"><p class="m-0 fs-sm">Payment system unavailable.</p></div>';
+    $proPlanAction = '<div class="alert-danger mt-1"><p class="m-0 fs-sm">Payment system unavailable.</p></div>';
 }
 
 // --- Pro Annual Action ---
@@ -87,7 +87,7 @@ $addonPackageHtml = '';
 if ($isPro && $wompiDataAddon) {
     $addonPackageHtml = '
     <div class="pricing-card glass">
-        <div class="popular-badge" style="background: var(--accent);">PRO Extra</div>
+        <div class="popular-badge extra-badge">PRO Extra</div>
         <h3>Extra Credits</h3>
         <div class="price-dual">$21 USD <span>/ $85.000 COP</span></div>
         <div class="price-billing">One-time payment</div>

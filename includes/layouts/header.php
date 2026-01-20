@@ -1,4 +1,6 @@
-<?php $prefix = $pathPrefix ?? ''; ?>
+<?php
+require_once __DIR__ . '/../utils/header_helper.php';
+?>
 <header class="main-header">
     <nav>
         <a href="<?php echo $prefix; ?>./" class="logo">
@@ -11,50 +13,22 @@
             <a href="<?php echo $prefix; ?>generator" class="btn-auth glass">Generator</a>
             <a href="<?php echo $prefix; ?>pricing" class="btn-auth glass">Pricing</a>
             <?php if (isset($_SESSION['user_id'])): ?>
-                <?php
-                // Self-healing session: If avatar is missing but user is logged in, fetch it.
-                if (!isset($_SESSION['user_avatar']) || empty($_SESSION['user_avatar'])) {
-                    $db = getDB();
-                    $stmt = $db->prepare("SELECT avatar_url FROM users WHERE id = ?");
-                    $stmt->execute([$_SESSION['user_id']]);
-                    $u = $stmt->fetch();
-                    $_SESSION['user_avatar'] = $u['avatar_url'] ?? '';
-                }
-
-                $displayAvatar = $_SESSION['user_avatar'];
-                // Verificación de robustez: Si es local y no existe, no mostrar
-                if (!empty($displayAvatar) && strpos($displayAvatar, 'http') !== 0) {
-                    if (!file_exists($displayAvatar)) {
-                        $displayAvatar = null;
-                        $_SESSION['user_avatar'] = ''; // Limpiar sesión
-                    }
-                }
-
-                $displayName = explode(' ', $_SESSION['user_name'])[0];
-                ?>
-
                 <div class="user-dropdown-container">
-                    <div class="user-menu-trigger btn-auth glass" onclick="toggleUserDropdown()"
-                        style="padding: 0.5rem 1rem;">
-                        <?php if ($displayAvatar): ?>
-                            <?php $avatarSrc = (strpos($displayAvatar, 'http') === 0) ? $displayAvatar : $prefix . $displayAvatar; ?>
-                            <img src="<?php echo htmlspecialchars($avatarSrc); ?>" alt="User"
-                                style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary);"
-                                referrerpolicy="no-referrer">
+                    <div class="user-menu-trigger btn-auth glass" onclick="toggleUserDropdown()">
+                        <?php if ($avatarSrc): ?>
+                            <img src="<?php echo htmlspecialchars($avatarSrc); ?>" alt="User" class="user-avatar-img" referrerpolicy="no-referrer">
                         <?php else: ?>
-                            <div
-                                style="width: 28px; height: 28px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 0.8rem;">
+                            <div class="user-avatar-fallback">
                                 <?php echo substr($displayName, 0, 1); ?>
                             </div>
                         <?php endif; ?>
-                        <span class="user-greeting" style="margin-left: 0.5rem;">Hi,
-                            <strong><?php echo $displayName; ?></strong> <span
-                                style="font-size: 0.7rem; opacity: 0.7; margin-left: 4px;">▼</span></span>
+                        <span class="user-greeting">Hi,
+                            <strong><?php echo $displayName; ?></strong> <span class="user-arrow">▼</span></span>
                     </div>
 
                     <div id="userDropdown" class="user-dropdown-menu">
-                        <div style="padding: 0.75rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.1);">
-                            <div style="font-weight: bold;"><?php echo htmlspecialchars($displayName); ?></div>
+                        <div class="dropdown-header-info">
+                            <div class="dropdown-user-name"><?php echo htmlspecialchars($_SESSION['user_name']); ?></div>
                         </div>
                         <a href="<?php echo $prefix; ?>dashboard" class="dropdown-item">
                             <span>📊</span> Dashboard

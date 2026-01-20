@@ -66,7 +66,7 @@ if (!$isPro) {
             id="free-trial-counter-text"><?php echo (int) $freeImagesCount; ?>/<?php echo (int) $freeLimit; ?></strong> used
         <div class="progress-small">
             <div id="free-trial-progress-bar" class="progress-small-fill <?php echo $freeTrialColorClass; ?>"
-                style="width: <?php echo $freeTrialProgress; ?>%;"></div>
+                style="--progress: <?php echo $freeTrialProgress; ?>%;"></div>
         </div>
     </div>
     <?php

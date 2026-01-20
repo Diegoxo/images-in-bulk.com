@@ -52,7 +52,7 @@ require_once 'includes/controllers/pricing_controller.php';
 
                 <!-- Pro Annual Plan -->
                 <div class="pricing-card glass">
-                    <div class="popular-badge" style="background: var(--primary);">Best Value</div>
+                    <div class="popular-badge best-value-badge">Best Value</div>
                     <h3>Pro Annual</h3>
                     <div class="price-dual">$210 USD <span>/ $850.000 COP</span></div>
                     <div class="price-billing">year</div>

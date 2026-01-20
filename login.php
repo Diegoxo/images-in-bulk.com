@@ -40,45 +40,41 @@ if (session_status() === PHP_SESSION_NONE) {
                 <?php echo $isSignUp ? "Sign up with Google" : "Sign in with Google"; ?>
             </a>
 
-            <div class="dropdown-divider"
-                style="margin: 1.5rem 0; width: 100%; position: relative; text-align: center;">
-                <span
-                    style="position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: #0f172a; padding: 0 10px; color: var(--text-muted); font-size: 0.8rem;">OR</span>
+            <div class="dropdown-divider auth-divider">
+                <span class="auth-divider-span">OR</span>
             </div>
 
-            <form action="auth/manual_login.php" method="POST"
-                style="width: 100%; display: flex; flex-direction: column; gap: 1rem;">
+            <form action="auth/manual_login.php" method="POST" class="auth-form">
                 <input type="hidden" name="mode" value="<?php echo $isSignUp ? 'signup' : 'login'; ?>">
                 <?php renderCsrfField(); ?>
 
                 <?php if (isset($_GET['error'])): ?>
-                    <div
-                        style="background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; color: #fca5a5; padding: 0.5rem; border-radius: 8px; font-size: 0.9rem;">
+                    <div class="auth-error-alert">
                         <?php echo htmlspecialchars($_GET['error']); ?>
                     </div>
                 <?php endif; ?>
 
                 <?php if ($isSignUp): ?>
-                    <div class="form-group" style="text-align: left;">
-                        <label for="full_name" style="font-size: 0.9rem;">Full Name</label>
+                    <div class="form-group">
+                        <label for="full_name">Full Name</label>
                         <input type="text" id="full_name" name="full_name" placeholder="John Doe" required
-                            style="width: 100%; padding: 0.8rem; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: var(--text-main);">
+                            class="auth-input">
                     </div>
                 <?php endif; ?>
 
-                <div class="form-group" style="text-align: left;">
-                    <label for="email" style="font-size: 0.9rem;">Email Address</label>
+                <div class="form-group">
+                    <label for="email">Email Address</label>
                     <input type="email" id="email" name="email" placeholder="name@example.com" required
-                        style="width: 100%; padding: 0.8rem; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: var(--text-main);">
+                        class="auth-input">
                 </div>
 
-                <div class="form-group" style="text-align: left;">
-                    <label for="password" style="font-size: 0.9rem;">Password</label>
+                <div class="form-group">
+                    <label for="password">Password</label>
                     <input type="password" id="password" name="password" placeholder="••••••••" required
-                        style="width: 100%; padding: 0.8rem; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: var(--text-main);">
+                        class="auth-input">
                 </div>
 
-                <button type="submit" class="btn-auth btn-primary full-width" style="margin-top: 0.5rem;">
+                <button type="submit" class="btn-auth btn-primary full-width mt-05">
                     <?php echo $isSignUp ? "Create Account" : "Sign In"; ?>
                 </button>
             </form>
@@ -89,7 +85,7 @@ if (session_status() === PHP_SESSION_NONE) {
                     href="<?php echo $footerLink; ?>"><strong><?php echo $footerAction; ?></strong></a>
             </p>
 
-            <p class="auth-footer" style="margin-top: 1rem; opacity: 0.7;">
+            <p class="auth-footer auth-footer-disclaimer">
                 By continuing, you agree to our <a href="terms.php">Terms</a> and <a href="privacy.php">Privacy
                     Policy</a>.
             </p>

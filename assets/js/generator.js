@@ -181,7 +181,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                     window.CURRENT_FREE_COUNT++;
                                     elements.freeTrialText.textContent = `${window.CURRENT_FREE_COUNT}/${window.FREE_LIMIT}`;
                                     const progress = (window.CURRENT_FREE_COUNT / window.FREE_LIMIT) * 100;
-                                    elements.freeTrialBar.style.width = `${progress}%`;
+                                    elements.freeTrialBar.style.setProperty('--progress', `${progress}%`);
 
                                     if (window.CURRENT_FREE_COUNT >= window.FREE_LIMIT) {
                                         elements.freeTrialBar.classList.remove('bg-primary');

@@ -35,7 +35,7 @@ require_once 'includes/controllers/index_controller.php';
                         <?php endif; ?>
                     </div>
                 </div>
-                <div class="hero-image animate-fade-up" style="animation-delay: 0.2s;">
+                <div class="hero-image animate-fade-up delay-02">
                     <div class="glass image-container">
                         <img src="assets/img/landing_hero_preview.webp" alt="Bulk Generation Preview"
                             class="rounded-image">

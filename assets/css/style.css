@@ -229,12 +229,20 @@ main {
     background: var(--primary) !important;
 }
 
+.text-danger {
+    color: #ef4444 !important;
+}
+
 .bg-danger {
     background: #ef4444 !important;
 }
 
 .d-block {
     display: block !important;
+}
+
+.d-flex {
+    display: flex !important;
 }
 
 .d-inline-block {
@@ -405,6 +413,51 @@ nav {
         padding: 0.6rem 0.5rem;
         font-size: 0.85rem;
     }
+}
+
+/* User Menu & Dropdown Styles */
+.user-menu-trigger {
+    padding: 0.5rem 1rem !important;
+}
+
+.user-avatar-img {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--primary);
+}
+
+.user-avatar-fallback {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 0.8rem;
+}
+
+.user-greeting {
+    margin-left: 0.5rem;
+}
+
+.user-arrow {
+    font-size: 0.7rem;
+    opacity: 0.7;
+    margin-left: 4px;
+}
+
+.dropdown-header-info {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dropdown-user-name {
+    font-weight: bold;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -1690,6 +1743,15 @@ textarea::-webkit-scrollbar-thumb:hover,
     height: 100%;
     border-radius: 2px;
     transition: width 0.3s;
+    width: var(--progress, 0%);
+}
+
+.hidden {
+    display: none !important;
+}
+
+.delay-02 {
+    animation-delay: 0.2s !important;
 }
 
 .not-allowed {
@@ -2077,9 +2139,99 @@ textarea::-webkit-scrollbar-thumb:hover,
     transform: rotate(90deg);
 }
 
+/* Authentication Page Helpers */
+.auth-form {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.auth-divider {
+    margin: 1.5rem 0;
+    width: 100%;
+    position: relative;
+    text-align: center;
+}
+
+.auth-divider-span {
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #0f172a;
+    padding: 0 10px;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+.auth-input {
+    width: 100%;
+    padding: 0.8rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    color: var(--text-main);
+}
+
+.auth-error-alert {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid #ef4444;
+    color: #fca5a5;
+    padding: 0.5rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+}
+
+.auth-card .form-group {
+    text-align: left;
+}
+
+.auth-card label {
+    font-size: 0.9rem;
+}
+
+.auth-footer {
+    text-align: center;
+    margin-top: 1.5rem;
+    color: var(--text-secondary);
+}
+
+.auth-footer-disclaimer {
+    margin-top: 1rem;
+    opacity: 0.7;
+    font-size: 0.85rem;
+}
+
+/* Pricing Helpers */
+.best-value-badge {
+    background: var(--primary) !important;
+}
+
+.mt-05 {
+    margin-top: 0.5rem !important;
+}
+
+.mt-1 {
+    margin-top: 1rem !important;
+}
+
+
+.extra-badge {
+    background: var(--accent) !important;
+}
+
 .modal-body {
     padding: 25px;
     text-align: center;
+}
+
+.modal-body-left {
+    text-align: left !important;
+}
+
+.h-150 {
+    height: 150px !important;
 }
 
 .modal-body p {
@@ -2120,4 +2272,20 @@ textarea::-webkit-scrollbar-thumb:hover,
 .modal-footer .btn-auth {
     flex: 1;
     margin: 0;
+}
+
+.h-150 {
+    height: 150px !important;
+}
+
+.grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+@media (max-width: 600px) {
+    .grid-2 {
+        grid-template-columns: 1fr;
+    }
 }

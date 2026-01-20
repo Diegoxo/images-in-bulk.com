@@ -8,7 +8,8 @@
 function openModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
-        modal.style.display = 'flex';
+        modal.classList.remove('hidden');
+        modal.classList.add('d-flex');
         setTimeout(() => modal.classList.add('active'), 10);
         document.body.style.overflow = 'hidden'; // Lock scrolling
     }
@@ -18,7 +19,10 @@ function closeModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
         modal.classList.remove('active');
-        setTimeout(() => modal.style.display = 'none', 300); // Wait for transition
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            modal.classList.remove('d-flex');
+        }, 300); // Wait for transition
         document.body.style.overflow = ''; // Unlock scrolling
     }
 }
@@ -30,16 +34,18 @@ function toggleAddCard() {
 
     if (!section) return;
 
-    const isVisible = section.style.display === 'block';
-    const nextState = isVisible ? 'none' : 'block';
-    const triggerDisplay = isVisible ? 'block' : 'none';
+    const isVisible = !section.classList.contains('hidden');
 
-    section.style.display = nextState;
-
-    if (emptyState) emptyState.style.display = triggerDisplay;
-    if (replaceSection) replaceSection.style.display = triggerDisplay;
-
-    if (!isVisible) section.scrollIntoView({ behavior: 'smooth' });
+    if (isVisible) {
+        section.classList.add('hidden');
+        if (emptyState) emptyState.classList.remove('hidden');
+        if (replaceSection) replaceSection.classList.remove('hidden');
+    } else {
+        section.classList.remove('hidden');
+        if (emptyState) emptyState.classList.add('hidden');
+        if (replaceSection) replaceSection.classList.add('hidden');
+        section.scrollIntoView({ behavior: 'smooth' });
+    }
 }
 
 async function deleteCard() {

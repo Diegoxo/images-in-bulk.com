@@ -31,7 +31,7 @@ include 'includes/pages-config/reports-config.php';
                     <label>Email</label>
                     <input type="email" name="email" placeholder="your@email.com" required>
                 </div>
-                <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-row grid-2">
                     <div class="form-group">
                         <label>Phone / WhatsApp</label>
                         <input type="tel" name="phone" placeholder="+57 300 123 4567" required>
@@ -52,7 +52,7 @@ include 'includes/pages-config/reports-config.php';
                 </div>
                 <div class="form-group">
                     <label>Message</label>
-                    <textarea name="message" placeholder="Describe your issue in detail..." style="height: 150px;"
+                    <textarea name="message" placeholder="Describe your issue in detail..." class="h-150"
                         required></textarea>
                 </div>
                 <button type="submit" id="submit-btn" class="btn-auth btn-primary full-width">Send Message</button>

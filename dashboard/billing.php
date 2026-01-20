@@ -103,7 +103,7 @@ require_once '../includes/controllers/billing_controller.php';
     <!-- Scripts -->
     <script src="../assets/js/billing.js?v=2"></script>
     <!-- Cancellation Modal Overlay -->
-    <div id="cancel-subscription-modal" class="custom-modal" style="display: none;">
+    <div id="cancel-subscription-modal" class="custom-modal hidden">
         <div class="modal-overlay" onclick="closeModal('cancel-subscription-modal')"></div>
         <div class="modal-content">
             <div class="modal-header">

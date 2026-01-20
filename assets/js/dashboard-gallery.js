@@ -104,6 +104,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     } catch (err) {
         console.error('Gallery Fetch Error:', err);
-        galleryGrid.innerHTML = '<p class="text-center p-2" style="color: #ef4444;">Could not load gallery.</p>';
+        galleryGrid.innerHTML = '<p class="text-center p-2 text-danger">Could not load gallery.</p>';
     }
 });
