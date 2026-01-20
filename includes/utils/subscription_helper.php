@@ -120,8 +120,8 @@ function validateUserAccess($userId, $model, $resolution)
     $status = getUserSubscriptionStatus($userId);
     $isPro = $status['isPro'];
 
-    // PRO model check
-    if (!$isPro && $model !== 'dall-e-3') {
+    // PRO model check: Free users ONLY allowed to use GPT Mini
+    if (!$isPro && $model !== 'gpt-image-1-mini') {
         return ['success' => false, 'error' => 'This model is only available for PRO users.'];
     }
 
