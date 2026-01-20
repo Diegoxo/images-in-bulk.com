@@ -57,44 +57,44 @@ $freeCountJs = (int) $freeImagesCount;
 
 // 6. Pre-render Button Group HTML (To keep view logic-free)
 ob_start();
+?>
+<div id="generator-actions-container">
+    <?php if ($userId && !$isPro): ?>
+        <div id="free-trial-status-container" class="mb-1 text-center text-secondary fs-sm">
+            Free Trial: <strong
+                id="free-trial-counter-text"><?php echo (int) $freeImagesCount; ?>/<?php echo (int) $freeLimit; ?></strong>
+            used
+            <div class="progress-small">
+                <div id="free-trial-progress-bar" class="progress-small-fill <?php echo $freeTrialColorClass; ?>"
+                    style="--progress: <?php echo $freeTrialProgress; ?>%;"></div>
+            </div>
+        </div>
+    <?php endif; ?>
 
-// Show Free Trial counter ONLY to logged-in non-pro users
-if ($userId && !$isPro) {
-    ?>
-    <div id="free-trial-status-container" class="mb-1 text-center text-secondary fs-sm">
-        Free Trial: <strong
-            id="free-trial-counter-text"><?php echo (int) $freeImagesCount; ?>/<?php echo (int) $freeLimit; ?></strong> used
-        <div class="progress-small">
-            <div id="free-trial-progress-bar" class="progress-small-fill <?php echo $freeTrialColorClass; ?>"
-                style="--progress: <?php echo $freeTrialProgress; ?>%;"></div>
+    <div id="active-generator-controls"
+        class="btn-group-vertical <?php echo ($generatorState === 'FREE_REACHED') ? 'hidden' : ''; ?>">
+        <?php if ($generatorState === 'PRO'): ?>
+            <button type="submit" id="generate-btn" class="btn-auth btn-primary generate-main-btn">Start Generation
+                🚀</button>
+            <button type="button" id="stop-btn" class="btn-auth glass btn-stop hidden-btn">Stop</button>
+        <?php elseif ($generatorState === 'FREE_ACTIVE'): ?>
+            <button type="submit" id="generate-btn" class="btn-auth btn-primary generate-main-btn">Generate (Free)
+                🎨</button>
+            <button type="button" id="stop-btn" class="btn-auth glass btn-stop hidden-btn">Stop</button>
+        <?php else: ?>
+            <a href="login" class="btn-auth btn-primary generate-main-btn no-decor">Start Generation 🚀</a>
+            <button type="button" class="btn-auth glass btn-stop not-allowed opacity-7" disabled>Stop</button>
+        <?php endif; ?>
+    </div>
+
+    <div id="limit-reached-controls" class="<?php echo ($generatorState === 'FREE_REACHED') ? '' : 'hidden'; ?>">
+        <div class="alert-danger mb-1">
+            <p class="mb-05 fs-sm">🔒 Free Limit Reached</p>
+            <a href="pricing" class="btn-auth btn-primary full-width">Upgrade for Unlimited</a>
         </div>
     </div>
-    <?php
-}
-
-if ($generatorState === 'PRO') {
-    ?>
-    <button type="submit" id="generate-btn" class="btn-auth btn-primary generate-main-btn">Start Generation 🚀</button>
-    <button type="button" id="stop-btn" class="btn-auth glass btn-stop">Stop</button>
-    <?php
-} elseif ($generatorState === 'FREE_ACTIVE') {
-    ?>
-    <button type="submit" id="generate-btn" class="btn-auth btn-primary generate-main-btn">Generate (Free) 🎨</button>
-    <button type="button" id="stop-btn" class="btn-auth glass btn-stop">Stop</button>
-    <?php
-} elseif ($generatorState === 'FREE_REACHED') {
-    ?>
-    <div class="alert-danger mb-1">
-        <p class="mb-05 fs-sm">🔒 Free Limit Reached</p>
-        <a href="pricing" class="btn-auth btn-primary full-width">Upgrade for Unlimited</a>
-    </div>
-    <?php
-} else {
-    ?>
-    <a href="login" class="btn-auth btn-primary generate-main-btn no-decor">Start Generation 🚀</a>
-    <button type="button" class="btn-auth glass btn-stop not-allowed opacity-7" disabled>Stop</button>
-    <?php
-}
+</div>
+<?php
 $renderButtonsHtml = ob_get_clean();
 
 // 7. Pre-render Sections

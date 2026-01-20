@@ -48,7 +48,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         warningText: document.getElementById('generation-warning-text'),
         spinner: document.getElementById('generation-spinner'),
         freeTrialText: document.getElementById('free-trial-counter-text'),
-        freeTrialBar: document.getElementById('free-trial-progress-bar')
+        freeTrialBar: document.getElementById('free-trial-progress-bar'),
+        activeControls: document.getElementById('active-generator-controls'),
+        limitControls: document.getElementById('limit-reached-controls')
     };
 
     console.log('[Generator] Free Trial UI found:', {
@@ -210,6 +212,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                                     if (window.CURRENT_FREE_COUNT >= window.FREE_LIMIT) {
                                         elements.freeTrialBar.classList.remove('bg-primary');
                                         elements.freeTrialBar.classList.add('bg-danger');
+
+                                        // REACTIVE SWITCH: Swap Generate button for Upgrade alert instantly
+                                        if (elements.activeControls && elements.limitControls) {
+                                            elements.activeControls.classList.add('hidden');
+                                            elements.limitControls.classList.remove('hidden');
+                                        }
                                     }
                                 }
                             } else if (data.success === false) {
