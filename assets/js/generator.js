@@ -1,6 +1,6 @@
 /**
- * Generator UI Controller (v15 - Final Stability Refactor)
- * Confirmed Base64 persistence for iPhone. Fixed stream visibility and reactive counters.
+ * Generator UI Controller (v18 - Hardened Visibility)
+ * Direct DOM manipulation for maximum reliability on iPhone.
  */
 
 (function () {
@@ -15,7 +15,7 @@
     const form = getEl('generator-form');
     let controller = null;
 
-    // Helper: Convert Blob to Base64 (Reliable for Safari/iOS)
+    // Helper: Convert Blob to Base64 (Safer for iOS session storage)
     const blobToBase64 = blob => new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onloadend = () => resolve(reader.result);
@@ -36,60 +36,53 @@
         if (!imageGrid) return;
 
         try {
-            const storedImages = await ImageStorage.getAllImages();
+            const stored = await ImageStorage.getAllImages();
 
-            let hasCurrent = false;
-            let hasHistory = false;
-            const currentNodes = [];
-            const historyNodes = [];
+            // Separate Current and History
+            const currentItems = stored.filter(i => String(i.isArchived) === 'false');
+            const historyItems = stored.filter(i => String(i.isArchived) === 'true');
 
-            if (storedImages && storedImages.length > 0) {
-                storedImages.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+            // Sort by timestamp
+            currentItems.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+            historyItems.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
-                storedImages.forEach((img) => {
-                    const src = img.base64 || (img.blob ? URL.createObjectURL(img.blob) : null);
-                    if (!src) return;
-
-                    const card = createCard(img.fileName, img.prompt, src);
-                    if (String(img.isArchived) === 'true') {
-                        historyNodes.push(card);
-                        hasHistory = true;
-                    } else {
-                        currentNodes.push(card);
-                        hasCurrent = true;
-                    }
-                });
-            }
-
-            if (hasCurrent) {
+            // Render Results
+            if (currentItems.length > 0) {
                 imageGrid.innerHTML = '';
-                currentNodes.forEach(node => imageGrid.append(node));
-                if (dlBtn) dlBtn.classList.remove('hidden-btn');
-                if (clearGalBtn) clearGalBtn.classList.remove('hidden-btn');
+                currentItems.forEach(img => {
+                    const src = img.base64 || (img.blob ? URL.createObjectURL(img.blob) : null);
+                    if (src) imageGrid.append(createCard(img.fileName, img.prompt, src));
+                });
+                dlBtn?.classList.remove('hidden-btn');
+                clearGalBtn?.classList.remove('hidden-btn');
             } else {
-                const isGenerating = getEl('generate-btn')?.disabled === true;
-                if (!isGenerating) {
+                // IMPORTANT: Only show empty state if NOT currently generating
+                if (getEl('generate-btn')?.disabled !== true) {
                     imageGrid.innerHTML = '<div class="empty-state">Your generated images will appear here.</div>';
-                    if (dlBtn) dlBtn.classList.add('hidden-btn');
-                    if (clearGalBtn) clearGalBtn.classList.add('hidden-btn');
+                    dlBtn?.classList.add('hidden-btn');
+                    clearGalBtn?.classList.add('hidden-btn');
                 }
             }
 
-            if (hasHistory) {
+            // Render History
+            if (historyItems.length > 0) {
                 if (historyGrid) {
                     historyGrid.innerHTML = '';
-                    historyNodes.forEach(node => historyGrid.append(node));
+                    historyItems.forEach(img => {
+                        const src = img.base64 || (img.blob ? URL.createObjectURL(img.blob) : null);
+                        if (src) historyGrid.append(createCard(img.fileName, img.prompt, src));
+                    });
                 }
-                if (historySection) historySection.classList.remove('hidden-btn');
-                if (dlHistoryBtn) dlHistoryBtn.classList.remove('hidden-btn');
-                if (clearHistBtn) clearHistBtn.classList.remove('hidden-btn');
+                historySection?.classList.remove('hidden-btn');
+                dlHistoryBtn?.classList.remove('hidden-btn');
+                clearHistBtn?.classList.remove('hidden-btn');
             } else {
-                if (historySection) historySection.classList.add('hidden-btn');
-                if (dlHistoryBtn) dlHistoryBtn.classList.add('hidden-btn');
-                if (clearHistBtn) clearHistBtn.classList.add('hidden-btn');
+                historySection?.classList.add('hidden-btn');
+                dlHistoryBtn?.classList.add('hidden-btn');
+                clearHistBtn?.classList.add('hidden-btn');
             }
         } catch (e) {
-            console.error('[Generator] Gallery Load Failed:', e);
+            console.error('[Gallery] Load failed', e);
         }
     }
 
@@ -110,37 +103,33 @@
         if (btn) {
             btn.onclick = (e) => {
                 e.stopPropagation();
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = name;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
+                const a = document.createElement('a'); a.href = url; a.download = name; a.click();
             };
         }
         return div;
     }
 
+    // --- 2. GENERATION LOGIC ---
     if (form) {
         form.onsubmit = async (e) => {
             e.preventDefault();
             const genBtn = getEl('generate-btn');
-            if (genBtn) {
-                genBtn.disabled = true;
-                genBtn.textContent = 'Processing...';
-            }
+            const imageGrid = getEl('image-grid');
+            if (genBtn) { genBtn.disabled = true; genBtn.textContent = 'Processing...'; }
 
-            ['progress-bar-container', 'generation-warning-text', 'generation-spinner'].forEach(id => {
-                getEl(id)?.classList.remove('hidden-btn');
-            });
-            const stopBtn = getEl('stop-btn');
-            if (stopBtn) { stopBtn.classList.remove('hidden-btn'); stopBtn.classList.add('d-flex'); }
+            // 1. Initial UI Logic
+            ['progress-bar-container', 'generation-warning-text', 'generation-spinner'].forEach(id => getEl(id)?.classList.remove('hidden-btn'));
+            getEl('stop-btn')?.classList.remove('hidden-btn');
+            getEl('stop-btn')?.classList.add('d-flex');
 
+            // 2. Archive previous results immediately
             await ImageStorage.archiveAll();
-            await loadGallery();
+            // Clear current grid immediately
+            if (imageGrid) imageGrid.innerHTML = '';
 
+            // 3. Start Generation
             controller = new AbortController();
-            const pendingSaves = [];
+            const saves = [];
 
             try {
                 const response = await fetch('api/process_batch.php', {
@@ -170,122 +159,103 @@
                     buffer = parts.pop();
 
                     for (const part of parts) {
-                        const dataLine = part.split('\n').find(l => l.startsWith('data: '));
-                        if (!dataLine) continue;
+                        const dl = part.split('\n').find(l => l.startsWith('data: '));
+                        if (!dl) continue;
                         try {
-                            const data = JSON.parse(dataLine.substring(6));
+                            const data = JSON.parse(dl.substring(6));
                             if (data.total) {
                                 total = data.total;
-                                const counter = getEl('generation-counter');
-                                if (counter) {
-                                    counter.classList.remove('hidden-btn');
-                                    counter.textContent = `0 / ${total}`;
-                                }
-                                const bar = getEl('progress-bar');
-                                if (bar) bar.style.width = '0%';
+                                getEl('generation-counter')?.classList.remove('hidden-btn');
+                                getEl('generation-counter').textContent = `0 / ${total}`;
                             }
-
                             if (data.image) {
+                                // Add to DOM and show immediately
                                 if (imageGrid) {
                                     if (current === 0) imageGrid.innerHTML = '';
-                                    const card = createCard(data.fileName, data.prompt, data.image);
-                                    imageGrid.append(card);
+                                    imageGrid.append(createCard(data.fileName, data.prompt, data.image));
                                 }
                                 current++;
-                                const bar = getEl('progress-bar');
-                                if (bar) bar.style.width = `${(current / total) * 100}%`;
-                                const counter = getEl('generation-counter');
-                                if (counter) counter.textContent = `${current} / ${total}`;
+                                // Update Counters
+                                if (getEl('progress-bar')) getEl('progress-bar').style.width = `${(current / total) * 100}%`;
+                                if (getEl('generation-counter')) getEl('generation-counter').textContent = `${current} / ${total}`;
 
+                                // Free Trial Counter
                                 if (window.FREE_LIMIT > 0) {
                                     window.CURRENT_FREE_COUNT++;
-                                    const ftText = getEl('free-trial-counter-text');
-                                    const ftBar = getEl('free-trial-progress-bar');
-                                    if (ftText) ftText.textContent = `${window.CURRENT_FREE_COUNT}/${window.FREE_LIMIT}`;
-                                    if (ftBar) {
-                                        const progressPct = (window.CURRENT_FREE_COUNT / window.FREE_LIMIT) * 100;
-                                        ftBar.style.setProperty('--progress', `${progressPct}%`);
+                                    if (getEl('free-trial-counter-text')) getEl('free-trial-counter-text').textContent = `${window.CURRENT_FREE_COUNT}/${window.FREE_LIMIT}`;
+                                    const ftb = getEl('free-trial-progress-bar');
+                                    if (ftb) {
+                                        ftb.style.setProperty('--progress', `${(window.CURRENT_FREE_COUNT / window.FREE_LIMIT) * 100}%`);
                                         if (window.CURRENT_FREE_COUNT >= window.FREE_LIMIT) {
-                                            ftBar.classList.add('bg-danger');
+                                            ftb.classList.add('bg-danger');
                                             getEl('active-generator-controls')?.classList.add('hidden');
                                             getEl('limit-reached-controls')?.classList.remove('hidden');
                                         }
                                     }
                                 }
 
-                                const saveOp = fetch(data.image).then(r => r.blob()).then(async blob => {
-                                    const base64Data = await blobToBase64(blob);
-                                    return ImageStorage.saveImage(null, data.fileName, data.prompt, base64Data);
-                                }).catch(e => console.error('[Storage] Save failed', e));
-                                pendingSaves.push(saveOp);
+                                // Persistence
+                                const s = fetch(data.image).then(r => r.blob()).then(async b => {
+                                    const b64 = await blobToBase64(b);
+                                    return ImageStorage.saveImage(null, data.fileName, data.prompt, b64);
+                                });
+                                saves.push(s);
                             }
                         } catch (e) { }
                     }
                 }
-                await Promise.all(pendingSaves);
-            } catch (err) {
-                if (err.name !== 'AbortError') {
-                    if (window.Toast) window.Toast.error(`Generation failed: ${err.message}`);
-                }
-            } finally {
+                await Promise.all(saves);
+            } catch (err) { }
+            finally {
                 if (genBtn) { genBtn.disabled = false; genBtn.textContent = 'Start Generation 🚀'; }
-                ['progress-bar-container', 'generation-warning-text', 'stop-btn', 'generation-spinner', 'generation-counter'].forEach(id => {
-                    getEl(id)?.classList.add('hidden-btn');
-                });
-                setTimeout(() => loadGallery(), 500);
+                ['progress-bar-container', 'generation-warning-text', 'stop-btn', 'generation-spinner', 'generation-counter'].forEach(id => getEl(id)?.classList.add('hidden-btn'));
+                // Final Sync to update buttons and history
+                loadGallery();
             }
         };
     }
 
+    // --- 3. BUTTON ACTIONS ---
     const stopBtn = getEl('stop-btn');
     if (stopBtn) stopBtn.onclick = () => { if (controller) controller.abort(); };
 
     const clearGal = getEl('clear-gallery');
     if (clearGal) clearGal.onclick = async () => {
-        if (window.Confirm && !await window.Confirm.show('Clear all images from this batch?')) return;
+        if (window.Confirm && !await window.Confirm.show('Clear all current results?')) return;
         await ImageStorage.clearSelective(false);
         await loadGallery();
     };
 
     const clearHist = getEl('clear-history');
     if (clearHist) clearHist.onclick = async () => {
-        if (window.Confirm && !await window.Confirm.show('Clear all historical images?')) return;
+        if (window.Confirm && !await window.Confirm.show('Clear all history images?')) return;
         await ImageStorage.clearSelective(true);
         await loadGallery();
     };
 
     const dlZip = getEl('download-zip');
     if (dlZip) dlZip.onclick = async () => {
-        const images = await ImageStorage.getAllImages();
-        const filtered = images.filter(img => String(img.isArchived) === 'false');
-        if (filtered.length === 0) return;
+        const stored = await ImageStorage.getAllImages();
+        const current = stored.filter(i => String(i.isArchived) === 'false');
+        if (current.length === 0) return;
         const zip = new JSZip();
-        filtered.forEach(img => {
-            const data = img.base64 ? img.base64.split(',')[1] : img.blob;
-            zip.file(img.fileName, data, { base64: !!img.base64 });
+        current.forEach(i => {
+            const d = i.base64 ? i.base64.split(',')[1] : i.blob;
+            zip.file(i.fileName, d, { base64: !!i.base64 });
         });
         const content = await zip.generateAsync({ type: 'blob' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(content); a.download = 'results.zip'; a.click();
+        const a = document.createElement('a'); a.href = URL.createObjectURL(content); a.download = 'results.zip'; a.click();
     };
 
-    async function initSystem() {
+    // --- 4. INIT ---
+    async function init() {
         try {
-            const updateCount = (input, counter, label) => {
-                const count = input.value.split('\n').filter(line => line.trim()).length;
-                if (counter) counter.textContent = `${count} ${label}`;
-            };
-            const prompts = getEl('prompts');
-            const filenames = getEl('filenames');
-            if (prompts) prompts.addEventListener('input', () => updateCount(prompts, getEl('prompts-count'), 'Prompts'));
-            if (filenames) filenames.addEventListener('input', () => updateCount(filenames, getEl('filenames-count'), 'Names'));
-
+            const upd = (i, c, l) => { if (i && c) c.textContent = `${i.value.split('\n').filter(line => line.trim()).length} ${l}`; };
+            getEl('prompts')?.addEventListener('input', () => upd(getEl('prompts'), getEl('prompts-count'), 'Prompts'));
+            getEl('filenames')?.addEventListener('input', () => upd(getEl('filenames'), getEl('filenames-count'), 'Names'));
             await ImageStorage.init();
-            setTimeout(() => loadGallery(), 600);
-        } catch (e) {
             loadGallery();
-        }
+        } catch (e) { loadGallery(); }
     }
-
-    initSystem();
+    init();
 })();
