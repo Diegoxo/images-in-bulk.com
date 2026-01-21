@@ -1,21 +1,13 @@
 /**
- * Generator UI Controller (v12 - Clean & Persistent)
- * Base64 persistence confirmed for Safari/iOS.
+ * Generator UI Controller (v13 - Targeted Deletion)
+ * Focused on independent clearing of results and history.
  */
 
 (function () {
-    // 0. GLOBAL ERROR REPORTER
-    window.onerror = function (msg, url, lineNo, columnNo, error) {
-        console.error(`[Generator] Error: ${msg} [${lineNo}:${columnNo}]`);
-        if (window.Toast) window.Toast.error(`System Error: ${msg}`);
-        return false;
-    };
-
     const getEl = (id) => document.getElementById(id);
     const form = getEl('generator-form');
     let controller = null;
 
-    // Helper: Convert Blob to Base64 (Essential for iOS persistence)
     const blobToBase64 = blob => new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onloadend = () => resolve(reader.result);
@@ -30,6 +22,8 @@
         const historySection = getEl('history-section');
         const dlBtn = getEl('download-zip');
         const dlHistoryBtn = getEl('download-zip-history');
+        const clearGalBtn = getEl('clear-gallery');
+        const clearHistBtn = getEl('clear-history');
 
         if (!imageGrid) return;
 
@@ -42,15 +36,11 @@
             let hasHistory = false;
 
             if (storedImages && storedImages.length > 0) {
-                // Sort by timestamp (desc)
                 storedImages.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-
                 storedImages.forEach((img) => {
                     const src = img.base64 || (img.blob ? URL.createObjectURL(img.blob) : null);
                     if (!src) return;
-
                     const card = createCard(img.fileName, img.prompt, src);
-
                     if (String(img.isArchived) === 'true') {
                         if (historyGrid) historyGrid.append(card);
                         hasHistory = true;
@@ -61,19 +51,25 @@
                 });
             }
 
+            // Target: Current Results Container
             if (!hasCurrent) {
                 imageGrid.innerHTML = '<div class="empty-state">Your generated images will appear here.</div>';
                 if (dlBtn) dlBtn.classList.add('hidden-btn');
+                if (clearGalBtn) clearGalBtn.classList.add('hidden-btn');
             } else {
                 if (dlBtn) dlBtn.classList.remove('hidden-btn');
+                if (clearGalBtn) clearGalBtn.classList.remove('hidden-btn');
             }
 
+            // Target: History Section
             if (hasHistory) {
                 if (historySection) historySection.classList.remove('hidden-btn');
                 if (dlHistoryBtn) dlHistoryBtn.classList.remove('hidden-btn');
+                if (clearHistBtn) clearHistBtn.classList.remove('hidden-btn');
             } else {
                 if (historySection) historySection.classList.add('hidden-btn');
                 if (dlHistoryBtn) dlHistoryBtn.classList.add('hidden-btn');
+                if (clearHistBtn) clearHistBtn.classList.add('hidden-btn');
             }
         } catch (e) { console.error('[Generator] Render error:', e); }
     }
@@ -96,28 +92,22 @@
             btn.onclick = (e) => {
                 e.stopPropagation();
                 const a = document.createElement('a');
-                a.href = url;
-                a.download = name;
-                a.click();
+                a.href = url; a.download = name; a.click();
             };
         }
         return div;
     }
 
-    // --- FORM SUBMIT HANDLER ---
     if (form) {
         form.onsubmit = async (e) => {
             e.preventDefault();
             const genBtn = getEl('generate-btn');
             if (genBtn) { genBtn.disabled = true; genBtn.textContent = 'Processing...'; }
 
-            const showGroup = ['progress-bar-container', 'generation-warning-text', 'generation-spinner'];
-            showGroup.forEach(id => getEl(id)?.classList.remove('hidden-btn'));
-
+            ['progress-bar-container', 'generation-warning-text', 'generation-spinner'].forEach(id => getEl(id)?.classList.remove('hidden-btn'));
             const stopBtn = getEl('stop-btn');
             if (stopBtn) { stopBtn.classList.remove('hidden-btn'); stopBtn.classList.add('d-flex'); }
 
-            // Archive old batch
             await ImageStorage.archiveAll();
             await loadGallery();
 
@@ -162,10 +152,7 @@
                             }
                             if (data.image) {
                                 const card = createCard(data.fileName, data.prompt, data.image);
-                                if (imageGrid) {
-                                    if (current === 0) imageGrid.innerHTML = '';
-                                    imageGrid.append(card);
-                                }
+                                if (imageGrid) { if (current === 0) imageGrid.innerHTML = ''; imageGrid.append(card); }
 
                                 current++;
                                 const bar = getEl('progress-bar');
@@ -173,7 +160,6 @@
                                 const counter = getEl('generation-counter');
                                 if (counter) counter.textContent = `${current} / ${total}`;
 
-                                // --- Trial Update ---
                                 if (window.FREE_LIMIT > 0) {
                                     window.CURRENT_FREE_COUNT++;
                                     const ftText = getEl('free-trial-counter-text');
@@ -190,7 +176,6 @@
                                     }
                                 }
 
-                                // --- Persistence ---
                                 fetch(data.image).then(r => r.blob()).then(async b => {
                                     const b64 = await blobToBase64(b);
                                     await ImageStorage.saveImage(null, data.fileName, data.prompt, b64);
@@ -199,32 +184,31 @@
                         } catch (e) { }
                     }
                 }
-            } catch (err) {
-                if (err.name !== 'AbortError') console.error('[Generator] Fetch Fail:', err);
-            } finally {
+            } catch (err) { }
+            finally {
                 if (genBtn) { genBtn.disabled = false; genBtn.textContent = 'Start Generation 🚀'; }
-                ['progress-bar-container', 'generation-warning-text', 'stop-btn', 'generation-spinner', 'generation-counter'].forEach(id => {
-                    getEl(id)?.classList.add('hidden-btn');
-                });
+                ['progress-bar-container', 'generation-warning-text', 'stop-btn', 'generation-spinner', 'generation-counter'].forEach(id => getEl(id)?.classList.add('hidden-btn'));
+                await loadGallery(); // Ensure buttons update state after generation
             }
         };
     }
 
-    // --- BUTTON CONTROLS ---
     const stopBtn = getEl('stop-btn');
     if (stopBtn) stopBtn.onclick = () => { if (controller) controller.abort(); };
 
+    // Selective: Clear Results Only (isArchived: false)
     const clearGal = getEl('clear-gallery');
     if (clearGal) clearGal.onclick = async () => {
-        if (window.Confirm && !await window.Confirm.show('Clear all images?')) return;
-        await ImageStorage.clear();
+        if (window.Confirm && !await window.Confirm.show('Clear all current results?')) return;
+        await ImageStorage.clearSelective(false);
         await loadGallery();
     };
 
+    // Selective: Clear History Only (isArchived: true)
     const clearHist = getEl('clear-history');
     if (clearHist) clearHist.onclick = async () => {
         if (window.Confirm && !await window.Confirm.show('Clear all history images?')) return;
-        await ImageStorage.clear();
+        await ImageStorage.clearSelective(true);
         await loadGallery();
     };
 
@@ -236,22 +220,17 @@
         const zip = new JSZip();
         filtered.forEach(img => zip.file(img.fileName, img.blob || img.base64.split(',')[1], { base64: !!img.base64 }));
         const content = await zip.generateAsync({ type: 'blob' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(content);
-        a.download = 'results.zip';
-        a.click();
+        const a = document.createElement('a'); a.href = URL.createObjectURL(content); a.download = 'results.zip'; a.click();
     };
 
-    // --- INITIALIZATION ---
     async function initSystem() {
         try {
             const upd = (i, c, l) => { if (i && c) c.textContent = `${i.value.split('\n').filter(l => l.trim()).length} ${l}`; };
             getEl('prompts')?.addEventListener('input', () => upd(getEl('prompts'), getEl('prompts-count'), 'Prompts'));
             getEl('filenames')?.addEventListener('input', () => upd(getEl('filenames'), getEl('filenames-count'), 'Names'));
-
             await ImageStorage.init();
             setTimeout(() => loadGallery(), 600);
-        } catch (e) { console.error('[Generator] Init Fail:', e); }
+        } catch (e) { }
     }
     initSystem();
 })();

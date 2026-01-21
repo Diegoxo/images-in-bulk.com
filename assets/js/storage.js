@@ -1,6 +1,6 @@
 /**
  * Simple IndexedDB wrapper for image storage
- * Hardened version with Base64 support for mobile persistence.
+ * Hardened version with selective deletion.
  */
 const ImageStorage = {
     dbName: 'ImagesInBulkDB',
@@ -64,7 +64,7 @@ const ImageStorage = {
 
                 const record = {
                     blob: blob,
-                    base64: base64, // Persistent string format for mobile
+                    base64: base64,
                     fileName: fileName,
                     prompt: prompt,
                     timestamp: new Date().getTime(),
@@ -130,7 +130,11 @@ const ImageStorage = {
         } catch (e) { }
     },
 
-    async clear() {
+    /**
+     * Selective deletion based on archive status
+     * @param {boolean} archiveStatus - true to clear history, false to clear active results
+     */
+    async clearSelective(archiveStatus) {
         if (this.isFailed) return;
         try {
             const db = await this.init();
@@ -141,7 +145,8 @@ const ImageStorage = {
                 request.onsuccess = (event) => {
                     const cursor = event.target.result;
                     if (cursor) {
-                        if (String(cursor.value.userId) === String(this.currentUserId)) {
+                        const data = cursor.value;
+                        if (String(data.userId) === String(this.currentUserId) && String(data.isArchived) === String(archiveStatus)) {
                             cursor.delete();
                         }
                         cursor.continue();
