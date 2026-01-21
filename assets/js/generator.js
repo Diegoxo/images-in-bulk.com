@@ -1,13 +1,21 @@
 /**
- * Generator UI Controller (v13 - Targeted Deletion)
- * Focused on independent clearing of results and history.
+ * Generator UI Controller (v15 - Final Stability Refactor)
+ * Confirmed Base64 persistence for iPhone. Fixed stream visibility and reactive counters.
  */
 
 (function () {
+    // 0. GLOBAL ERROR REPORTER
+    window.onerror = function (msg, url, lineNo, columnNo, error) {
+        console.error(`[Generator] Error: ${msg} [${lineNo}:${columnNo}]`);
+        if (window.Toast) window.Toast.error(`System Error: ${msg}`);
+        return false;
+    };
+
     const getEl = (id) => document.getElementById(id);
     const form = getEl('generator-form');
     let controller = null;
 
+    // Helper: Convert Blob to Base64 (Reliable for Safari/iOS)
     const blobToBase64 = blob => new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onloadend = () => resolve(reader.result);
@@ -15,7 +23,7 @@
         reader.readAsDataURL(blob);
     });
 
-    // --- GALLERY MANAGEMENT ---
+    // --- 1. GALLERY RENDERING ---
     async function loadGallery() {
         const imageGrid = getEl('image-grid');
         const historyGrid = getEl('history-grid');
@@ -29,40 +37,49 @@
 
         try {
             const storedImages = await ImageStorage.getAllImages();
-            imageGrid.innerHTML = '';
-            if (historyGrid) historyGrid.innerHTML = '';
 
             let hasCurrent = false;
             let hasHistory = false;
+            const currentNodes = [];
+            const historyNodes = [];
 
             if (storedImages && storedImages.length > 0) {
                 storedImages.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
                 storedImages.forEach((img) => {
                     const src = img.base64 || (img.blob ? URL.createObjectURL(img.blob) : null);
                     if (!src) return;
+
                     const card = createCard(img.fileName, img.prompt, src);
                     if (String(img.isArchived) === 'true') {
-                        if (historyGrid) historyGrid.append(card);
+                        historyNodes.push(card);
                         hasHistory = true;
                     } else {
-                        imageGrid.append(card);
+                        currentNodes.push(card);
                         hasCurrent = true;
                     }
                 });
             }
 
-            // Target: Current Results Container
-            if (!hasCurrent) {
-                imageGrid.innerHTML = '<div class="empty-state">Your generated images will appear here.</div>';
-                if (dlBtn) dlBtn.classList.add('hidden-btn');
-                if (clearGalBtn) clearGalBtn.classList.add('hidden-btn');
-            } else {
+            if (hasCurrent) {
+                imageGrid.innerHTML = '';
+                currentNodes.forEach(node => imageGrid.append(node));
                 if (dlBtn) dlBtn.classList.remove('hidden-btn');
                 if (clearGalBtn) clearGalBtn.classList.remove('hidden-btn');
+            } else {
+                const isGenerating = getEl('generate-btn')?.disabled === true;
+                if (!isGenerating) {
+                    imageGrid.innerHTML = '<div class="empty-state">Your generated images will appear here.</div>';
+                    if (dlBtn) dlBtn.classList.add('hidden-btn');
+                    if (clearGalBtn) clearGalBtn.classList.add('hidden-btn');
+                }
             }
 
-            // Target: History Section
             if (hasHistory) {
+                if (historyGrid) {
+                    historyGrid.innerHTML = '';
+                    historyNodes.forEach(node => historyGrid.append(node));
+                }
                 if (historySection) historySection.classList.remove('hidden-btn');
                 if (dlHistoryBtn) dlHistoryBtn.classList.remove('hidden-btn');
                 if (clearHistBtn) clearHistBtn.classList.remove('hidden-btn');
@@ -71,7 +88,9 @@
                 if (dlHistoryBtn) dlHistoryBtn.classList.add('hidden-btn');
                 if (clearHistBtn) clearHistBtn.classList.add('hidden-btn');
             }
-        } catch (e) { console.error('[Generator] Render error:', e); }
+        } catch (e) {
+            console.error('[Generator] Gallery Load Failed:', e);
+        }
     }
 
     function createCard(name, prompt, url) {
@@ -83,8 +102,8 @@
                 <img src="${url}" alt="AI Image" class="fade-img loaded" style="opacity:1 !important">
             </div>
             <div class="card-info">
-                <div class="image-name-tag">${name}</div>
-                <div class="image-prompt-tag">${prompt}</div>
+                <div class="image-name-tag" title="${name}">${name}</div>
+                <div class="image-prompt-tag" title="${prompt}">${prompt}</div>
             </div>
         `;
         const btn = div.querySelector('.btn-download-single');
@@ -92,7 +111,11 @@
             btn.onclick = (e) => {
                 e.stopPropagation();
                 const a = document.createElement('a');
-                a.href = url; a.download = name; a.click();
+                a.href = url;
+                a.download = name;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
             };
         }
         return div;
@@ -102,16 +125,26 @@
         form.onsubmit = async (e) => {
             e.preventDefault();
             const genBtn = getEl('generate-btn');
-            if (genBtn) { genBtn.disabled = true; genBtn.textContent = 'Processing...'; }
+            if (genBtn) {
+                genBtn.disabled = true;
+                genBtn.textContent = 'Processing...';
+            }
 
-            ['progress-bar-container', 'generation-warning-text', 'generation-spinner'].forEach(id => getEl(id)?.classList.remove('hidden-btn'));
+            ['progress-bar-container', 'generation-warning-text', 'generation-spinner'].forEach(id => {
+                getEl(id)?.classList.remove('hidden-btn');
+            });
             const stopBtn = getEl('stop-btn');
             if (stopBtn) { stopBtn.classList.remove('hidden-btn'); stopBtn.classList.add('d-flex'); }
 
             await ImageStorage.archiveAll();
             await loadGallery();
 
+            const imageGrid = getEl('image-grid');
+            if (imageGrid) imageGrid.innerHTML = '<div class="text-center p-4">Connecting to AI Engine...</div>';
+
             controller = new AbortController();
+            const pendingSaves = [];
+
             try {
                 const response = await fetch('api/process_batch.php', {
                     method: 'POST',
@@ -120,7 +153,9 @@
                     body: JSON.stringify({
                         prompts: getEl('prompts')?.value,
                         filenames: getEl('filenames')?.value,
-                        model: getEl('model')?.value, resolution: getEl('resolution')?.value, format: getEl('format')?.value,
+                        model: getEl('model')?.value,
+                        resolution: getEl('resolution')?.value,
+                        format: getEl('format')?.value,
                         custom_style: getEl('custom_style')?.value || ''
                     })
                 });
@@ -129,9 +164,6 @@
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
                 let buffer = '', total = 0, current = 0;
-
-                const imageGrid = getEl('image-grid');
-                if (imageGrid) imageGrid.innerHTML = '';
 
                 while (true) {
                     const { value, done } = await reader.read();
@@ -148,12 +180,20 @@
                             if (data.total) {
                                 total = data.total;
                                 const counter = getEl('generation-counter');
-                                if (counter) { counter.classList.remove('hidden-btn'); counter.textContent = `0 / ${total}`; }
+                                if (counter) {
+                                    counter.classList.remove('hidden-btn');
+                                    counter.textContent = `0 / ${total}`;
+                                }
+                                const bar = getEl('progress-bar');
+                                if (bar) bar.style.width = '0%';
                             }
-                            if (data.image) {
-                                const card = createCard(data.fileName, data.prompt, data.image);
-                                if (imageGrid) { if (current === 0) imageGrid.innerHTML = ''; imageGrid.append(card); }
 
+                            if (data.image) {
+                                if (imageGrid) {
+                                    if (current === 0) imageGrid.innerHTML = '';
+                                    const card = createCard(data.fileName, data.prompt, data.image);
+                                    imageGrid.append(card);
+                                }
                                 current++;
                                 const bar = getEl('progress-bar');
                                 if (bar) bar.style.width = `${(current / total) * 100}%`;
@@ -166,8 +206,8 @@
                                     const ftBar = getEl('free-trial-progress-bar');
                                     if (ftText) ftText.textContent = `${window.CURRENT_FREE_COUNT}/${window.FREE_LIMIT}`;
                                     if (ftBar) {
-                                        const progress = (window.CURRENT_FREE_COUNT / window.FREE_LIMIT) * 100;
-                                        ftBar.style.setProperty('--progress', `${progress}%`);
+                                        const progressPct = (window.CURRENT_FREE_COUNT / window.FREE_LIMIT) * 100;
+                                        ftBar.style.setProperty('--progress', `${progressPct}%`);
                                         if (window.CURRENT_FREE_COUNT >= window.FREE_LIMIT) {
                                             ftBar.classList.add('bg-danger');
                                             getEl('active-generator-controls')?.classList.add('hidden');
@@ -176,19 +216,26 @@
                                     }
                                 }
 
-                                fetch(data.image).then(r => r.blob()).then(async b => {
-                                    const b64 = await blobToBase64(b);
-                                    await ImageStorage.saveImage(null, data.fileName, data.prompt, b64);
-                                });
+                                const saveOp = fetch(data.image).then(r => r.blob()).then(async blob => {
+                                    const base64Data = await blobToBase64(blob);
+                                    return ImageStorage.saveImage(null, data.fileName, data.prompt, base64Data);
+                                }).catch(e => console.error('[Storage] Save failed', e));
+                                pendingSaves.push(saveOp);
                             }
                         } catch (e) { }
                     }
                 }
-            } catch (err) { }
-            finally {
+                await Promise.all(pendingSaves);
+            } catch (err) {
+                if (err.name !== 'AbortError') {
+                    if (window.Toast) window.Toast.error(`Generation failed: ${err.message}`);
+                }
+            } finally {
                 if (genBtn) { genBtn.disabled = false; genBtn.textContent = 'Start Generation 🚀'; }
-                ['progress-bar-container', 'generation-warning-text', 'stop-btn', 'generation-spinner', 'generation-counter'].forEach(id => getEl(id)?.classList.add('hidden-btn'));
-                await loadGallery(); // Ensure buttons update state after generation
+                ['progress-bar-container', 'generation-warning-text', 'stop-btn', 'generation-spinner', 'generation-counter'].forEach(id => {
+                    getEl(id)?.classList.add('hidden-btn');
+                });
+                setTimeout(() => loadGallery(), 500);
             }
         };
     }
@@ -196,18 +243,16 @@
     const stopBtn = getEl('stop-btn');
     if (stopBtn) stopBtn.onclick = () => { if (controller) controller.abort(); };
 
-    // Selective: Clear Results Only (isArchived: false)
     const clearGal = getEl('clear-gallery');
     if (clearGal) clearGal.onclick = async () => {
-        if (window.Confirm && !await window.Confirm.show('Clear all current results?')) return;
+        if (window.Confirm && !await window.Confirm.show('Clear all images from this batch?')) return;
         await ImageStorage.clearSelective(false);
         await loadGallery();
     };
 
-    // Selective: Clear History Only (isArchived: true)
     const clearHist = getEl('clear-history');
     if (clearHist) clearHist.onclick = async () => {
-        if (window.Confirm && !await window.Confirm.show('Clear all history images?')) return;
+        if (window.Confirm && !await window.Confirm.show('Clear all historical images?')) return;
         await ImageStorage.clearSelective(true);
         await loadGallery();
     };
@@ -216,21 +261,34 @@
     if (dlZip) dlZip.onclick = async () => {
         const images = await ImageStorage.getAllImages();
         const filtered = images.filter(img => String(img.isArchived) === 'false');
-        if (filtered.length === 0) return window.Toast?.info('Nothing to download.');
+        if (filtered.length === 0) return;
         const zip = new JSZip();
-        filtered.forEach(img => zip.file(img.fileName, img.blob || img.base64.split(',')[1], { base64: !!img.base64 }));
+        filtered.forEach(img => {
+            const data = img.base64 ? img.base64.split(',')[1] : img.blob;
+            zip.file(img.fileName, data, { base64: !!img.base64 });
+        });
         const content = await zip.generateAsync({ type: 'blob' });
-        const a = document.createElement('a'); a.href = URL.createObjectURL(content); a.download = 'results.zip'; a.click();
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(content); a.download = 'results.zip'; a.click();
     };
 
     async function initSystem() {
         try {
-            const upd = (i, c, l) => { if (i && c) c.textContent = `${i.value.split('\n').filter(l => l.trim()).length} ${l}`; };
-            getEl('prompts')?.addEventListener('input', () => upd(getEl('prompts'), getEl('prompts-count'), 'Prompts'));
-            getEl('filenames')?.addEventListener('input', () => upd(getEl('filenames'), getEl('filenames-count'), 'Names'));
+            const updateCount = (input, counter, label) => {
+                const count = input.value.split('\n').filter(line => line.trim()).length;
+                if (counter) counter.textContent = `${count} ${label}`;
+            };
+            const prompts = getEl('prompts');
+            const filenames = getEl('filenames');
+            if (prompts) prompts.addEventListener('input', () => updateCount(prompts, getEl('prompts-count'), 'Prompts'));
+            if (filenames) filenames.addEventListener('input', () => updateCount(filenames, getEl('filenames-count'), 'Names'));
+
             await ImageStorage.init();
             setTimeout(() => loadGallery(), 600);
-        } catch (e) { }
+        } catch (e) {
+            loadGallery();
+        }
     }
+
     initSystem();
 })();
