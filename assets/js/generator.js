@@ -56,7 +56,10 @@
                 dlBtn?.classList.remove('hidden-btn');
                 clearGalBtn?.classList.remove('hidden-btn');
             } else {
-                // IMPORTANT: Only show empty state if NOT currently generating
+                // If no current items, always clear the grid to remove stale content from previous batch
+                imageGrid.innerHTML = '';
+
+                // Only show empty state message if not currently generating
                 if (getEl('generate-btn')?.disabled !== true) {
                     imageGrid.innerHTML = '<div class="empty-state">Your generated images will appear here.</div>';
                     dlBtn?.classList.add('hidden-btn');
