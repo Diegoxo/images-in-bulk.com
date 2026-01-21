@@ -94,6 +94,13 @@ require_once 'includes/controllers/generator_controller.php';
         </section>
 
         <?php echo $resultsSectionHtml; ?>
+
+        <!-- Diagnostic Panel (Temporary) -->
+        <div id="diag-panel">
+            <h3>🔍 Storage Diagnostic</h3>
+            <div id="diag-stats">Init...</div>
+            <div id="diag-log-console" class="diag-log"></div>
+        </div>
     </main>
 
     <!-- Main Footer Section -->

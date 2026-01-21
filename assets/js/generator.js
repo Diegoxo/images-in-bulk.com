@@ -1,15 +1,40 @@
 /**
- * Generator UI Controller (Hardened for Mobile & Reliable Storage)
+ * Generator UI Controller (Hardened + Diagnostic Mode)
  */
 
 (function () {
-    // 0. GLOBAL ERROR REPORTER
+    const diag = {
+        log: (msg) => {
+            console.log(`[Diag] ${msg}`);
+            const consoleEl = document.getElementById('diag-log-console');
+            if (consoleEl) consoleEl.innerHTML = `<div>> ${msg}</div>` + consoleEl.innerHTML;
+        },
+        updateStats: async () => {
+            const statsEl = document.getElementById('diag-stats');
+            if (!statsEl) return;
+
+            const dbStatus = ImageStorage.db ? 'CONNECTED' : (ImageStorage.isFailed ? 'FAILED' : 'WAITING');
+            const images = await ImageStorage.getAllImages();
+            const current = images.filter(i => i.isArchived === false).length;
+            const history = images.filter(i => i.isArchived !== false).length;
+
+            statsEl.innerHTML = `
+                <div class="diag-row"><span>DB Status:</span> <span class="diag-val">${dbStatus}</span></div>
+                <div class="diag-row"><span>User ID:</span> <span class="diag-val">${CURRENT_USER_ID}</span></div>
+                <div class="diag-row"><span>Current Batch:</span> <span class="diag-val">${current} images</span></div>
+                <div class="diag-row"><span>History:</span> <span class="diag-val">${history} images</span></div>
+                <div class="diag-row"><span>IndexedDB:</span> <span class="diag-val">${!!window.indexedDB ? 'SUPPORTED' : 'NOT SUPPORTED'}</span></div>
+            `;
+        }
+    };
+
     window.onerror = function (msg, url, lineNo, columnNo, error) {
-        const errorMsg = `JS Error: ${msg} [${lineNo}:${columnNo}]`;
-        console.error(errorMsg);
-        if (window.Toast) window.Toast.error(errorMsg);
+        diag.log(`ERROR: ${msg} at line ${lineNo}`);
+        if (window.Toast) window.Toast.error(`JS Error: ${msg}`);
         return false;
     };
+
+    diag.log('Script Starting...');
 
     const getEl = (id) => document.getElementById(id);
     const form = getEl('generator-form');
@@ -17,26 +42,20 @@
     let controller = null;
     let pendingSaves = 0;
 
-    // --- 1. UI RESET HELPER ---
     function resetUI() {
         if (generateBtn) {
             generateBtn.disabled = false;
             generateBtn.textContent = 'Start Generation 🚀';
-            // If the trial limit was hit during the process, the controller logic in the loop will handle the button swap.
         }
-
-        const ids = ['progress-bar-container', 'generation-warning-text', 'stop-btn', 'generation-spinner', 'generation-counter'];
-        ids.forEach(id => {
-            const el = getEl(id);
-            if (el) el.classList.add('hidden-btn');
+        ['progress-bar-container', 'generation-warning-text', 'stop-btn', 'generation-spinner', 'generation-counter'].forEach(id => {
+            const el = getEl(id); if (el) el.classList.add('hidden-btn');
         });
-
         const dlBtn = getEl('download-zip');
         if (dlBtn) dlBtn.classList.remove('hidden-btn');
     }
 
-    // --- 2. STORAGE MANAGEMENT ---
     async function loadGallery() {
+        diag.log('Loading Gallery...');
         const imageGrid = getEl('image-grid');
         const historyGrid = getEl('history-grid');
         const historySection = getEl('history-section');
@@ -44,22 +63,18 @@
         const dlBtn = getEl('download-zip');
 
         if (!imageGrid) return;
-        if (ImageStorage.isFailed) {
-            imageGrid.innerHTML = '<div class="empty-state">Storage unavailable. Results won\'t be saved.</div>';
-            return;
-        }
 
         try {
             const storedImages = await ImageStorage.getAllImages();
+            diag.log(`Found ${storedImages.length} total images in storage.`);
+
             imageGrid.innerHTML = '';
             if (historyGrid) historyGrid.innerHTML = '';
 
             let hasHistory = false, hasCurrent = false;
 
             if (storedImages && storedImages.length > 0) {
-                // Sort by timestamp if available
                 storedImages.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-
                 storedImages.forEach(img => {
                     if (!img.blob) return;
                     try {
@@ -71,20 +86,18 @@
                             imageGrid.append(card);
                             hasCurrent = true;
                         }
-                    } catch (e) { console.error('Card init error', e); }
+                    } catch (e) { diag.log('Card render fail: ' + e.message); }
                 });
             }
 
-            if (!hasCurrent) {
-                imageGrid.innerHTML = '<div class="empty-state">Your generated images will appear here.</div>';
-            }
-
+            if (!hasCurrent) imageGrid.innerHTML = '<div class="empty-state">Your generated images will appear here.</div>';
             if (hasHistory && historySection) historySection.classList.remove('hidden-btn');
             if (hasHistory && dlHistoryBtn) dlHistoryBtn.classList.remove('hidden-btn');
             if (hasCurrent && dlBtn) dlBtn.classList.remove('hidden-btn');
 
+            diag.updateStats();
         } catch (e) {
-            console.error('Render error:', e);
+            diag.log('Gallery load exception: ' + e.message);
         }
     }
 
@@ -114,39 +127,31 @@
         return div;
     }
 
-    // --- 3. MAIN SUBMIT HANDLER ---
     if (form) {
         form.onsubmit = async (e) => {
             e.preventDefault();
-            console.log('[Generator] Generation request...');
+            diag.log('SUBMIT: Starting generation...');
 
-            // UI State
             if (generateBtn) {
                 generateBtn.disabled = true;
                 generateBtn.textContent = 'Processing...';
             }
 
-            const show = (id) => { const el = getEl(id); if (el) el.classList.remove('hidden-btn'); };
-            show('progress-bar-container');
-            show('generation-warning-text');
-            show('generation-spinner');
-
+            getEl('progress-bar-container')?.classList.remove('hidden-btn');
+            getEl('generation-warning-text')?.classList.remove('hidden-btn');
+            getEl('generation-spinner')?.classList.remove('hidden-btn');
             const stopBtn = getEl('stop-btn');
-            if (stopBtn) {
-                stopBtn.classList.remove('hidden-btn');
-                stopBtn.classList.add('d-flex');
-            }
+            if (stopBtn) { stopBtn.classList.remove('hidden-btn'); stopBtn.classList.add('d-flex'); }
 
             const imageGrid = getEl('image-grid');
-            if (imageGrid) imageGrid.innerHTML = '<div class="text-center p-2">Connecting to AI engine...</div>';
+            if (imageGrid) imageGrid.innerHTML = '<div class="text-center p-2">Connecting...</div>';
 
-            // Archive previous results before starting
-            try { await ImageStorage.archiveAll(); } catch (e) { }
+            try {
+                diag.log('Archiving old results...');
+                await ImageStorage.archiveAll();
+            } catch (e) { diag.log('Archive error: ' + e.message); }
+
             await loadGallery();
-
-            const model = getEl('model')?.value || 'dall-e-3';
-            const res = getEl('resolution')?.value || '1:1';
-            const fmt = getEl('format')?.value || 'png';
 
             controller = new AbortController();
             try {
@@ -157,14 +162,12 @@
                     body: JSON.stringify({
                         prompts: getEl('prompts')?.value || '',
                         filenames: getEl('filenames')?.value || '',
-                        model, resolution: res, format: fmt,
+                        model: getEl('model')?.value, resolution: getEl('resolution')?.value, format: getEl('format')?.value,
                         custom_style: getEl('custom_style')?.value || ''
                     })
                 });
 
                 if (!response.ok) throw new Error('Network error: ' + response.status);
-                if (!response.body) throw new Error('Stream not supported');
-
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
                 let total = 0, current = 0, buffer = '';
@@ -189,18 +192,12 @@
                             if (data.total) {
                                 total = data.total;
                                 const counter = getEl('generation-counter');
-                                if (counter) {
-                                    counter.classList.remove('hidden-btn');
-                                    counter.textContent = `0 / ${total}`;
-                                }
+                                if (counter) { counter.classList.remove('hidden-btn'); counter.textContent = `0 / ${total}`; }
                             }
                             if (data.image) {
-                                // 1. Instant UI update
+                                diag.log(`IMAGE: Received ${data.fileName}`);
                                 const card = createCard(data.fileName, data.prompt, data.image);
-                                if (imageGrid) {
-                                    if (current === 0) imageGrid.innerHTML = '';
-                                    imageGrid.append(card);
-                                }
+                                if (imageGrid) { if (current === 0) imageGrid.innerHTML = ''; imageGrid.append(card); }
 
                                 current++;
                                 const bar = getEl('progress-bar');
@@ -208,111 +205,60 @@
                                 const counter = getEl('generation-counter');
                                 if (counter) counter.textContent = `${current} / ${total}`;
 
-                                // 2. Update Free Trial UI
+                                // Update Trial
                                 if (window.FREE_LIMIT > 0) {
                                     window.CURRENT_FREE_COUNT++;
                                     const ftText = getEl('free-trial-counter-text');
-                                    const ftBar = getEl('free-trial-progress-bar');
                                     if (ftText) ftText.textContent = `${window.CURRENT_FREE_COUNT}/${window.FREE_LIMIT}`;
-                                    if (ftBar) {
-                                        const progressPercentage = (window.CURRENT_FREE_COUNT / window.FREE_LIMIT) * 100;
-                                        ftBar.style.setProperty('--progress', `${progressPercentage}%`);
-                                        if (window.CURRENT_FREE_COUNT >= window.FREE_LIMIT) {
-                                            ftBar.classList.add('bg-danger');
-                                            const activeGroup = getEl('active-generator-controls');
-                                            const limitGroup = getEl('limit-reached-controls');
-                                            if (activeGroup && limitGroup) {
-                                                activeGroup.classList.add('hidden');
-                                                limitGroup.classList.remove('hidden');
-                                            }
-                                        }
-                                    }
                                 }
 
-                                // 3. Persistence (Reliable async save)
+                                // Persistence
                                 pendingSaves++;
-                                fetch(data.image).then(r => r.blob()).then(blob => {
-                                    return ImageStorage.saveImage(blob, data.fileName, data.prompt);
-                                }).finally(() => { pendingSaves--; });
-
-                            } else if (data.success === false) {
-                                if (window.Toast) window.Toast.error(data.error);
+                                diag.log(`SAVE: Fetching blob for ${data.fileName}...`);
+                                fetch(data.image).then(r => r.blob()).then(async (blob) => {
+                                    diag.log(`SAVE: Writing to DB: ${data.fileName} (${blob.size} bytes)`);
+                                    const res = await ImageStorage.saveImage(blob, data.fileName, data.prompt);
+                                    if (res) diag.log(`SAVE SUCCESS: ${data.fileName}`);
+                                    else diag.log(`SAVE FAILED: ${data.fileName}`);
+                                    diag.updateStats();
+                                }).catch(e => diag.log(`FETCH ERROR: ${e.message}`)).finally(() => { pendingSaves--; });
                             }
                         } catch (pErr) { console.error('Stream parse error', pErr); }
                     }
                 }
             } catch (err) {
-                if (err.name !== 'AbortError') {
-                    console.error('Fetch fail:', err);
-                    if (window.Toast) window.Toast.error('Operation failed: ' + err.message);
-                }
+                if (err.name !== 'AbortError') diag.log(`PROCESS ERROR: ${err.message}`);
             } finally {
                 resetUI();
-                // If on mobile and many images were generated, they might still be saving
-                if (pendingSaves > 0) console.log(`[Generator] Still saving ${pendingSaves} images...`);
+                diag.log(`Generation finished. Pending saves: ${pendingSaves}`);
             }
         };
     }
 
-    // --- 4. OTHER CONTROLS ---
     const stopBtn = getEl('stop-btn');
     if (stopBtn) stopBtn.onclick = () => { if (controller) controller.abort(); resetUI(); };
 
     const clearGal = getEl('clear-gallery');
     if (clearGal) clearGal.onclick = async () => {
-        if (window.Confirm && !await window.Confirm.show('Clear all images from local gallery?')) return;
+        if (window.Confirm && !await window.Confirm.show('Clear local gallery?')) return;
+        diag.log('Clearing storage...');
         await ImageStorage.clear();
         await loadGallery();
     };
-
-    const clearHist = getEl('clear-history');
-    if (clearHist) clearHist.onclick = async () => {
-        if (window.Confirm && !await window.Confirm.show('Clear all history images?')) return;
-        // Optimization: simple clear for all archived
-        await ImageStorage.clear();
-        await loadGallery();
-    };
-
-    const dlZip = getEl('download-zip');
-    if (dlZip) dlZip.onclick = async () => {
-        const images = await ImageStorage.getAllImages();
-        const filtered = images.filter(img => img.isArchived === false);
-        if (filtered.length === 0) return window.Toast?.info('Nothing to download.');
-
-        if (typeof JSZip === 'undefined') return window.Toast?.error('ZIP library not loaded.');
-
-        const zip = new JSZip();
-        filtered.forEach(img => zip.file(img.fileName, img.blob));
-        const content = await zip.generateAsync({ type: 'blob' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(content);
-        a.download = 'results.zip';
-        a.click();
-    };
-
-    // --- 5. INITIALIZATION ---
-    function setupCounters() {
-        const pInput = getEl('prompts');
-        const pCount = getEl('prompts-count');
-        const fInput = getEl('filenames');
-        const fCount = getEl('filenames-count');
-        const upd = (i, c, l) => { if (i && c) c.textContent = `${i.value.split('\n').filter(l => l.trim()).length} ${l}`; };
-        if (pInput) pInput.addEventListener('input', () => upd(pInput, pCount, 'Prompts'));
-        if (fInput) fInput.addEventListener('input', () => upd(fInput, fCount, 'Names'));
-    }
 
     async function initSystem() {
-        setupCounters();
+        diag.log('System Initialization...');
         try {
             await ImageStorage.init();
+            diag.log('Storage initialized.');
             await loadGallery();
         } catch (e) {
-            console.warn('[Generator] System init with storage issues:', e);
-            await loadGallery(); // Still try to render whatever is possible
+            diag.log(`INIT ERROR: ${e.message || e}`);
+            await loadGallery();
         }
     }
 
     initSystem();
-    console.log('[Generator] Hardened engine ready.');
+    console.log('[Generator] Diagnostic mode active.');
 
 })();
