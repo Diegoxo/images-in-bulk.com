@@ -68,6 +68,22 @@ if (session_status() === PHP_SESSION_NONE) {
 function getDB()
 {
     static $pdo = null;
+
+    // Check if the connection is still alive
+    if ($pdo !== null) {
+        try {
+            // A simple query to test the connection (ping)
+            $pdo->query("SELECT 1");
+        } catch (PDOException $e) {
+            // Error code 2006 or 2013 usually mean "gone away" or "lost connection"
+            if ($e->getCode() == 'HY000' || strpos($e->getMessage(), 'gone away') !== false) {
+                $pdo = null; // Forces a reconnection below
+            } else {
+                throw $e;
+            }
+        }
+    }
+
     if ($pdo === null) {
         try {
             $dsn = "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8mb4";
@@ -75,6 +91,7 @@ function getDB()
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                 PDO::ATTR_EMULATE_PREPARES => false,
+                // Optional: PDO::ATTR_PERSISTENT => true, // Potentially useful but auto-recon is better
             ]);
         } catch (PDOException $e) {
             die("Database connection failed: " . $e->getMessage());
