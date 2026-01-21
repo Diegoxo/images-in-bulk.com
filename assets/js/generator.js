@@ -1,5 +1,6 @@
 /**
- * Generator UI Controller (Diagnostic v8 - Hardened Rendering)
+ * Generator UI Controller (Diagnostic v10 - THE BASE64 NUCLEAR OPTION)
+ * Final push for iPhone persistence.
  */
 
 (function () {
@@ -12,23 +13,14 @@
         updateStats: async () => {
             const statsEl = document.getElementById('diag-stats');
             if (!statsEl) return;
-
-            const dbStatus = ImageStorage.db ? 'CONNECTED' : (ImageStorage.isFailed ? 'FAILED' : 'WAITING');
             const images = await ImageStorage.getAllImages();
-
-            // Critical: Ensure User ID comparison is robust
             const current = images.filter(i => String(i.isArchived) === 'false').length;
             const history = images.filter(i => String(i.isArchived) !== 'false').length;
-
-            const gridEl = document.getElementById('image-grid');
-            const gridStatus = gridEl ? 'FOUND' : 'NOT FOUND';
-
             statsEl.innerHTML = `
-                <div class="diag-row"><span>DB Status:</span> <span class="diag-val">${dbStatus}</span></div>
+                <div class="diag-row"><span>DB Status:</span> <span class="diag-val">${ImageStorage.db ? 'CONNECTED' : 'WAIT'}</span></div>
                 <div class="diag-row"><span>User ID:</span> <span class="diag-val">${CURRENT_USER_ID}</span></div>
-                <div class="diag-row"><span>Image Grid:</span> <span class="diag-val" style="color:${gridEl ? '#0f0' : '#f00'}">${gridStatus}</span></div>
-                <div class="diag-row"><span>In Current:</span> <span class="diag-val">${current} images</span></div>
-                <div class="diag-row"><span>In History:</span> <span class="diag-val">${history} images</span></div>
+                <div class="diag-row"><span>Persisted (Base64):</span> <span class="diag-val">${images.length} items</span></div>
+                <div class="diag-row"><span>Current / History:</span> <span class="diag-val">${current} / ${history}</span></div>
             `;
         }
     };
@@ -37,23 +29,27 @@
     const form = getEl('generator-form');
     let controller = null;
 
+    // Helper: Convert Blob to Base64 (The most reliable format for Safari persistence)
+    const blobToBase64 = blob => new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+    });
+
     async function loadGallery() {
-        diag.log('RENDER: Initializing gallery load...');
+        diag.log('RENDER [v10]: Starting load...');
         const imageGrid = getEl('image-grid');
         const historyGrid = getEl('history-grid');
         const historySection = getEl('history-section');
         const dlBtn = getEl('download-zip');
 
-        if (!imageGrid) {
-            diag.log('RENDER ERROR: image-grid container not found in DOM');
-            return;
-        }
+        if (!imageGrid) return;
 
         try {
             const storedImages = await ImageStorage.getAllImages();
-            diag.log(`RENDER: Found ${storedImages.length} images in total storage.`);
+            diag.log(`RENDER: Processing ${storedImages.length} images.`);
 
-            // Clean slate
             imageGrid.innerHTML = '';
             if (historyGrid) historyGrid.innerHTML = '';
 
@@ -61,49 +57,32 @@
             let hasHistory = false;
 
             if (storedImages && storedImages.length > 0) {
-                // Sort by timestamp
                 storedImages.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
-                storedImages.forEach((img, index) => {
-                    if (!img.blob) {
-                        diag.log(`RENDER: Image ${index} has no blob data.`);
-                        return;
-                    }
+                storedImages.forEach((img) => {
+                    // In v10, we check for .base64 first, fallback to .blob
+                    const src = img.base64 || (img.blob ? URL.createObjectURL(img.blob) : null);
+                    if (!src) return;
 
-                    try {
-                        const blobUrl = URL.createObjectURL(img.blob);
-                        const card = createCard(img.fileName, img.prompt, blobUrl);
+                    const card = createCard(img.fileName, img.prompt, src);
 
-                        // Robust archival check
-                        if (String(img.isArchived) === 'true') {
-                            if (historyGrid) historyGrid.append(card);
-                            hasHistory = true;
-                        } else {
-                            imageGrid.append(card);
-                            hasCurrent = true;
-                            diag.log(`RENDER: Appended CURRENT card: ${img.fileName} (${img.blob.size} bytes)`);
-                        }
-                    } catch (e) {
-                        diag.log(`RENDER FAIL for ${img.fileName}: ${e.message}`);
+                    if (String(img.isArchived) === 'true') {
+                        if (historyGrid) historyGrid.append(card);
+                        hasHistory = true;
+                    } else {
+                        imageGrid.append(card);
+                        hasCurrent = true;
                     }
                 });
             }
 
-            // UI Visibility Adjustments
-            if (!hasCurrent) {
-                imageGrid.innerHTML = '<div class="empty-state">Your generated images will appear here.</div>';
-                diag.log('RENDER: Image grid is empty (showing placeholder)');
-            } else {
-                if (dlBtn) dlBtn.classList.remove('hidden-btn');
-                diag.log(`RENDER: Gallery populated with ${imageGrid.children.length} items.`);
-            }
+            if (!hasCurrent) imageGrid.innerHTML = '<div class="empty-state">Your generated images will appear here.</div>';
+            else if (dlBtn) dlBtn.classList.remove('hidden-btn');
 
             if (hasHistory && historySection) historySection.classList.remove('hidden-btn');
 
             await diag.updateStats();
-        } catch (e) {
-            diag.log(`RENDER EXCEPTION: ${e.message}`);
-        }
+        } catch (e) { diag.log(`RENDER ERROR: ${e.message}`); }
     }
 
     function createCard(name, prompt, url) {
@@ -132,14 +111,13 @@
         return div;
     }
 
-    // --- FORM SUBMIT (Simplified for Diag) ---
     if (form) {
         form.onsubmit = async (e) => {
             e.preventDefault();
             const genBtn = getEl('generate-btn');
             if (genBtn) { genBtn.disabled = true; genBtn.textContent = 'Processing...'; }
 
-            diag.log('SUBMIT: Archiving current results...');
+            diag.log('SUBMIT: Archiving results...');
             await ImageStorage.archiveAll();
             await loadGallery();
 
@@ -174,51 +152,34 @@
                         try {
                             const data = JSON.parse(dataLine.substring(6));
                             if (data.image) {
-                                diag.log(`STREAM: Received image ${data.fileName}`);
-                                // Render immediately
+                                diag.log(`STREAM: Rendering ${data.fileName}`);
                                 const card = createCard(data.fileName, data.prompt, data.image);
                                 const grid = getEl('image-grid');
-                                if (grid) {
-                                    if (grid.querySelector('.empty-state')) grid.innerHTML = '';
-                                    grid.append(card);
-                                }
-                                // Save to DB (Hardened for Safari/iOS)
-                                fetch(data.image).then(r => r.blob()).then(async b => {
-                                    // Force iPhone to read image into memory buffer to break session link
-                                    const buffer = await b.arrayBuffer();
-                                    const hardenedBlob = new Blob([buffer], { type: b.type || 'image/png' });
+                                if (grid) { if (grid.querySelector('.empty-state')) grid.innerHTML = ''; grid.append(card); }
 
-                                    const saved = await ImageStorage.saveImage(hardenedBlob, data.fileName, data.prompt);
-                                    diag.log(saved ? `DB: Permanent Save ${data.fileName}` : `DB FAIL: ${data.fileName}`);
+                                // Persistence (THE BASE64 CONVERSION)
+                                fetch(data.image).then(r => r.blob()).then(async b => {
+                                    const b64 = await blobToBase64(b);
+                                    const saved = await ImageStorage.saveImage(null, data.fileName, data.prompt, b64);
+                                    diag.log(saved ? `DB [B64]: Saved ${data.fileName}` : `DB [B64] FAIL`);
                                     diag.updateStats();
-                                }).catch(e => diag.log(`DB SAVE ERROR: ${e.message}`));
+                                }).catch(e => diag.log(`B64 ERROR: ${e.message}`));
                             }
                         } catch (e) { }
                     }
                 }
-            } catch (err) {
-                diag.log(`FETCH ERROR: ${err.message}`);
-            } finally {
-                if (genBtn) { genBtn.disabled = false; genBtn.textContent = 'Start Generation 🚀'; }
-                diag.log('Generation cycle finished.');
-            }
+            } catch (err) { diag.log(`FETCH ERROR: ${err.message}`); }
+            finally { if (genBtn) { genBtn.disabled = false; genBtn.textContent = 'Start Generation 🚀'; } }
         };
     }
 
     async function initSystem() {
-        diag.log('START: Script init...');
+        diag.log('v10 Script Init...');
         try {
             await ImageStorage.init();
-            diag.log('START: Storage connected.');
-            // Add a small delay to ensure DOM is settled for iPhone
-            setTimeout(async () => {
-                await loadGallery();
-            }, 500);
-        } catch (e) {
-            diag.log(`START ERROR: ${e.message}`);
-            await loadGallery();
-        }
+            diag.log('Storage OK.');
+            setTimeout(() => loadGallery(), 600);
+        } catch (e) { diag.log(`INIT FAIL: ${e.message}`); }
     }
-
     initSystem();
 })();
