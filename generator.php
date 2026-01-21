@@ -16,7 +16,7 @@ require_once 'includes/controllers/generator_controller.php';
     <!-- Main Header Section -->
     <?php include 'includes/layouts/header.php'; ?>
 
-    <main class="container">
+    <main class="container pb-mobile-lg">
         <!-- Input Section -->
         <section class="glass animate-fade section-card">
             <h1 class="section-title">Bulk image generator</h1>

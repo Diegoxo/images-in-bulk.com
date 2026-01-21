@@ -181,6 +181,16 @@ main {
     font-size: 0.85rem !important;
 }
 
+.pb-mobile-lg {
+    padding-bottom: 2rem !important;
+}
+
+@media (max-width: 768px) {
+    .pb-mobile-lg {
+        padding-bottom: 6rem !important;
+    }
+}
+
 .opacity-0 {
     opacity: 0 !important;
 }
@@ -2406,47 +2416,4 @@ textarea::-webkit-scrollbar-thumb:hover,
 
 .full-width {
     width: 100%;
-}
-
-/* --- Diagnostic Panel --- */
-#diag-panel {
-    background: rgba(0, 0, 0, 0.8);
-    color: #0f0;
-    font-family: monospace;
-    font-size: 11px;
-    padding: 15px;
-    border-radius: 10px;
-    margin: 20px 0;
-    border: 1px solid #0f0;
-    line-height: 1.4;
-    max-height: 300px;
-    overflow-y: auto;
-    backdrop-filter: blur(10px);
-}
-
-#diag-panel h3 {
-    color: #0f0;
-    margin: 0 0 10px 0;
-    border-bottom: 1px solid #0f0;
-    padding-bottom: 5px;
-}
-
-.diag-row {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 4px;
-    border-bottom: 1px solid rgba(0, 255, 0, 0.1);
-}
-
-.diag-val {
-    font-weight: bold;
-    color: #fff;
-}
-
-.diag-log {
-    margin-top: 10px;
-    font-size: 10px;
-    color: #aaa;
-    border-top: 1px dashed #0f0;
-    padding-top: 5px;
 }
