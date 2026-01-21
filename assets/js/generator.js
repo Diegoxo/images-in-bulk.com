@@ -139,9 +139,6 @@
             await ImageStorage.archiveAll();
             await loadGallery();
 
-            const imageGrid = getEl('image-grid');
-            if (imageGrid) imageGrid.innerHTML = '<div class="text-center p-4">Connecting to AI Engine...</div>';
-
             controller = new AbortController();
             const pendingSaves = [];
 
