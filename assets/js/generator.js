@@ -182,12 +182,16 @@
                                     if (grid.querySelector('.empty-state')) grid.innerHTML = '';
                                     grid.append(card);
                                 }
-                                // Save to DB
+                                // Save to DB (Hardened for Safari/iOS)
                                 fetch(data.image).then(r => r.blob()).then(async b => {
-                                    const saved = await ImageStorage.saveImage(b, data.fileName, data.prompt);
-                                    diag.log(saved ? `DB: Saved ${data.fileName}` : `DB FAIL: ${data.fileName}`);
+                                    // Force iPhone to read image into memory buffer to break session link
+                                    const buffer = await b.arrayBuffer();
+                                    const hardenedBlob = new Blob([buffer], { type: b.type || 'image/png' });
+
+                                    const saved = await ImageStorage.saveImage(hardenedBlob, data.fileName, data.prompt);
+                                    diag.log(saved ? `DB: Permanent Save ${data.fileName}` : `DB FAIL: ${data.fileName}`);
                                     diag.updateStats();
-                                });
+                                }).catch(e => diag.log(`DB SAVE ERROR: ${e.message}`));
                             }
                         } catch (e) { }
                     }
