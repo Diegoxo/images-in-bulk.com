@@ -232,6 +232,32 @@
                                 const counter = getEl('generation-counter');
                                 if (counter) counter.textContent = `${current} / ${total}`;
 
+                                // --- Update Free Trial UI (Restored) ---
+                                if (window.FREE_LIMIT > 0) {
+                                    window.CURRENT_FREE_COUNT++;
+                                    const ftText = getEl('free-trial-counter-text');
+                                    const ftBar = getEl('free-trial-progress-bar');
+                                    if (ftText) ftText.textContent = `${window.CURRENT_FREE_COUNT}/${window.FREE_LIMIT}`;
+                                    if (ftBar) {
+                                        const progress = (window.CURRENT_FREE_COUNT / window.FREE_LIMIT) * 100;
+                                        ftBar.style.setProperty('--progress', `${progress}%`);
+                                    }
+
+                                    if (window.CURRENT_FREE_COUNT >= window.FREE_LIMIT) {
+                                        if (ftBar) {
+                                            ftBar.classList.remove('bg-primary');
+                                            ftBar.classList.add('bg-danger');
+                                        }
+                                        // Switch to Limit Reached Mode
+                                        const activeControls = getEl('active-generator-controls');
+                                        const limitControls = getEl('limit-reached-controls');
+                                        if (activeControls && limitControls) {
+                                            activeControls.classList.add('hidden');
+                                            limitControls.classList.remove('hidden');
+                                        }
+                                    }
+                                }
+
                                 // Background Async Save
                                 fetch(data.image).then(r => r.blob()).then(b => ImageStorage.saveImage(b, data.fileName, data.prompt)).catch(() => { });
                             } else if (data.success === false) {
