@@ -124,8 +124,7 @@
 
             // 2. Archive previous results immediately
             await ImageStorage.archiveAll();
-            // Clear current grid immediately
-            if (imageGrid) imageGrid.innerHTML = '';
+            await loadGallery(); // This moves them to history visually before starting new ones
 
             // 3. Start Generation
             controller = new AbortController();
