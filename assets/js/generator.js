@@ -1,394 +1,293 @@
 /**
- * Generator UI Controller (Minimal JS)
- * This script only handles UI interaction and communicates with the Backend "Brain".
+ * Generator UI Controller (Hardened for Mobile)
  */
 
-// --- Modal Helpers ---
-window.openModal = function (modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-        modal.classList.remove('hidden');
-        modal.classList.add('d-flex');
-        setTimeout(() => modal.classList.add('active'), 10);
-        document.body.style.overflow = 'hidden';
-    }
-}
-
-window.closeModal = function (modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-        modal.classList.remove('active');
-        setTimeout(() => {
-            modal.classList.add('hidden');
-            modal.classList.remove('d-flex');
-        }, 300);
-        document.body.style.overflow = '';
-    }
-}
-
-document.addEventListener('DOMContentLoaded', async () => {
-    // UI Elements
-    const elements = {
-        form: document.getElementById('generator-form'),
-        imageGrid: document.getElementById('image-grid'),
-        historyGrid: document.getElementById('history-grid'),
-        historySection: document.getElementById('history-section'),
-        progressBar: document.getElementById('progress-bar'),
-        progressContainer: document.getElementById('progress-bar-container'),
-        downloadBtn: document.getElementById('download-zip'),
-        downloadHistoryBtn: document.getElementById('download-zip-history'),
-        stopBtn: document.getElementById('stop-btn'),
-        promptsInput: document.getElementById('prompts'),
-        filenamesInput: document.getElementById('filenames'),
-        promptsCounter: document.getElementById('prompts-count'),
-        filenamesCounter: document.getElementById('filenames-count'),
-        generationCounter: document.getElementById('generation-counter'),
-        clearGalleryBtn: document.getElementById('clear-gallery'),
-        generateBtn: document.getElementById('generate-btn'),
-        warningText: document.getElementById('generation-warning-text'),
-        spinner: document.getElementById('generation-spinner'),
-        freeTrialText: document.getElementById('free-trial-counter-text'),
-        freeTrialBar: document.getElementById('free-trial-progress-bar'),
-        activeControls: document.getElementById('active-generator-controls'),
-        limitControls: document.getElementById('limit-reached-controls')
+(function () {
+    // 0. GLOBAL ERROR REPORTER
+    window.onerror = function (msg, url, lineNo, columnNo, error) {
+        const errorMsg = `JS Error: ${msg} [${lineNo}:${columnNo}]`;
+        console.error(errorMsg);
+        if (window.Toast) window.Toast.error(errorMsg);
+        return false;
     };
 
-    console.log('[Generator] Free Trial UI found:', {
-        text: !!elements.freeTrialText,
-        bar: !!elements.freeTrialBar,
-        limit: window.FREE_LIMIT,
-        count: window.CURRENT_FREE_COUNT
-    });
+    console.log('[Generator] Script starting...');
+
+    const getEl = (id) => document.getElementById(id);
+
+    // Instant check for critical elements
+    const form = getEl('generator-form');
+    const generateBtn = getEl('generate-btn');
+
+    if (!form || !generateBtn) {
+        console.warn('[Generator] Some critical elements missing at start.');
+    }
 
     let controller = null;
 
-    // --- 1. ATTACH LISTENERS IMMEDIATELY (Don't wait for storage) ---
-    function setupInteraction() {
-        const updateLineCount = (input, counter, suffix) => {
-            if (!input || !counter) return;
-            const lines = input.value.split('\n').filter(line => line.trim() !== '').length;
-            counter.textContent = `${lines} ${suffix}`;
-        };
+    // --- 1. UI RESET HELPER ---
+    function resetUI() {
+        if (generateBtn) {
+            generateBtn.disabled = false;
+            generateBtn.textContent = 'Start Generation 🚀';
+        }
 
-        if (elements.promptsInput && elements.promptsCounter) {
-            elements.promptsInput.addEventListener('input', () => updateLineCount(elements.promptsInput, elements.promptsCounter, 'Prompts'));
-        }
-        if (elements.filenamesInput && elements.filenamesCounter) {
-            elements.filenamesInput.addEventListener('input', () => updateLineCount(elements.filenamesInput, elements.filenamesCounter, 'Names'));
-        }
+        const ids = ['progress-bar-container', 'generation-warning-text', 'stop-btn', 'generation-spinner', 'generation-counter'];
+        ids.forEach(id => {
+            const el = getEl(id);
+            if (el) el.classList.add('hidden-btn');
+        });
+
+        const dlBtn = getEl('download-zip');
+        if (dlBtn) dlBtn.classList.remove('hidden-btn');
     }
 
-    setupInteraction();
-
-    // --- 2. INITIALIZE STORAGE GRACEFULLY ---
+    // --- 2. STORAGE INITIALIZATION (Non-blocking) ---
     async function initSystem() {
         try {
             await ImageStorage.init();
-            console.log('[Generator] Storage initialized successfully.');
+            console.log('[Generator] Storage ready.');
             await loadGallery();
-        } catch (e) {
-            console.warn('[Generator] Storage failed to init:', e);
-            Toast.info('Local history is unavailable in this session.');
-            // Fallback: Just show empty state
-            elements.imageGrid.innerHTML = '<div class="empty-state">Storage unavailable. Images won\'t be saved locally.</div>';
+        } catch (err) {
+            console.warn('[Generator] Storage failed:', err);
+            if (window.Toast) window.Toast.info('Local history is unavailable.');
+            const imageGrid = getEl('image-grid');
+            if (imageGrid) imageGrid.innerHTML = '<div class="empty-state">Storage unavailable. Results property of this session.</div>';
         }
     }
 
-    initSystem();
-
-    // LOAD GALLERY FROM STORAGE
+    // --- 3. GALLERY RENDERING ---
     async function loadGallery() {
-        if (ImageStorage.isFailed) return;
+        const imageGrid = getEl('image-grid');
+        const historyGrid = getEl('history-grid');
+        const historySection = getEl('history-section');
+        const dlHistoryBtn = getEl('download-zip-history');
+        const dlBtn = getEl('download-zip');
+
+        if (!imageGrid) return;
+        if (ImageStorage.isFailed) {
+            imageGrid.innerHTML = '<div class="empty-state">Storage unavailable. Results won\'t be saved.</div>';
+            return;
+        }
 
         try {
             const storedImages = await ImageStorage.getAllImages();
-            elements.imageGrid.innerHTML = '';
-            elements.historyGrid.innerHTML = '';
+            imageGrid.innerHTML = '';
+            if (historyGrid) historyGrid.innerHTML = '';
 
             if (storedImages && storedImages.length > 0) {
                 let hasHistory = false, hasCurrent = false;
                 storedImages.forEach(img => {
-                    if (!img.blob) return; // Skip corrupted records
+                    if (!img.blob) return;
                     try {
-                        const card = createCardElement(img.fileName, img.prompt, URL.createObjectURL(img.blob));
+                        const card = createCard(img.fileName, img.prompt, URL.createObjectURL(img.blob));
                         if (img.isArchived) {
-                            elements.historyGrid.append(card);
+                            if (historyGrid) historyGrid.append(card);
                             hasHistory = true;
                         } else {
-                            elements.imageGrid.append(card);
+                            imageGrid.append(card);
                             hasCurrent = true;
                         }
-                    } catch (e) {
-                        console.error('Error creating card for image:', e);
-                    }
+                    } catch (e) { console.error('Card init error', e); }
                 });
-                if (hasHistory) {
-                    elements.historySection.classList.remove('hidden-btn');
-                    elements.downloadHistoryBtn.classList.remove('hidden-btn');
-                }
-                if (hasCurrent) {
-                    elements.downloadBtn.classList.remove('hidden-btn');
-                } else {
-                    elements.imageGrid.innerHTML = '<div class="empty-state">Your generated images will appear here.</div>';
-                }
+
+                if (hasHistory && historySection) historySection.classList.remove('hidden-btn');
+                if (hasHistory && dlHistoryBtn) dlHistoryBtn.classList.remove('hidden-btn');
+                if (hasCurrent && dlBtn) dlBtn.classList.remove('hidden-btn');
             } else {
-                elements.imageGrid.innerHTML = '<div class="empty-state">Your generated images will appear here.</div>';
+                imageGrid.innerHTML = '<div class="empty-state">Your generated images will appear here.</div>';
             }
-        } catch (err) {
-            console.error('Gallery load error:', err);
+        } catch (e) {
+            console.error('Render error:', e);
         }
-    };
-
-    // 3. START GENERATION (The brain is now in the Backend)
-    elements.form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-
-        // Get raw values (let backend handle parsing and validation)
-        const rawPrompts = elements.promptsInput.value;
-        const rawFilenames = elements.filenamesInput.value;
-
-        // Prepare UI
-        await ImageStorage.archiveAll();
-        await loadGallery(); // Await to ensure it finishes before clearing
-        elements.imageGrid.innerHTML = '';
-        elements.generateBtn.disabled = true;
-        elements.generateBtn.textContent = 'Processing...';
-        elements.progressContainer.classList.remove('hidden-btn');
-        elements.progressBar.style.width = '0%';
-        elements.warningText.classList.remove('hidden-btn');
-        elements.spinner.classList.remove('hidden-btn');
-        elements.stopBtn.classList.remove('hidden-btn');
-        elements.stopBtn.classList.add('d-flex');
-
-        // Communicate with Backend Brain via Streaming
-        controller = new AbortController();
-        try {
-            const response = await fetch('api/process_batch.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': window.CSRF_TOKEN || ''
-                },
-                signal: controller.signal,
-                body: JSON.stringify({
-                    prompts: rawPrompts,
-                    filenames: rawFilenames,
-                    model: document.getElementById('model').value,
-                    resolution: document.getElementById('resolution').value,
-                    format: document.getElementById('format').value,
-                    custom_style: document.getElementById('custom_style').value
-                })
-            });
-
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
-            let totalImages = 0;
-            let completedImages = 0;
-            let buffer = ''; // BUFFER TO HANDLE PARTIAL CHUNKS
-
-            while (true) {
-                const { value, done } = await reader.read();
-                if (done) break;
-
-                buffer += decoder.decode(value, { stream: true });
-
-                // SSE events are separated by double newlines (\n\n)
-                const parts = buffer.split('\n\n');
-
-                // Keep the last part in the buffer (it might be incomplete)
-                buffer = parts.pop();
-
-                for (const part of parts) {
-                    if (!part.trim()) continue;
-
-                    const lines = part.split('\n');
-                    let eventData = '';
-
-                    for (const line of lines) {
-                        if (line.startsWith('data: ')) {
-                            eventData = line.substring(6);
-                        }
-                    }
-
-                    if (eventData) {
-                        try {
-                            const data = JSON.parse(eventData);
-
-                            if (data.total) {
-                                totalImages = data.total;
-                                elements.generationCounter.classList.remove('hidden-btn');
-                                elements.generationCounter.classList.add('d-inline-block');
-                                elements.generationCounter.textContent = `0 / ${totalImages}`;
-                            }
-
-                            if (data.image) {
-                                // Process results from backend
-                                try {
-                                    const blob = await (await fetch(data.image)).blob();
-                                    await ImageStorage.saveImage(blob, data.fileName, data.prompt);
-                                } catch (storageErr) {
-                                    console.error('Failed to save image locally:', storageErr);
-                                }
-
-                                const card = createCardElement(data.fileName, data.prompt, data.image);
-                                elements.imageGrid.append(card);
-
-                                completedImages++;
-                                elements.progressBar.style.width = `${(completedImages / totalImages) * 100}%`;
-                                elements.generationCounter.textContent = `${completedImages} / ${totalImages}`;
-
-                                // Update Free Trial UI if applicable
-                                if (window.FREE_LIMIT > 0 && elements.freeTrialText) {
-                                    window.CURRENT_FREE_COUNT++;
-                                    elements.freeTrialText.textContent = `${window.CURRENT_FREE_COUNT}/${window.FREE_LIMIT}`;
-                                    const progress = (window.CURRENT_FREE_COUNT / window.FREE_LIMIT) * 100;
-                                    elements.freeTrialBar.style.setProperty('--progress', `${progress}%`);
-
-                                    if (window.CURRENT_FREE_COUNT >= window.FREE_LIMIT) {
-                                        elements.freeTrialBar.classList.remove('bg-primary');
-                                        elements.freeTrialBar.classList.add('bg-danger');
-
-                                        // REACTIVE SWITCH: Swap Generate button for Upgrade alert instantly
-                                        if (elements.activeControls && elements.limitControls) {
-                                            elements.activeControls.classList.add('hidden');
-                                            elements.limitControls.classList.remove('hidden');
-                                        }
-                                    }
-                                }
-                            } else if (data.success === false) {
-                                if (data.error.toLowerCase().includes('limit')) {
-                                    document.getElementById('limit-modal-message').innerHTML = data.error;
-                                    window.openModal('limit-modal');
-                                } else {
-                                    Toast.error('Error: ' + data.error);
-                                }
-                            }
-                        } catch (parseErr) {
-                            console.error('JSON Parse Error on part:', parseErr, eventData);
-                        }
-                    }
-                }
-            }
-        } catch (err) {
-            if (err.name !== 'AbortError') console.error('Batch error:', err);
-        } finally {
-            resetUI();
-        }
-    });
-
-    // 4. STOP BUTTON
-    elements.stopBtn.addEventListener('click', () => {
-        if (controller) controller.abort();
-        resetUI();
-    });
-
-    function resetUI() {
-        elements.generateBtn.disabled = false;
-        elements.generateBtn.textContent = 'Start Generation 🚀';
-        elements.progressContainer.classList.add('hidden-btn');
-        elements.warningText.classList.add('hidden-btn');
-        elements.stopBtn.classList.add('hidden-btn');
-        elements.spinner.classList.add('hidden-btn');
-        elements.generationCounter.classList.add('hidden-btn');
-        elements.downloadBtn.classList.remove('hidden-btn');
     }
 
-    // UTILS: Card Creation
-    function createCardElement(name, prompt, url) {
+    function createCard(name, prompt, url) {
         const div = document.createElement('div');
         div.className = 'image-card glass';
         div.innerHTML = `
             <div class="img-wrapper">
-                <button class="btn-download-single" title="Download image"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg></button>
-                <img src="${url}" alt="Generated Image" class="fade-img loaded">
+                <button class="btn-download-single" title="Download"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg></button>
+                <img src="${url}" alt="AI Image" class="fade-img loaded">
             </div>
             <div class="card-info">
                 <div class="image-name-tag" title="${name}">${name}</div>
                 <div class="image-prompt-tag" title="${prompt}">${prompt}</div>
             </div>
         `;
-        div.querySelector('.btn-download-single').onclick = (e) => {
-            e.stopPropagation();
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = name;
-            a.click();
-        };
+        const btn = div.querySelector('.btn-download-single');
+        if (btn) {
+            btn.onclick = (e) => {
+                e.stopPropagation();
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = name;
+                a.click();
+            };
+        }
         return div;
     }
 
-    // 5. ZIP DOWNLOADS
-    const createZip = async (isHistory) => {
-        const zip = new JSZip();
+    // --- 4. COUNTERS ---
+    function setupCounters() {
+        const pInput = getEl('prompts');
+        const pCount = getEl('prompts-count');
+        const fInput = getEl('filenames');
+        const fCount = getEl('filenames-count');
+
+        const upd = (input, count, label) => {
+            if (!input || !count) return;
+            const lines = input.value.split('\n').filter(l => l.trim()).length;
+            count.textContent = `${lines} ${label}`;
+        };
+
+        if (pInput) pInput.addEventListener('input', () => upd(pInput, pCount, 'Prompts'));
+        if (fInput) fInput.addEventListener('input', () => upd(fInput, fCount, 'Names'));
+    }
+
+    // --- 5. MAIN SUBMIT HANDLER ---
+    if (form) {
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+            console.log('[Generator] Form submit.');
+
+            if (generateBtn) {
+                generateBtn.disabled = true;
+                generateBtn.textContent = 'Processing...';
+            }
+
+            const show = (id) => { const el = getEl(id); if (el) el.classList.remove('hidden-btn'); };
+            show('progress-bar-container');
+            show('generation-warning-text');
+            show('generation-spinner');
+
+            const stopBtn = getEl('stop-btn');
+            if (stopBtn) {
+                stopBtn.classList.remove('hidden-btn');
+                stopBtn.classList.add('d-flex');
+            }
+
+            const imageGrid = getEl('image-grid');
+            if (imageGrid) imageGrid.innerHTML = '<div class="text-center p-2">Connecting to engine...</div>';
+
+            // Non-blocking history archive
+            ImageStorage.archiveAll().then(() => loadGallery()).catch(() => { });
+
+            const rawPrompts = getEl('prompts')?.value || '';
+            const rawFilenames = getEl('filenames')?.value || '';
+            const model = getEl('model')?.value || 'dall-e-3';
+            const res = getEl('resolution')?.value || '1:1';
+            const fmt = getEl('format')?.value || 'png';
+            const style = getEl('custom_style')?.value || '';
+
+            controller = new AbortController();
+            try {
+                const response = await fetch('api/process_batch.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': window.CSRF_TOKEN || '' },
+                    signal: controller.signal,
+                    body: JSON.stringify({ prompts: rawPrompts, filenames: rawFilenames, model, resolution: res, format: fmt, custom_style: style })
+                });
+
+                if (!response.ok) throw new Error('Network error: ' + response.status);
+                if (!response.body) throw new Error('Stream not supported');
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let total = 0, current = 0, buffer = '';
+
+                if (imageGrid) imageGrid.innerHTML = '';
+
+                while (true) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
+
+                    buffer += decoder.decode(value, { stream: true });
+                    const parts = buffer.split('\n\n');
+                    buffer = parts.pop();
+
+                    for (const part of parts) {
+                        if (!part.trim()) continue;
+                        const dataLine = part.split('\n').find(l => l.startsWith('data: '));
+                        if (!dataLine) continue;
+
+                        try {
+                            const data = JSON.parse(dataLine.substring(6));
+                            if (data.total) {
+                                total = data.total;
+                                const counter = getEl('generation-counter');
+                                if (counter) {
+                                    counter.classList.remove('hidden-btn');
+                                    counter.textContent = `0 / ${total}`;
+                                }
+                            }
+                            if (data.image) {
+                                // Instant UI Update
+                                const card = createCard(data.fileName, data.prompt, data.image);
+                                if (imageGrid) imageGrid.append(card);
+
+                                current++;
+                                const bar = getEl('progress-bar');
+                                if (bar) bar.style.width = `${(current / total) * 100}%`;
+                                const counter = getEl('generation-counter');
+                                if (counter) counter.textContent = `${current} / ${total}`;
+
+                                // Background Async Save
+                                fetch(data.image).then(r => r.blob()).then(b => ImageStorage.saveImage(b, data.fileName, data.prompt)).catch(() => { });
+                            } else if (data.success === false) {
+                                if (window.Toast) window.Toast.error(data.error);
+                            }
+                        } catch (pErr) { console.error('Stream parse error', pErr); }
+                    }
+                }
+            } catch (err) {
+                if (err.name !== 'AbortError') {
+                    console.error('Fetch fail:', err);
+                    if (window.Toast) window.Toast.error('Operation failed: ' + err.message);
+                }
+            } finally {
+                resetUI();
+            }
+        };
+    }
+
+    // --- 6. OTHER CONTROLS ---
+    const stopBtn = getEl('stop-btn');
+    if (stopBtn) stopBtn.onclick = () => { if (controller) controller.abort(); resetUI(); };
+
+    const clearGal = getEl('clear-gallery');
+    if (clearGal) clearGal.onclick = async () => {
+        if (window.Confirm && !await window.Confirm.show('Clear all images from local gallery?')) return;
+        await ImageStorage.clear();
+        loadGallery();
+    };
+
+    const dlZip = getEl('download-zip');
+    if (dlZip) dlZip.onclick = async () => {
         const images = await ImageStorage.getAllImages();
-
-        // Robust filtering: 
-        // Current images MUST have isArchived explicitly false.
-        // History images are everything else (true or undefined legacy records).
-        const filtered = images.filter(img => {
-            return isHistory ? (img.isArchived !== false) : (img.isArchived === false);
-        });
-
+        const filtered = images.filter(img => img.isArchived === false);
         if (filtered.length === 0) {
-            Toast.info(isHistory ? 'No images in history to download.' : 'No current results to download.');
+            if (window.Toast) window.Toast.info('Nothing to download.');
             return;
         }
 
-        const usedNames = new Set();
+        if (typeof JSZip === 'undefined') {
+            if (window.Toast) window.Toast.error('ZIP library not loaded.');
+            return;
+        }
 
-        filtered.forEach(img => {
-            let finalName = img.fileName;
-            let counter = 1;
-            let baseName = finalName;
-            let ext = '';
-
-            // Extract extension if present
-            const lastDot = finalName.lastIndexOf('.');
-            if (lastDot !== -1) {
-                baseName = finalName.substring(0, lastDot);
-                ext = finalName.substring(lastDot);
-            }
-
-            // If name exists, append counter until unique
-            while (usedNames.has(finalName)) {
-                finalName = `${baseName} (${counter})${ext}`;
-                counter++;
-            }
-
-            usedNames.add(finalName);
-            zip.file(finalName, img.blob);
-        });
-
+        const zip = new JSZip();
+        filtered.forEach(img => zip.file(img.fileName, img.blob));
         const content = await zip.generateAsync({ type: 'blob' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(content);
-        a.download = isHistory ? 'history_images_bulk.zip' : 'batch_images_results.zip';
+        a.download = 'results.zip';
         a.click();
     };
-    elements.downloadBtn.onclick = () => createZip(false);
-    elements.downloadHistoryBtn.onclick = () => createZip(true);
 
-    // 6. CLEAR GALLERY
-    elements.clearGalleryBtn.onclick = async () => {
-        const confirmed = await Confirm.show('Are you sure you want to clear your entire local gallery? This action cannot be undone.', 'Clear Gallery');
-        if (!confirmed) return;
+    // Initialize
+    setupCounters();
+    initSystem();
+    console.log('[Generator] Init complete.');
 
-        await ImageStorage.clear();
-        loadGallery();
-        Toast.success('Gallery cleared.');
-        elements.downloadBtn.classList.add('hidden-btn');
-        elements.downloadHistoryBtn.classList.add('hidden-btn');
-        elements.historySection.classList.add('hidden-btn');
-    };
-
-    // 7. CLEAR ONLY HISTORY
-    const clearHistoryBtn = document.getElementById('clear-history');
-    if (clearHistoryBtn) {
-        clearHistoryBtn.onclick = async () => {
-            await ImageStorage.clearHistory();
-            loadGallery();
-            elements.downloadHistoryBtn.classList.add('hidden-btn');
-            elements.historySection.classList.add('hidden-btn');
-        };
-    }
-});
+})();
