@@ -60,53 +60,84 @@ document.addEventListener('DOMContentLoaded', async () => {
         count: window.CURRENT_FREE_COUNT
     });
 
-    let controller = null; // For cancelling the stream
+    let controller = null;
 
-    // Initialize Storage
-    await ImageStorage.init();
+    // --- 1. ATTACH LISTENERS IMMEDIATELY (Don't wait for storage) ---
+    function setupInteraction() {
+        const updateLineCount = (input, counter, suffix) => {
+            if (!input || !counter) return;
+            const lines = input.value.split('\n').filter(line => line.trim() !== '').length;
+            counter.textContent = `${lines} ${suffix}`;
+        };
 
-    // 1. UPDATE UI COUNTERS
-    const updateLineCount = (input, counter, suffix) => {
-        const lines = input.value.split('\n').filter(line => line.trim() !== '').length;
-        counter.textContent = `${lines} ${suffix}`;
-    };
-    elements.promptsInput.addEventListener('input', () => updateLineCount(elements.promptsInput, elements.promptsCounter, 'Prompts'));
-    elements.filenamesInput.addEventListener('input', () => updateLineCount(elements.filenamesInput, elements.filenamesCounter, 'Names'));
+        if (elements.promptsInput && elements.promptsCounter) {
+            elements.promptsInput.addEventListener('input', () => updateLineCount(elements.promptsInput, elements.promptsCounter, 'Prompts'));
+        }
+        if (elements.filenamesInput && elements.filenamesCounter) {
+            elements.filenamesInput.addEventListener('input', () => updateLineCount(elements.filenamesInput, elements.filenamesCounter, 'Names'));
+        }
+    }
 
-    // 2. LOAD GALLERY FROM INDEXEDDB
-    const loadGallery = async () => {
-        const storedImages = await ImageStorage.getAllImages();
-        elements.imageGrid.innerHTML = '';
-        elements.historyGrid.innerHTML = '';
+    setupInteraction();
 
-        if (storedImages.length > 0) {
-            let hasHistory = false, hasCurrent = false;
-            storedImages.forEach(img => {
-                const card = createCardElement(img.fileName, img.prompt, URL.createObjectURL(img.blob));
-                if (img.isArchived) {
-                    elements.historyGrid.append(card);
-                    hasHistory = true;
-                } else {
-                    elements.imageGrid.append(card);
-                    hasCurrent = true;
+    // --- 2. INITIALIZE STORAGE GRACEFULLY ---
+    async function initSystem() {
+        try {
+            await ImageStorage.init();
+            console.log('[Generator] Storage initialized successfully.');
+            await loadGallery();
+        } catch (e) {
+            console.warn('[Generator] Storage failed to init:', e);
+            Toast.info('Local history is unavailable in this session.');
+            // Fallback: Just show empty state
+            elements.imageGrid.innerHTML = '<div class="empty-state">Storage unavailable. Images won\'t be saved locally.</div>';
+        }
+    }
+
+    initSystem();
+
+    // LOAD GALLERY FROM STORAGE
+    async function loadGallery() {
+        if (ImageStorage.isFailed) return;
+
+        try {
+            const storedImages = await ImageStorage.getAllImages();
+            elements.imageGrid.innerHTML = '';
+            elements.historyGrid.innerHTML = '';
+
+            if (storedImages && storedImages.length > 0) {
+                let hasHistory = false, hasCurrent = false;
+                storedImages.forEach(img => {
+                    if (!img.blob) return; // Skip corrupted records
+                    try {
+                        const card = createCardElement(img.fileName, img.prompt, URL.createObjectURL(img.blob));
+                        if (img.isArchived) {
+                            elements.historyGrid.append(card);
+                            hasHistory = true;
+                        } else {
+                            elements.imageGrid.append(card);
+                            hasCurrent = true;
+                        }
+                    } catch (e) {
+                        console.error('Error creating card for image:', e);
+                    }
+                });
+                if (hasHistory) {
+                    elements.historySection.classList.remove('hidden-btn');
+                    elements.downloadHistoryBtn.classList.remove('hidden-btn');
                 }
-            });
-            if (hasHistory) {
-                elements.historySection.classList.remove('hidden-btn');
-                elements.downloadHistoryBtn.classList.remove('hidden-btn');
-            }
-            if (hasCurrent) {
-                elements.downloadBtn.classList.remove('hidden-btn');
+                if (hasCurrent) {
+                    elements.downloadBtn.classList.remove('hidden-btn');
+                } else {
+                    elements.imageGrid.innerHTML = '<div class="empty-state">Your generated images will appear here.</div>';
+                }
             } else {
-                // If there are NO current images (only history), show expectation message in Results
                 elements.imageGrid.innerHTML = '<div class="empty-state">Your generated images will appear here.</div>';
             }
-        } else {
-            // Totally empty database
-            elements.imageGrid.innerHTML = '<div class="empty-state">Your generated images will appear here.</div>';
+        } catch (err) {
+            console.error('Gallery load error:', err);
         }
     };
-    loadGallery();
 
     // 3. START GENERATION (The brain is now in the Backend)
     elements.form.addEventListener('submit', async (e) => {
@@ -192,8 +223,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                             if (data.image) {
                                 // Process results from backend
-                                const blob = await (await fetch(data.image)).blob();
-                                await ImageStorage.saveImage(blob, data.fileName, data.prompt);
+                                try {
+                                    const blob = await (await fetch(data.image)).blob();
+                                    await ImageStorage.saveImage(blob, data.fileName, data.prompt);
+                                } catch (storageErr) {
+                                    console.error('Failed to save image locally:', storageErr);
+                                }
 
                                 const card = createCardElement(data.fileName, data.prompt, data.image);
                                 elements.imageGrid.append(card);

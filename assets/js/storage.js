@@ -6,162 +6,226 @@ const ImageStorage = {
     dbVersion: 5, // Bump version to add userId index
     storeName: 'generated_images',
     db: null,
+    isFailed: false,
     currentUserId: typeof CURRENT_USER_ID !== 'undefined' ? CURRENT_USER_ID : 'guest',
 
     init() {
-        return new Promise((resolve, reject) => {
-            const request = indexedDB.open(this.dbName, this.dbVersion);
-
-            request.onupgradeneeded = (event) => {
-                const db = event.target.result;
-                let store;
-
-                if (!db.objectStoreNames.contains(this.storeName)) {
-                    store = db.createObjectStore(this.storeName, { keyPath: 'id', autoIncrement: true });
-                } else {
-                    store = event.currentTarget.transaction.objectStore(this.storeName);
-                }
-
-                if (!store.indexNames.contains('isArchived')) {
-                    store.createIndex('isArchived', 'isArchived', { unique: false });
-                }
-
-                // New index for User ID segregation
-                if (!store.indexNames.contains('userId')) {
-                    store.createIndex('userId', 'userId', { unique: false });
-                }
-            };
-
-            request.onsuccess = (event) => {
-                this.db = event.target.result;
-                resolve(this.db);
-            };
-
-            request.onerror = (event) => {
-                console.error('IDB Error:', event.target.error);
-                reject('Error opening IndexedDB');
-            };
-        });
-    },
-
-    async saveImage(blob, fileName, prompt) {
-        if (!this.db) await this.init();
+        if (this.db) return Promise.resolve(this.db);
+        if (this.isFailed) return Promise.reject('IDB previously failed');
 
         return new Promise((resolve, reject) => {
-            const transaction = this.db.transaction([this.storeName], 'readwrite');
-            const store = transaction.objectStore(this.storeName);
+            try {
+                if (!window.indexedDB) {
+                    this.isFailed = true;
+                    return reject('IndexedDB not supported');
+                }
 
-            const record = {
-                blob: blob,
-                fileName: fileName,
-                prompt: prompt,
-                timestamp: new Date().getTime(),
-                isArchived: false,
-                userId: this.currentUserId // Tag with current user
-            };
+                const request = indexedDB.open(this.dbName, this.dbVersion);
 
-            const request = store.add(record);
-            request.onsuccess = () => resolve(request.result);
-            request.onerror = () => reject('Error saving image');
-        });
-    },
-
-    async archiveAll() {
-        if (!this.db) await this.init();
-
-        return new Promise((resolve, reject) => {
-            const transaction = this.db.transaction([this.storeName], 'readwrite');
-            const store = transaction.objectStore(this.storeName);
-            const index = store.index('userId');
-            const request = index.openCursor(IDBKeyRange.only(this.currentUserId));
-
-            request.onsuccess = (event) => {
-                const cursor = event.target.result;
-                if (cursor) {
-                    const updateData = cursor.value;
-                    if (updateData.isArchived !== true) {
-                        updateData.isArchived = true;
-                        cursor.update(updateData);
+                // Set a timeout for the open request (sometimes iPhones hang here)
+                const timeout = setTimeout(() => {
+                    if (!this.db) {
+                        this.isFailed = true;
+                        reject('IndexedDB Open Timeout');
                     }
-                    cursor.continue();
-                } else {
-                    resolve();
-                }
-            };
-            request.onerror = () => reject('Error archiving images');
-        });
-    },
+                }, 4000);
 
-    async getAllImages() {
-        if (!this.db) await this.init();
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    let store;
 
-        return new Promise((resolve, reject) => {
-            const transaction = this.db.transaction([this.storeName], 'readonly');
-            const store = transaction.objectStore(this.storeName);
+                    if (!db.objectStoreNames.contains(this.storeName)) {
+                        store = db.createObjectStore(this.storeName, { keyPath: 'id', autoIncrement: true });
+                    } else {
+                        store = event.currentTarget.transaction.objectStore(this.storeName);
+                    }
 
-            // If we have the userId index, use it. Otherwise fallback (migration safety)
-            if (store.indexNames.contains('userId')) {
-                const index = store.index('userId');
-                const request = index.getAll(IDBKeyRange.only(this.currentUserId));
+                    if (!store.indexNames.contains('isArchived')) {
+                        store.createIndex('isArchived', 'isArchived', { unique: false });
+                    }
 
-                request.onsuccess = () => resolve(request.result);
-                request.onerror = () => reject('Error fetching images');
-            } else {
-                // Should not happen if version is correct, but fail-safe
-                const request = store.getAll();
-                request.onsuccess = () => {
-                    const all = request.result;
-                    // Manual filter
-                    const filtered = all.filter(img => img.userId == this.currentUserId);
-                    resolve(filtered);
+                    if (!store.indexNames.contains('userId')) {
+                        store.createIndex('userId', 'userId', { unique: false });
+                    }
                 };
+
+                request.onsuccess = (event) => {
+                    clearTimeout(timeout);
+                    this.db = event.target.result;
+                    resolve(this.db);
+                };
+
+                request.onerror = (event) => {
+                    clearTimeout(timeout);
+                    console.error('IDB Error:', event.target.error);
+                    this.isFailed = true;
+                    reject('Error opening IndexedDB');
+                };
+
+                request.onblocked = () => {
+                    clearTimeout(timeout);
+                    console.warn('IDB Blocked');
+                    this.isFailed = true;
+                    reject('IndexedDB Blocked');
+                };
+            } catch (e) {
+                console.error('Storage Init Exception:', e);
+                this.isFailed = true;
+                reject(e);
             }
         });
     },
 
-    async clear() {
-        if (!this.db) await this.init();
+    async isAvailable() {
+        try {
+            await this.init();
+            return !this.isFailed;
+        } catch (e) {
+            return false;
+        }
+    },
 
-        return new Promise((resolve, reject) => {
-            const transaction = this.db.transaction([this.storeName], 'readwrite');
-            const store = transaction.objectStore(this.storeName);
-            const index = store.index('userId');
-            const request = index.openCursor(IDBKeyRange.only(this.currentUserId));
+    async saveImage(blob, fileName, prompt) {
+        if (this.isFailed) return null;
+        try {
+            if (!this.db) await this.init();
 
-            request.onsuccess = (event) => {
-                const cursor = event.target.result;
-                if (cursor) {
-                    cursor.delete();
-                    cursor.continue();
+            return new Promise((resolve, reject) => {
+                const transaction = this.db.transaction([this.storeName], 'readwrite');
+                const store = transaction.objectStore(this.storeName);
+
+                const record = {
+                    blob: blob,
+                    fileName: fileName,
+                    prompt: prompt,
+                    timestamp: new Date().getTime(),
+                    isArchived: false,
+                    userId: this.currentUserId
+                };
+
+                const request = store.add(record);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject('Error saving image');
+            });
+        } catch (e) {
+            this.isFailed = true;
+            return null;
+        }
+    },
+
+    async archiveAll() {
+        if (this.isFailed) return;
+        try {
+            if (!this.db) await this.init();
+
+            return new Promise((resolve, reject) => {
+                const transaction = this.db.transaction([this.storeName], 'readwrite');
+                const store = transaction.objectStore(this.storeName);
+                const index = store.index('userId');
+                const request = index.openCursor(IDBKeyRange.only(this.currentUserId));
+
+                request.onsuccess = (event) => {
+                    const cursor = event.target.result;
+                    if (cursor) {
+                        const updateData = cursor.value;
+                        if (updateData.isArchived !== true) {
+                            updateData.isArchived = true;
+                            cursor.update(updateData);
+                        }
+                        cursor.continue();
+                    } else {
+                        resolve();
+                    }
+                };
+                request.onerror = () => reject('Error archiving images');
+            });
+        } catch (e) {
+            this.isFailed = true;
+        }
+    },
+
+    async getAllImages() {
+        if (this.isFailed) return [];
+        try {
+            if (!this.db) await this.init();
+
+            return new Promise((resolve, reject) => {
+                const transaction = this.db.transaction([this.storeName], 'readonly');
+                const store = transaction.objectStore(this.storeName);
+
+                if (store.indexNames.contains('userId')) {
+                    const index = store.index('userId');
+                    const request = index.getAll(IDBKeyRange.only(this.currentUserId));
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => reject('Error fetching images');
                 } else {
-                    resolve();
+                    const request = store.getAll();
+                    request.onsuccess = () => {
+                        const all = request.result;
+                        const filtered = all.filter(img => img.userId == this.currentUserId);
+                        resolve(filtered);
+                    };
                 }
-            };
-            request.onerror = () => reject('Error clearing images');
-        });
+            });
+        } catch (e) {
+            this.isFailed = true;
+            return [];
+        }
+    },
+
+    async clear() {
+        if (this.isFailed) return;
+        try {
+            if (!this.db) await this.init();
+
+            return new Promise((resolve, reject) => {
+                const transaction = this.db.transaction([this.storeName], 'readwrite');
+                const store = transaction.objectStore(this.storeName);
+                const index = store.index('userId');
+                const request = index.openCursor(IDBKeyRange.only(this.currentUserId));
+
+                request.onsuccess = (event) => {
+                    const cursor = event.target.result;
+                    if (cursor) {
+                        cursor.delete();
+                        cursor.continue();
+                    } else {
+                        resolve();
+                    }
+                };
+                request.onerror = () => reject('Error clearing images');
+            });
+        } catch (e) {
+            this.isFailed = true;
+        }
     },
 
     async clearHistory() {
-        if (!this.db) await this.init();
+        if (this.isFailed) return;
+        try {
+            if (!this.db) await this.init();
 
-        return new Promise((resolve, reject) => {
-            const transaction = this.db.transaction([this.storeName], 'readwrite');
-            const store = transaction.objectStore(this.storeName);
-            const index = store.index('userId');
-            const request = index.openCursor(IDBKeyRange.only(this.currentUserId));
+            return new Promise((resolve, reject) => {
+                const transaction = this.db.transaction([this.storeName], 'readwrite');
+                const store = transaction.objectStore(this.storeName);
+                const index = store.index('userId');
+                const request = index.openCursor(IDBKeyRange.only(this.currentUserId));
 
-            request.onsuccess = (event) => {
-                const cursor = event.target.result;
-                if (cursor) {
-                    if (cursor.value.isArchived === true) {
-                        cursor.delete();
+                request.onsuccess = (event) => {
+                    const cursor = event.target.result;
+                    if (cursor) {
+                        if (cursor.value.isArchived === true) {
+                            cursor.delete();
+                        }
+                        cursor.continue();
+                    } else {
+                        resolve();
                     }
-                    cursor.continue();
-                } else {
-                    resolve();
-                }
-            };
-            request.onerror = () => reject('Error clearing history');
-        });
+                };
+                request.onerror = () => reject('Error clearing history');
+            });
+        } catch (e) {
+            this.isFailed = true;
+        }
     }
 };
