@@ -73,7 +73,7 @@ try {
     // Reset de créditos
     $db->prepare("UPDATE users SET credits = 50000 WHERE id = ?")->execute([$userId]);
 
-    header('Location: ../generator.php?payment=success');
+    header('Location: ../pricing.php?payment=success');
     exit;
 
 } catch (Exception $e) {
