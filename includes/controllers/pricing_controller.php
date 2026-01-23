@@ -49,17 +49,26 @@ if ($isLoggedIn) {
     $freePlanAction = '<a href="login" class="btn-auth glass full-width">Get Started</a>';
 }
 
-// --- Pro Plan Action ---
+// --- Dynamic Redirect URL for Wompi ---
+$redirectUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]" . URL_BASE . "api/wompi-callback.php";
+
+// --- Pro Plan Action (Monthly) ---
 if (!$isLoggedIn) {
     $proPlanAction = '<a href="login.php?mode=signup" class="btn-auth btn-primary full-width">Sign up to buy</a>';
-} elseif ($isPro) {
+} elseif ($isPro && $billingCycle === 'monthly') {
     $proPlanAction = '
         <div class="subscription-status success-glass">
-            <p>✨ You are a PRO member!</p>
+            <p>✨ You are a Monthly PRO member!</p>
             <a href="generator" class="btn-auth btn-primary full-width">Go to Generator</a>
         </div>';
+} elseif ($isPro && $billingCycle === 'yearly') {
+    // User is Annual, Monthly should be disabled or show "Included"
+    $proPlanAction = '
+        <div class="subscription-status success-glass opacity-7">
+            <p>Included in your Annual plan</p>
+        </div>';
 } elseif ($wompiData) {
-    $proPlanAction = renderWompiButton($wompiData, 'Secure Payment by Wompi');
+    $proPlanAction = renderWompiButton($wompiData, 'Secure Payment by Wompi', $redirectUrl);
 } else {
     $proPlanAction = '<div class="alert-danger mt-1"><p class="m-0 fs-sm">Payment system unavailable.</p></div>';
 }
@@ -73,11 +82,11 @@ if (!$isLoggedIn) {
             <p>✨ You are an ANNUAL PRO!</p>
             <a href="generator" class="btn-auth btn-primary full-width">Go to Generator</a>
         </div>';
-} elseif ($isPro && $billingCycle !== 'yearly' && $wompiDataAnnual) {
+} elseif ($isPro && $billingCycle === 'monthly' && $wompiDataAnnual) {
     // Upgrade path for Monthly PRO to Annual PRO
-    $proAnnualAction = renderWompiButton($wompiDataAnnual, 'Upgrade to Annual & Save 🚀');
+    $proAnnualAction = renderWompiButton($wompiDataAnnual, 'Upgrade to Annual & Save 🚀', $redirectUrl);
 } elseif ($wompiDataAnnual) {
-    $proAnnualAction = renderWompiButton($wompiDataAnnual, 'Pay Annually & Save');
+    $proAnnualAction = renderWompiButton($wompiDataAnnual, 'Pay Annually & Save', $redirectUrl);
 } else {
     $proAnnualAction = '';
 }
@@ -95,14 +104,14 @@ if ($isPro && $wompiDataAddon) {
             <li>55,000 Additional Credits</li>
             <li>No expiration (Rolls over)</li>
             <li>Immediate activation</li>
-        </ul>' . renderWompiButton($wompiDataAddon, 'Buy 55k Credits') . '
+        </ul>' . renderWompiButton($wompiDataAddon, 'Buy 55k Credits', $redirectUrl) . '
     </div>';
 }
 
 /**
  * Helper to render Wompi Widget HTML
  */
-function renderWompiButton($data, $label)
+function renderWompiButton($data, $label, $redirectUrl)
 {
     return '
     <div class="payment-box">
@@ -113,6 +122,7 @@ function renderWompiButton($data, $label)
                 data-currency="' . htmlspecialchars($data['currency']) . '"
                 data-amount-in-cents="' . htmlspecialchars($data['amountInCents']) . '"
                 data-reference="' . htmlspecialchars($data['reference']) . '"
+                data-redirect-url="' . htmlspecialchars($redirectUrl) . '"
                 data-signature:integrity="' . htmlspecialchars($data['signature']) . '"></script>
         </form>
     </div>';

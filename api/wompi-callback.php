@@ -30,16 +30,14 @@ try {
     $customerEmail = $transaction['customer_email'];
     $paymentMethod = $transaction['payment_method'];
     $paymentSourceId = null;
+    $reference = $transaction['reference'];
+    $isAnnual = strpos($reference, 'ANNUAL') === 0;
+    $interval = $isAnnual ? '1 YEAR' : '1 MONTH';
+    $cycle = $isAnnual ? 'yearly' : 'monthly';
 
     // 2. Si el pago fue con tarjeta, crear/guardar la Fuente de Pago para el futuro
-    if ($transaction['payment_method_type'] === 'CARD' && isset($paymentMethod['extra']['bin'])) {
-        // En una transacción aprobada, Wompi a veces no devuelve el token directo en el callback, 
-        // pero podemos generar la fuente si el usuario aceptó términos.
-        // NOTA: Para recurrencia real, lo ideal es tokenizar ANTES, pero intentamos extraer info:
-
-        // Si Wompi devolvió un token de tarjeta en la respuesta (algunas versiones lo hacen)
+    if ($transaction['payment_method_type'] === 'CARD') {
         $cardToken = $transaction['payment_method']['token'] ?? null;
-
         if ($cardToken) {
             $paymentSourceId = $wompi->createPaymentSource($cardToken, $customerEmail);
         }
@@ -54,17 +52,21 @@ try {
         $stmt = $db->prepare("UPDATE subscriptions SET 
             plan_type = 'pro', 
             status = 'active', 
-            wompi_payment_source_id = ?, 
+            billing_cycle = ?,
+            wompi_payment_source_id = COALESCE(?, wompi_payment_source_id), 
             wompi_customer_email = ?,
             current_period_start = NOW(),
-            current_period_end = DATE_ADD(NOW(), INTERVAL 1 MONTH) 
+            current_period_end = DATE_ADD(NOW(), INTERVAL $interval) 
             WHERE user_id = ?");
-        $stmt->execute([$paymentSourceId, $customerEmail, $userId]);
+        $stmt->execute([$cycle, $paymentSourceId, $customerEmail, $userId]);
     } else {
-        $stmt = $db->prepare("INSERT INTO subscriptions (user_id, plan_type, status, current_period_start, current_period_end, wompi_payment_source_id, wompi_customer_email) 
-            VALUES (?, 'pro', 'active', NOW(), DATE_ADD(NOW(), INTERVAL 1 MONTH), ?, ?)");
-        $stmt->execute([$userId, $paymentSourceId, $customerEmail]);
+        $stmt = $db->prepare("INSERT INTO subscriptions (user_id, plan_type, status, billing_cycle, current_period_start, current_period_end, wompi_payment_source_id, wompi_customer_email) 
+            VALUES (?, 'pro', 'active', ?, NOW(), DATE_ADD(NOW(), INTERVAL $interval), ?, ?)");
+        $stmt->execute([$userId, $cycle, $paymentSourceId, $customerEmail]);
     }
+
+    // Reset de créditos
+    $db->prepare("UPDATE users SET credits = 50000 WHERE id = ?")->execute([$userId]);
 
     header('Location: ../generator.php?payment=success');
     exit;
