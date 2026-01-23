@@ -10,7 +10,8 @@ function getUserSubscriptionStatus($userId)
         'isPro' => false,
         'credits' => 0,
         'freeImagesCount' => 0,
-        'freeLimit' => 3
+        'freeLimit' => 3,
+        'billing_cycle' => 'monthly'
     ];
 
     if (!$userId) {
@@ -22,7 +23,7 @@ function getUserSubscriptionStatus($userId)
 
         // Check Subscription and credits
         $stmt = $db->prepare("
-            SELECT s.id as sub_id, s.plan_type, s.status, s.current_period_end, u.credits 
+            SELECT s.id as sub_id, s.plan_type, s.status, s.current_period_end, s.billing_cycle, u.credits 
             FROM users u
             LEFT JOIN subscriptions s ON u.id = s.user_id AND s.status IN ('active', 'cancelled')
             WHERE u.id = ?
@@ -32,6 +33,7 @@ function getUserSubscriptionStatus($userId)
 
         if ($data) {
             $result['credits'] = (int) ($data['credits'] ?? 0);
+            $result['billing_cycle'] = $data['billing_cycle'] ?? 'monthly';
 
             // Check for expiration (only if they are pro)
             $isExpired = false;

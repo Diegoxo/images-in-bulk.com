@@ -6,6 +6,11 @@
 require_once '../includes/config.php';
 require_once '../includes/wompi-helper.php';
 
+// Ensure session is active
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 $transactionId = isset($_GET['id']) ? $_GET['id'] : null;
 
 if (!$transactionId) {

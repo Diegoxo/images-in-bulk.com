@@ -24,10 +24,7 @@ if ($isLoggedIn) {
     $db = getDB();
     $subStatus = getUserSubscriptionStatus($userId);
     $isPro = $subStatus['isPro'];
-
-    $stmtCycle = $db->prepare("SELECT billing_cycle FROM subscriptions WHERE user_id = ? AND status = 'active'");
-    $stmtCycle->execute([$userId]);
-    $billingCycle = $stmtCycle->fetchColumn() ?: 'monthly';
+    $billingCycle = $subStatus['billing_cycle'];
 
     if (!$isPro) {
         $wompiData = generateWompiSignature($userId, 8500000, 'COP', 'BULK');
@@ -50,7 +47,10 @@ if ($isLoggedIn) {
 }
 
 // --- Dynamic Redirect URL for Wompi ---
-$redirectUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]" . URL_BASE . "api/wompi-callback.php";
+$proto = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http");
+$host = $_SERVER['HTTP_HOST'];
+$base = rtrim(URL_BASE, '/');
+$redirectUrl = "$proto://$host$base/api/wompi-callback.php";
 
 // --- Pro Plan Action (Monthly) ---
 if (!$isLoggedIn) {
