@@ -31,7 +31,6 @@ if ($isLoggedIn) {
         $wompiDataAnnual = generateWompiSignature($userId, 85000000, 'COP', 'ANNUAL');
     } else {
         $wompiDataAddon = generateWompiSignature($userId, 8500000, 'COP', 'ADDON');
-        // If they are PRO but NOT yearly, allow them to upgrade to Annual
         if ($billingCycle !== 'yearly') {
             $wompiDataAnnual = generateWompiSignature($userId, 85000000, 'COP', 'ANNUAL');
         }
@@ -46,26 +45,26 @@ if ($isLoggedIn) {
     $freePlanAction = '<a href="login" class="btn-auth glass full-width">Get Started</a>';
 }
 
-// --- Dynamic Redirect URL for Wompi ---
+// --- Dynamic Redirect URL for Wompi (Fixed Concatenation) ---
 $proto = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http");
 $host = $_SERVER['HTTP_HOST'];
-$base = rtrim(URL_BASE, '/');
-$redirectUrl = "$proto://$host$base/api/wompi-callback.php";
+$basePath = '/' . trim(URL_BASE, '/') . '/';
+$basePath = str_replace('//', '/', $basePath); // Ensure single slash
+$redirectUrl = $proto . '://' . $host . $basePath . 'api/wompi-callback.php';
 
 // --- Pro Plan Action (Monthly) ---
 if (!$isLoggedIn) {
     $proPlanAction = '<a href="login.php?mode=signup" class="btn-auth btn-primary full-width">Sign up to buy</a>';
+} elseif ($isPro && $billingCycle === 'yearly') {
+    $proPlanAction = '
+        <div class="subscription-status success-glass opacity-7">
+            <p>Included in your Annual plan</p>
+        </div>';
 } elseif ($isPro && $billingCycle === 'monthly') {
     $proPlanAction = '
         <div class="subscription-status success-glass">
             <p>✨ You are a Monthly PRO member!</p>
             <a href="generator" class="btn-auth btn-primary full-width">Go to Generator</a>
-        </div>';
-} elseif ($isPro && $billingCycle === 'yearly') {
-    // User is Annual, Monthly should be disabled or show "Included"
-    $proPlanAction = '
-        <div class="subscription-status success-glass opacity-7">
-            <p>Included in your Annual plan</p>
         </div>';
 } elseif ($wompiData) {
     $proPlanAction = renderWompiButton($wompiData, 'Secure Payment by Wompi', $redirectUrl);
@@ -83,7 +82,6 @@ if (!$isLoggedIn) {
             <a href="generator" class="btn-auth btn-primary full-width">Go to Generator</a>
         </div>';
 } elseif ($isPro && $billingCycle === 'monthly' && $wompiDataAnnual) {
-    // Upgrade path for Monthly PRO to Annual PRO
     $proAnnualAction = renderWompiButton($wompiDataAnnual, 'Upgrade to Annual & Save 🚀', $redirectUrl);
 } elseif ($wompiDataAnnual) {
     $proAnnualAction = renderWompiButton($wompiDataAnnual, 'Pay Annually & Save', $redirectUrl);

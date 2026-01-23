@@ -27,6 +27,8 @@ function getUserSubscriptionStatus($userId)
             FROM users u
             LEFT JOIN subscriptions s ON u.id = s.user_id AND s.status IN ('active', 'cancelled')
             WHERE u.id = ?
+            ORDER BY s.id DESC
+            LIMIT 1
         ");
         $stmt->execute([$userId]);
         $data = $stmt->fetch(PDO::FETCH_ASSOC);
