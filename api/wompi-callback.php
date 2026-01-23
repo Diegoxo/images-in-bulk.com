@@ -36,6 +36,8 @@ try {
     $paymentMethod = $transaction['payment_method'];
     $paymentSourceId = null;
     $reference = $transaction['reference'];
+
+    $isAddon = strpos($reference, 'ADDON') === 0;
     $isAnnual = strpos($reference, 'ANNUAL') === 0;
     $interval = $isAnnual ? '1 YEAR' : '1 MONTH';
     $cycle = $isAnnual ? 'yearly' : 'monthly';
@@ -48,30 +50,36 @@ try {
         }
     }
 
-    // 3. Activar o actualizar suscripción
-    $stmt = $db->prepare("SELECT id FROM subscriptions WHERE user_id = ?");
-    $stmt->execute([$userId]);
-    $subscription = $stmt->fetch();
-
-    if ($subscription) {
-        $stmt = $db->prepare("UPDATE subscriptions SET 
-            plan_type = 'pro', 
-            status = 'active', 
-            billing_cycle = ?,
-            wompi_payment_source_id = COALESCE(?, wompi_payment_source_id), 
-            wompi_customer_email = ?,
-            current_period_start = NOW(),
-            current_period_end = DATE_ADD(NOW(), INTERVAL $interval) 
-            WHERE user_id = ?");
-        $stmt->execute([$cycle, $paymentSourceId, $customerEmail, $userId]);
+    // 3. Activar o actualizar (Solo si NO es un Addon)
+    if ($isAddon) {
+        // Lógica de créditos extra: SUMAR, no resetear
+        $db->prepare("UPDATE users SET credits = credits + 55000 WHERE id = ?")->execute([$userId]);
     } else {
-        $stmt = $db->prepare("INSERT INTO subscriptions (user_id, plan_type, status, billing_cycle, current_period_start, current_period_end, wompi_payment_source_id, wompi_customer_email) 
-            VALUES (?, 'pro', 'active', ?, NOW(), DATE_ADD(NOW(), INTERVAL $interval), ?, ?)");
-        $stmt->execute([$userId, $cycle, $paymentSourceId, $customerEmail]);
-    }
+        // Lógica de Suscripción PRO
+        $stmt = $db->prepare("SELECT id FROM subscriptions WHERE user_id = ?");
+        $stmt->execute([$userId]);
+        $subscription = $stmt->fetch();
 
-    // Reset de créditos
-    $db->prepare("UPDATE users SET credits = 50000 WHERE id = ?")->execute([$userId]);
+        if ($subscription) {
+            $stmt = $db->prepare("UPDATE subscriptions SET 
+                plan_type = 'pro', 
+                status = 'active', 
+                billing_cycle = ?,
+                wompi_payment_source_id = COALESCE(?, wompi_payment_source_id), 
+                wompi_customer_email = ?,
+                current_period_start = NOW(),
+                current_period_end = DATE_ADD(NOW(), INTERVAL $interval) 
+                WHERE user_id = ?");
+            $stmt->execute([$cycle, $paymentSourceId, $customerEmail, $userId]);
+        } else {
+            $stmt = $db->prepare("INSERT INTO subscriptions (user_id, plan_type, status, billing_cycle, current_period_start, current_period_end, wompi_payment_source_id, wompi_customer_email) 
+                VALUES (?, 'pro', 'active', ?, NOW(), DATE_ADD(NOW(), INTERVAL $interval), ?, ?)");
+            $stmt->execute([$userId, $cycle, $paymentSourceId, $customerEmail]);
+        }
+
+        // Reset de créditos mensuales CORRESPONDIENTE al plan (Solo para nuevas subs o renewals)
+        $db->prepare("UPDATE users SET credits = 50000 WHERE id = ?")->execute([$userId]);
+    }
 
     header('Location: ../pricing.php?payment=success');
     exit;
