@@ -63,6 +63,36 @@ if ($transaction['status'] === 'APPROVED') {
             $cardToken = $transaction['payment_method']['token'] ?? null;
             if ($cardToken) {
                 $paymentSourceId = $wompi->createPaymentSource($cardToken, $customerEmail);
+
+                if ($paymentSourceId) {
+                    // Obtener detalles de la tarjeta para guardarlos localmente
+                    $sourceRes = $wompi->getPaymentSource($paymentSourceId);
+                    $brand = 'Card';
+                    $last4 = '****';
+                    $exp_month = null;
+                    $exp_year = null;
+
+                    if (isset($sourceRes['data']['public_data'])) {
+                        $pd = $sourceRes['data']['public_data'];
+                        $brand = $pd['brand'] ?? 'Card';
+                        $last4 = $pd['last_four'] ?? '****';
+                        $exp_month = $pd['exp_month'] ?? null;
+                        $exp_year = $pd['exp_year'] ?? null;
+                    }
+
+                    // Verificar si ya existe esta tarjeta o si es la primera para ponerla por defecto
+                    $stmtCheck = $db->prepare("SELECT id FROM payment_methods WHERE user_id = ? AND brand = ? AND last4 = ?");
+                    $stmtCheck->execute([$userId, $brand, $last4]);
+
+                    if ($stmtCheck->rowCount() === 0) {
+                        $stmtHasCards = $db->prepare("SELECT id FROM payment_methods WHERE user_id = ?");
+                        $stmtHasCards->execute([$userId]);
+                        $isDefault = ($stmtHasCards->rowCount() === 0);
+
+                        $stmtIns = $db->prepare("INSERT INTO payment_methods (user_id, wompi_payment_source_id, brand, last4, exp_month, exp_year, is_default) VALUES (?, ?, ?, ?, ?, ?, ?)");
+                        $stmtIns->execute([$userId, $paymentSourceId, $brand, $last4, $exp_month, $exp_year, $isDefault]);
+                    }
+                }
             }
         }
 
