@@ -57,15 +57,33 @@ require_once '../includes/controllers/dashboard_controller.php';
             <div class="glass dash-card">
                 <div class="card-content">
                     <div class="stat-value">
-                        <?php echo number_format($credits); ?>
+                        <?php echo number_format($totalCredits); ?>
                     </div>
-                    <div class="stat-label">Available Credits</div>
+                    <div class="stat-label">Total Credits Available</div>
+
+                    <div class="credits-breakdown mt-2">
+                        <div class="d-flex justify-between fs-sm text-secondary mb-05">
+                            <span>Plan Credits:</span>
+                            <strong><?php echo number_format($credits); ?></strong>
+                        </div>
+                        <div class="d-flex justify-between fs-sm text-secondary">
+                            <span>Extra Credits:</span>
+                            <strong class="text-accent">+<?php echo number_format($extraCredits); ?></strong>
+                        </div>
+                    </div>
+
                     <p class="mt-2 fs-sm text-muted">
-                        <?php echo $creditsTipHtml; ?>
+                        Plan credits are used first and reset monthly.
+                        <?php if ($extraCredits > 0 && $nextExpiry): ?>
+                            <br><span class="text-accent">⏳ Next bundle expires:
+                                <strong><?php echo date('d M, Y', strtotime($nextExpiry)); ?></strong></span>
+                        <?php else: ?>
+                            Extra credits are used after plan credits.
+                        <?php endif; ?>
                     </p>
                 </div>
                 <div class="card-footer">
-                    <a href="../generator" class="btn-auth glass full-width">Use Credits</a>
+                    <a href="../pricing" class="btn-auth glass full-width">Buy More Credits</a>
                 </div>
             </div>
 

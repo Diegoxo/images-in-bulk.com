@@ -52,8 +52,9 @@ try {
 
     // 3. Activar o actualizar (Solo si NO es un Addon)
     if ($isAddon) {
-        // Lógica de créditos extra: SUMAR, no resetear
-        $db->prepare("UPDATE users SET credits = credits + 55000 WHERE id = ?")->execute([$userId]);
+        // Lógica de créditos extra: Crear paquete con vencimiento de 1 mes
+        $db->prepare("INSERT INTO credit_bundles (user_id, amount_original, amount_remaining, expires_at) 
+                      VALUES (?, 55000, 55000, DATE_ADD(NOW(), INTERVAL 1 MONTH))")->execute([$userId]);
     } else {
         // Lógica de Suscripción PRO
         $stmt = $db->prepare("SELECT id FROM subscriptions WHERE user_id = ?");

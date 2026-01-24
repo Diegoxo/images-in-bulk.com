@@ -68,8 +68,9 @@ if ($transaction['status'] === 'APPROVED') {
 
         try {
             if ($isAddon) {
-                // Lógica de créditos extra
-                $stmt = $db->prepare("UPDATE users SET credits = credits + 55000 WHERE id = ?");
+                // ADD-ON logic: Crear un nuevo paquete con vencimiento de 1 mes
+                $stmt = $db->prepare("INSERT INTO credit_bundles (user_id, amount_original, amount_remaining, expires_at) 
+                                      VALUES (?, 55000, 55000, DATE_ADD(NOW(), INTERVAL 1 MONTH))");
                 $stmt->execute([$userId]);
             } else {
                 // Lógica de Suscripción PRO

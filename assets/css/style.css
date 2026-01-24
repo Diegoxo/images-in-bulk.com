@@ -125,6 +125,10 @@ main {
     justify-content: center !important;
 }
 
+.justify-between {
+    justify-content: space-between !important;
+}
+
 .flex-wrap {
     flex-wrap: wrap !important;
 }

@@ -9,6 +9,8 @@ function getUserSubscriptionStatus($userId)
     $result = [
         'isPro' => false,
         'credits' => 0,
+        'extra_credits' => 0,
+        'total_credits' => 0,
         'freeImagesCount' => 0,
         'freeLimit' => 3,
         'billing_cycle' => 'monthly'
@@ -21,7 +23,7 @@ function getUserSubscriptionStatus($userId)
     try {
         $db = getDB();
 
-        // Check Subscription and credits
+        // 1. Fetch Subscription and Regular Credits
         $stmt = $db->prepare("
             SELECT s.id as sub_id, s.plan_type, s.status, s.current_period_end, s.billing_cycle, u.credits 
             FROM users u
@@ -33,8 +35,15 @@ function getUserSubscriptionStatus($userId)
         $stmt->execute([$userId]);
         $data = $stmt->fetch(PDO::FETCH_ASSOC);
 
+        // 2. Fetch Active Credit Bundles (Not expired, with balance)
+        $stmtBundles = $db->prepare("SELECT SUM(amount_remaining) FROM credit_bundles WHERE user_id = ? AND expires_at > NOW() AND amount_remaining > 0");
+        $stmtBundles->execute([$userId]);
+        $extraCredits = (int) $stmtBundles->fetchColumn();
+
         if ($data) {
             $result['credits'] = (int) ($data['credits'] ?? 0);
+            $result['extra_credits'] = $extraCredits;
+            $result['total_credits'] = $result['credits'] + $result['extra_credits'];
             $result['billing_cycle'] = $data['billing_cycle'] ?? 'monthly';
 
             // Check for expiration (only if they are pro)
@@ -47,17 +56,17 @@ function getUserSubscriptionStatus($userId)
 
             // User loses PRO access if:
             // 1. Period is met (Expired)
-            // 2. Credits run out (<= 0)
-            if ($isExpired || $result['credits'] <= 0) {
-                // AUTO-CLEANUP: If expired or no credits, deactivate sub if it was pro
+            // 2. Total credits run out (<= 0)
+            if ($isExpired || $result['total_credits'] <= 0) {
                 if ($data['plan_type'] === 'pro') {
-                    $db->prepare("UPDATE subscriptions SET status = 'inactive' WHERE id = ?")->execute([$data['sub_id']]);
                     if ($isExpired) {
+                        $db->prepare("UPDATE subscriptions SET status = 'inactive' WHERE id = ?")->execute([$data['sub_id']]);
                         $db->prepare("UPDATE users SET credits = 0 WHERE id = ?")->execute([$userId]);
                         $result['credits'] = 0;
+                        $result['total_credits'] = $result['extra_credits'];
                     }
                 }
-                $result['isPro'] = false;
+                $result['isPro'] = ($result['total_credits'] > 0);
             } else {
                 if ($data['plan_type'] === 'pro') {
                     $result['isPro'] = true;
@@ -102,15 +111,65 @@ function calculateImageCost($model, $resolution)
 }
 
 /**
- * Deduct credits from user
+ * Deduct credits from user (Intelligent Consumption: Monthly -> Bundle expiring soon)
  */
 function deductCredits($userId, $amount)
 {
     try {
         $db = getDB();
-        $stmt = $db->prepare("UPDATE users SET credits = GREATEST(0, credits - ?) WHERE id = ?");
-        return $stmt->execute([$amount, $userId]);
+        $db->beginTransaction();
+
+        // 1. Get Regular credits
+        $stmt = $db->prepare("SELECT credits FROM users WHERE id = ? FOR UPDATE");
+        $stmt->execute([$userId]);
+        $user = $stmt->fetch();
+
+        if (!$user) {
+            $db->rollBack();
+            return false;
+        }
+
+        $regular = (int) $user['credits'];
+        $remaining = $amount;
+
+        // 2. Deduct from regular first
+        if ($regular > 0) {
+            $diff = min($regular, $remaining);
+            $regular -= $diff;
+            $remaining -= $diff;
+            $db->prepare("UPDATE users SET credits = ? WHERE id = ?")->execute([$regular, $userId]);
+        }
+
+        // 3. Deduct from Bundles (Earliest expiry first)
+        if ($remaining > 0) {
+            $stmtBundles = $db->prepare("SELECT id, amount_remaining FROM credit_bundles WHERE user_id = ? AND expires_at > NOW() AND amount_remaining > 0 ORDER BY expires_at ASC FOR UPDATE");
+            $stmtBundles->execute([$userId]);
+            $bundles = $stmtBundles->fetchAll();
+
+            foreach ($bundles as $bundle) {
+                if ($remaining <= 0)
+                    break;
+
+                $bAmount = (int) $bundle['amount_remaining'];
+                $bDiff = min($bAmount, $remaining);
+
+                $newBAmount = $bAmount - $bDiff;
+                $remaining -= $bDiff;
+
+                $db->prepare("UPDATE credit_bundles SET amount_remaining = ? WHERE id = ?")->execute([$newBAmount, $bundle['id']]);
+            }
+        }
+
+        if ($remaining > 0) {
+            $db->rollBack();
+            return false;
+        }
+
+        $db->commit();
+        return true;
     } catch (Exception $e) {
+        if (isset($db))
+            $db->rollBack();
         error_log("Deduct Credits Error: " . $e->getMessage());
         return false;
     }
@@ -137,8 +196,8 @@ function validateUserAccess($userId, $model, $resolution)
     // PRO credits check
     if ($isPro) {
         $cost = calculateImageCost($model, $resolution);
-        if ($status['credits'] < $cost) {
-            return ['success' => false, 'error' => 'Insufficient credits. Balance: ' . $status['credits']];
+        if ($status['total_credits'] < $cost) {
+            return ['success' => false, 'error' => 'Insufficient credits. Balance: ' . $status['total_credits']];
         }
     } else {
         // Free tier limits
@@ -167,10 +226,10 @@ function validateBatchAccess($userId, $model, $resolution, $batchSize)
     if ($isPro) {
         $costPerImage = calculateImageCost($model, $resolution);
         $totalCost = $costPerImage * $batchSize;
-        if ($status['credits'] < $totalCost) {
+        if ($status['total_credits'] < $totalCost) {
             return [
                 'success' => false,
-                'error' => "Insufficient credits for the full batch. Required: $totalCost, Balance: " . $status['credits']
+                'error' => "Insufficient credits for the full batch. Required: $totalCost, Balance: " . $status['total_credits']
             ];
         }
     } else {

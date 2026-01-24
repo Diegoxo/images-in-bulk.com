@@ -44,7 +44,14 @@ try {
     // 3. Variables
     $isPro = $subStatus['isPro'];
     $credits = $subStatus['credits'];
+    $extraCredits = $subStatus['extra_credits'];
+    $totalCredits = $subStatus['total_credits'];
     $avatarUrl = $user['avatar_url'] ?? '';
+
+    // 3.1 Fetch nearest expiring bundle for the UI tip
+    $stmtExpiry = $db->prepare("SELECT MIN(expires_at) FROM credit_bundles WHERE user_id = ? AND expires_at > NOW() AND amount_remaining > 0");
+    $stmtExpiry->execute([$userId]);
+    $nextExpiry = $stmtExpiry->fetchColumn();
 
     // 4. Pre-render UI Components
 

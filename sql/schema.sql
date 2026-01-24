@@ -14,8 +14,19 @@ CREATE TABLE IF NOT EXISTS users (
     auth_provider VARCHAR(50) DEFAULT 'local',
     provider_id VARCHAR(255) NULL,
     avatar_url TEXT,
-    credits INT DEFAULT 0, -- User's available credits
+    credits INT DEFAULT 0, -- User's available credits (resets monthly)
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Credit Bundles Table (Add-ons with expiry)
+CREATE TABLE IF NOT EXISTS credit_bundles (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    amount_original INT NOT NULL,
+    amount_remaining INT NOT NULL,
+    expires_at DATETIME NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 -- Subscriptions Table
