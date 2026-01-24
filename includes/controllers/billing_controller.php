@@ -40,9 +40,35 @@ try {
     if (!empty($cards)) {
         $hasCard = true;
         foreach ($cards as $row) {
-            $brand = htmlspecialchars($row['brand'] ?: 'Card');
-            $last4 = htmlspecialchars($row['last4'] ?: '****');
+            $brand = htmlspecialchars($row['brand'] ?: '');
+            $last4 = htmlspecialchars($row['last4'] ?: '');
             $isDefault = $row['is_default'];
+
+            // SELF-HEALING: If info is missing, fetch it from Wompi once
+            if (empty($brand) || empty($last4)) {
+                try {
+                    $wompi = new WompiHelper();
+                    $sourceData = $wompi->getPaymentSource($row['wompi_payment_source_id']);
+                    if (isset($sourceData['data']['public_data'])) {
+                        $brand = $sourceData['data']['public_data']['brand'] ?? 'Card';
+                        $last4 = $sourceData['data']['public_data']['last_four'] ?? '****';
+                        // Update DB for next time
+                        $db->prepare("UPDATE payment_methods SET brand = ?, last4 = ? WHERE id = ?")
+                            ->execute([$brand, $last4, $row['id']]);
+
+                        $brand = htmlspecialchars($brand);
+                        $last4 = htmlspecialchars($last4);
+                    }
+                } catch (Exception $e) {
+                    $brand = 'Primary Card';
+                    $last4 = '****';
+                }
+            }
+
+            if (empty($brand))
+                $brand = 'Card';
+            if (empty($last4))
+                $last4 = '****';
 
             $cardDetailsHtml .= '
                 <div class="payment-method-card ' . ($isDefault ? 'default-card' : '') . '" data-id="' . $row['id'] . '">
