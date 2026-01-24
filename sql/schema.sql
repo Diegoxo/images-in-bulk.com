@@ -30,6 +30,20 @@ CREATE TABLE IF NOT EXISTS credit_bundles (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
+-- Registered Payment Methods Table
+CREATE TABLE IF NOT EXISTS payment_methods (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    wompi_payment_source_id VARCHAR(255) NOT NULL,
+    brand VARCHAR(50),
+    last4 VARCHAR(4),
+    exp_month INT,
+    exp_year INT,
+    is_default BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
 -- Subscriptions Table
 CREATE TABLE IF NOT EXISTS subscriptions (
     id INT AUTO_INCREMENT PRIMARY KEY,

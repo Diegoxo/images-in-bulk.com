@@ -31,8 +31,8 @@ function toggleAddCard() {
     openModal('add-card-modal');
 }
 
-async function deleteCard() {
-    const confirmed = await Confirm.show('Are you sure you want to remove your primary payment method? Your subscription will not be automatically renewed.', 'Deactivate Card');
+async function deleteCard(cardId) {
+    const confirmed = await Confirm.show('Are you sure you want to remove this payment method? If this is your primary card, subscription renewals will fail.', 'Deactivate Card');
     if (!confirmed) return;
 
     try {
@@ -43,15 +43,45 @@ async function deleteCard() {
         const response = await fetch(prefix + 'api/delete-payment-method.php', {
             method: 'POST',
             headers: {
+                'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': token
-            }
+            },
+            body: JSON.stringify({ id: cardId })
         });
         const result = await response.json();
 
         if (result.success) {
-            location.reload();
+            Toast.success('Card removed successfully.');
+            setTimeout(() => location.reload(), 1500);
         } else {
             Toast.error('Error: ' + (result.error || 'Could not remove card'));
+        }
+    } catch (err) {
+        Toast.error('Connection error. Please try again.');
+    }
+}
+
+async function setDefaultCard(cardId) {
+    try {
+        const container = document.querySelector('.billing-container');
+        const prefix = container.dataset.prefix || '';
+        const token = container.dataset.csrf || '';
+
+        const response = await fetch(prefix + 'api/set-default-payment-method.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': token
+            },
+            body: JSON.stringify({ id: cardId })
+        });
+        const result = await response.json();
+
+        if (result.success) {
+            Toast.success('Primary payment method updated.');
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            Toast.error('Error: ' + (result.error || 'Could not update primary card'));
         }
     } catch (err) {
         Toast.error('Connection error. Please try again.');

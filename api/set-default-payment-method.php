@@ -1,6 +1,6 @@
 <?php
 /**
- * API for Deleting Payment Method (Updated for Multi-Card)
+ * API for Setting Default Payment Method
  */
 require_once '../includes/config.php';
 require_once '../includes/utils/security.php';
@@ -31,32 +31,32 @@ $userId = $_SESSION['user_id'];
 
 try {
     $db = getDB();
+    $db->beginTransaction();
 
     // 1. Verify card belongs to user
-    $stmt = $db->prepare("SELECT is_default, wompi_payment_source_id FROM payment_methods WHERE id = ? AND user_id = ?");
-    $stmt->execute([$cardId, $userId]);
-    $card = $stmt->fetch();
+    $check = $db->prepare("SELECT wompi_payment_source_id FROM payment_methods WHERE id = ? AND user_id = ?");
+    $check->execute([$cardId, $userId]);
+    $card = $check->fetch();
 
     if (!$card) {
+        $db->rollBack();
         echo json_encode(['success' => false, 'error' => 'Card not found']);
         exit;
     }
 
-    $db->beginTransaction();
+    // 2. Unset others
+    $db->prepare("UPDATE payment_methods SET is_default = FALSE WHERE user_id = ?")->execute([$userId]);
 
-    // 2. Delete Card Record
-    $stmtDel = $db->prepare("DELETE FROM payment_methods WHERE id = ?");
-    $stmtDel->execute([$cardId]);
+    // 3. Set new default
+    $db->prepare("UPDATE payment_methods SET is_default = TRUE WHERE id = ?")->execute([$cardId]);
 
-    // 3. If it was the primary card, clean up subscription renewal
-    if ($card['is_default']) {
-        $stmtSub = $db->prepare("UPDATE subscriptions SET wompi_payment_source_id = NULL WHERE user_id = ? AND wompi_payment_source_id = ?");
-        $stmtSub->execute([$userId, $card['wompi_payment_source_id']]);
-    }
+    // 4. Update core subscription record for Wompi recurring bills
+    // Note: We only update if they have an active subscription
+    $db->prepare("UPDATE subscriptions SET wompi_payment_source_id = ? WHERE user_id = ? AND status IN ('active', 'cancelled')")
+        ->execute([$card['wompi_payment_source_id'], $userId]);
 
     $db->commit();
     echo json_encode(['success' => true]);
-
 } catch (Exception $e) {
     if (isset($db))
         $db->rollBack();

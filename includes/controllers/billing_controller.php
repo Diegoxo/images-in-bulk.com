@@ -26,69 +26,55 @@ $cardDetailsHtml = '';
 $paymentMethodActionHtml = '';
 
 try {
-    // 2. Fetch Subscription Info
-    $stmt = $db->prepare("SELECT wompi_payment_source_id, status FROM subscriptions WHERE user_id = ? AND status IN ('active', 'cancelled')");
-    $stmt->execute([$userId]);
-    $subscription = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    $paymentSourceId = $subscription['wompi_payment_source_id'] ?? null;
+    // 2. Fetch Subscription Info for status
+    $stmtSub = $db->prepare("SELECT status FROM subscriptions WHERE user_id = ? AND status IN ('active', 'cancelled')");
+    $stmtSub->execute([$userId]);
+    $subscription = $stmtSub->fetch(PDO::FETCH_ASSOC);
     $subStatusText = $subscription['status'] ?? 'inactive';
-    $hasCard = !empty($paymentSourceId);
 
-    if ($hasCard) {
-        $wompi = new WompiHelper();
-        $sourceData = $wompi->getPaymentSource($paymentSourceId);
+    // 3. Fetch All Registered Cards
+    $stmtCards = $db->prepare("SELECT * FROM payment_methods WHERE user_id = ? ORDER BY created_at DESC");
+    $stmtCards->execute([$userId]);
+    $cards = $stmtCards->fetchAll(PDO::FETCH_ASSOC);
 
-        if (isset($sourceData['data']['public_data'])) {
-            $cardInfo = $sourceData['data']['public_data'];
-            $brand = htmlspecialchars($cardInfo['brand'] ?? 'Primary Card');
-            $lastFour = htmlspecialchars($cardInfo['last_four'] ?? '');
+    if (!empty($cards)) {
+        $hasCard = true;
+        foreach ($cards as $row) {
+            $brand = htmlspecialchars($row['brand'] ?: 'Card');
+            $last4 = htmlspecialchars($row['last4'] ?: '****');
+            $isDefault = $row['is_default'];
 
-            $noteText = ($subStatusText === 'cancelled')
-                ? 'Your subscription is cancelled and will not renew.'
-                : 'Used for your PRO subscription renewals.';
-
-            $cardDetailsHtml = '
-                <div class="payment-method-card">
+            $cardDetailsHtml .= '
+                <div class="payment-method-card ' . ($isDefault ? 'default-card' : '') . '" data-id="' . $row['id'] . '">
                     <div class="card-details">
-                        <span class="card-icon">💳</span>
+                        <span class="card-icon">' . ($isDefault ? '⭐' : '💳') . '</span>
                         <div>
-                            <p class="card-brand-name">' . $brand . ' ending in **** ' . $lastFour . '</p>
-                            <p class="card-usage-tip">' . $noteText . '</p>
+                            <p class="card-brand-name">' . $brand . ' ending in **** ' . $last4 . '</p>
+                            ' . ($isDefault ? '<p class="card-usage-tip success-text">Primary for renewals</p>' : '') . '
                         </div>
                     </div>
-                    <button onclick="deleteCard()" class="btn-auth btn-danger card-remove-btn">
-                        Remove Card
-                    </button>
-                </div>';
-
-            if ($subStatusText !== 'cancelled') {
-                $cardDetailsHtml .= '
-                <div class="card-removal-note">
-                    <p>
-                        💡 <strong>Note:</strong> If you remove this card, your PRO subscription will not renew next month.
-                    </p>
-                </div>';
-
-                $paymentMethodActionHtml = '
-                    <section class="animate-fade replace-card-section">
-                        <p>Want to change your card?</p>
-                        <button onclick="toggleAddCard()" class="btn-auth glass" id="toggle-btn">
-                            Replace Primary Card
+                    <div class="card-actions">
+                        ' . (!$isDefault ? '<button onclick="setDefaultCard(' . $row['id'] . ')" class="btn-text-action">Set as Primary</button>' : '') . '
+                        <button onclick="deleteCard(' . $row['id'] . ')" class="btn-auth btn-danger card-remove-btn">
+                            Remove
                         </button>
-                    </section>';
-            }
+                    </div>
+                </div>';
         }
+
+        $paymentMethodActionHtml = '
+            <section class="animate-fade replace-card-section">
+                <button onclick="toggleAddCard()" class="btn-auth btn-primary">
+                    Add New Payment Method
+                </button>
+            </section>';
     } else {
         $cardDetailsHtml = '
             <div class="billing-empty-state">
                 <p class="empty-text">You don\'t have any registered payment methods yet.</p>
                 <button onclick="toggleAddCard()" class="btn-auth btn-primary">
-                    Add New Card
+                    Add My First Card
                 </button>
-                <p class="footer-tip">
-                    * This will securely save your card for future PRO renewals.
-                </p>
             </div>';
     }
 

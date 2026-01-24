@@ -2414,6 +2414,78 @@ textarea::-webkit-scrollbar-thumb:hover,
     margin-bottom: 1.5rem;
 }
 
+/* Billing & Card Management */
+.payment-method-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s ease;
+}
+
+.payment-method-card:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+.payment-method-card.default-card {
+    border-color: var(--primary);
+    background: rgba(109, 40, 217, 0.05);
+}
+
+.card-details {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.card-icon {
+    font-size: 1.5rem;
+    background: var(--glass-bg);
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+}
+
+.card-brand-name {
+    font-weight: 600;
+    margin: 0;
+    font-size: 1rem;
+}
+
+.card-usage-tip {
+    font-size: 0.8rem;
+    margin: 0.2rem 0 0 0;
+    opacity: 0.7;
+}
+
+.card-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.success-text {
+    color: #10b981 !important;
+    opacity: 1 !important;
+}
+
+.text-accent {
+    color: var(--accent) !important;
+}
+
+.justify-between {
+    justify-content: space-between !important;
+}
+
 .mb-2 {
     margin-bottom: 2rem;
 }
