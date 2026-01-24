@@ -38,11 +38,15 @@ function getUserSubscriptionStatus($userId)
         // 2. Fetch Active Credit Bundles (Not expired, with balance)
         $stmtBundles = $db->prepare("SELECT SUM(amount_remaining) FROM credit_bundles WHERE user_id = ? AND expires_at > NOW() AND amount_remaining > 0");
         $stmtBundles->execute([$userId]);
-        $extraCredits = (int) $stmtBundles->fetchColumn();
+        $extraCreditsSum = (int) $stmtBundles->fetchColumn();
 
         if ($data) {
             $result['credits'] = (int) ($data['credits'] ?? 0);
-            $result['extra_credits'] = $extraCredits;
+            $result['extra_credits'] = $extraCreditsSum;
+
+            // Sync extra_credits column if needed
+            $db->prepare("UPDATE users SET extra_credits = ? WHERE id = ?")->execute([$extraCreditsSum, $userId]);
+
             $result['total_credits'] = $result['credits'] + $result['extra_credits'];
             $result['billing_cycle'] = $data['billing_cycle'] ?? 'monthly';
 
@@ -158,6 +162,10 @@ function deductCredits($userId, $amount)
 
                 $db->prepare("UPDATE credit_bundles SET amount_remaining = ? WHERE id = ?")->execute([$newBAmount, $bundle['id']]);
             }
+
+            // 4. Update extra_credits cache in users table
+            $stmtSync = $db->prepare("UPDATE users SET extra_credits = (SELECT SUM(amount_remaining) FROM credit_bundles WHERE user_id = ? AND expires_at > NOW() AND amount_remaining > 0) WHERE id = ?");
+            $stmtSync->execute([$userId, $userId]);
         }
 
         if ($remaining > 0) {

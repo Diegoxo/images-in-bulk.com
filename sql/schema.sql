@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS users (
     provider_id VARCHAR(255) NULL,
     avatar_url TEXT,
     credits INT DEFAULT 0, -- User's available credits (resets monthly)
+    extra_credits INT DEFAULT 0, -- Total sum of active extra credit bundles
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -42,7 +43,7 @@ CREATE TABLE IF NOT EXISTS subscriptions (
     current_period_start DATETIME,
     current_period_end DATETIME,
     images_in_period INT DEFAULT 0, -- Counter for the current billing cycle
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,Te pregunto, 
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );

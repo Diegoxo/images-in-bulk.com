@@ -72,6 +72,10 @@ if ($transaction['status'] === 'APPROVED') {
                 $stmt = $db->prepare("INSERT INTO credit_bundles (user_id, amount_original, amount_remaining, expires_at) 
                                       VALUES (?, 55000, 55000, DATE_ADD(NOW(), INTERVAL 1 MONTH))");
                 $stmt->execute([$userId]);
+
+                // Sincronizar columna extra_credits en tabla users
+                $db->prepare("UPDATE users SET extra_credits = (SELECT SUM(amount_remaining) FROM credit_bundles WHERE user_id = ? AND expires_at > NOW() AND amount_remaining > 0) WHERE id = ?")
+                    ->execute([$userId, $userId]);
             } else {
                 // Lógica de Suscripción PRO
                 $cycle = $isAnnual ? 'yearly' : 'monthly';
