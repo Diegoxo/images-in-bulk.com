@@ -54,16 +54,10 @@ require_once '../includes/controllers/billing_controller.php';
 
         <?php echo $cancelActionHtml; ?>
 
-        <!-- Card Info Section (Moved to Bottom) -->
-        <section class="glass animate-fade billing-section mt-3">
-            <h3 class="billing-section-title">Payment Methods</h3>
-            <div class="card-management-wrapper">
-                <?php echo $cardDetailsHtml; ?>
-            </div>
-
-            <!-- Action Section (Replace/Change Card) -->
+        <div class="mt-2 text-center" style="display:flex; flex-direction:column; align-items:center; gap:0.5rem;">
+            <?php echo $cardDetailsHtml; ?>
             <?php echo $paymentMethodActionHtml; ?>
-        </section>
+        </div>
 
         <!-- Add/Replace Card Form Modal -->
         <div id="add-card-modal" class="custom-modal hidden">

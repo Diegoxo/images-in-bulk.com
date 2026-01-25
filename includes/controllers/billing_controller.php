@@ -80,18 +80,11 @@ try {
                 $last4 = '****';
 
             $cardDetailsHtml .= '
-                <div class="payment-method-card ' . ($isDefault ? 'default-card' : '') . '" data-id="' . $row['id'] . '">
-                    <div class="card-details">
-                        <span class="card-icon">💳</span>
-                        <div>
-                            <p class="card-brand-name">' . $brand . ' ending in **** ' . $last4 . '</p>
-                            ' . ($isDefault ? '<p class="card-usage-tip success-text">Primary for renewals</p>' : '') . '
-                        </div>
-                    </div>
-                    <div class="card-actions">
-                        ' . (!$isDefault ? '<button onclick="setDefaultCard(' . $row['id'] . ')" class="btn-text-action">Set as Primary</button>' : '') . '
-                        <button onclick="deleteCard(' . $row['id'] . ')" class="cancel-link fs-sm" style="color:var(--text-secondary);">Remove</button>
-                    </div>
+                <div class="billing-action-row">
+                    <button onclick="deleteCard(' . $row['id'] . ')" class="cancel-link fs-sm" style="color:var(--text-secondary);">
+                        Remove ' . strtoupper($brand) . ' - ' . $last4 . '
+                    </button>
+                    ' . (!$isDefault ? '<span class="separator">|</span> <button onclick="setDefaultCard(' . $row['id'] . ')" class="cancel-link fs-sm text-primary">Set Primary</button>' : '') . '
                 </div>';
         }
 
