@@ -106,19 +106,6 @@ if ($isPro && $wompiDataAddon) {
     </div>';
 }
 
-// --- DIAGNOSTIC LOG READER ---
-$debugHtml = '';
-$webhookLog = __DIR__ . '/../../wompi_last_webhook.json';
-$callbackLog = __DIR__ . '/../../wompi_last_callback.json';
-
-if (file_exists($webhookLog)) {
-    $debugHtml .= '<div class="mt-2 glass p-2" style="max-width:800px;margin:2rem auto;"><h4>Last Webhook Payload</h4><pre style="white-space:pre-wrap;word-break:break-all;font-size:11px;color:#a3e635;background:rgba(0,0,0,0.5);padding:1rem;">' . htmlspecialchars(file_get_contents($webhookLog)) . '</pre></div>';
-}
-if (file_exists($callbackLog)) {
-    $debugHtml .= '<div class="mt-2 glass p-2" style="max-width:800px;margin:2rem auto;"><h4>Last Callback Params</h4><pre style="white-space:pre-wrap;word-break:break-all;font-size:11px;color:#60a5fa;background:rgba(0,0,0,0.5);padding:1rem;">' . htmlspecialchars(file_get_contents($callbackLog)) . '</pre></div>';
-}
-
-
 /**
  * Helper to render Wompi Widget HTML
  */

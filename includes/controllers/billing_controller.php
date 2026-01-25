@@ -72,7 +72,7 @@ try {
 
             $cardDetailsHtml .= '
                 <div class="payment-method-card ' . ($isDefault ? 'default-card' : '') . '" data-id="' . $row['id'] . '">
-                    <div class="card-details">
+                    <div class="card-details" style="margin-right: 2rem;">
                         <span class="card-icon">💳</span>
                         <div>
                             <p class="card-brand-name">' . $brand . ' ending in **** ' . $last4 . '</p>
