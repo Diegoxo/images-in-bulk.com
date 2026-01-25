@@ -73,13 +73,13 @@ try {
             $cardDetailsHtml .= '
                 <div class="payment-method-card ' . ($isDefault ? 'default-card' : '') . '" data-id="' . $row['id'] . '">
                     <div class="card-details">
-                        <span class="card-icon">' . ($isDefault ? '⭐' : '💳') . '</span>
+                        <span class="card-icon">💳</span>
                         <div>
                             <p class="card-brand-name">' . $brand . ' ending in **** ' . $last4 . '</p>
                             ' . ($isDefault ? '<p class="card-usage-tip success-text">Primary for renewals</p>' : '') . '
                         </div>
                     </div>
-                    <div class="card-actions">
+                    <div class="card-actions" style="gap: 20px;">
                         ' . (!$isDefault ? '<button onclick="setDefaultCard(' . $row['id'] . ')" class="btn-text-action">Set as Primary</button>' : '') . '
                         <button onclick="deleteCard(' . $row['id'] . ')" class="btn-auth btn-danger card-remove-btn">
                             Remove
