@@ -7,6 +7,15 @@ require_once '../includes/config.php';
 require_once '../includes/wompi-helper.php';
 
 $payload = file_get_contents('php://input');
+// --- DIAGNOSTIC LOG START ---
+file_put_contents(__DIR__ . '/../wompi_last_webhook.json', json_encode([
+    'timestamp' => date('Y-m-d H:i:s'),
+    'headers' => getallheaders(),
+    'raw_body' => $payload,
+    'decoded' => json_decode($payload, true)
+], JSON_PRETTY_PRINT));
+// --- DIAGNOSTIC LOG END ---
+
 $event = json_decode($payload, true);
 
 // 1. Verificación básica

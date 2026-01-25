@@ -67,6 +67,9 @@ require_once 'includes/controllers/pricing_controller.php';
                 <!-- Conditional Add-on renders here -->
                 <?php echo $addonPackageHtml; ?>
             </div>
+
+            <!-- DEBUG SECTION -->
+            <?php echo $debugHtml; ?>
         </section>
     </main>
 

@@ -13,6 +13,13 @@ if (session_status() === PHP_SESSION_NONE) {
 
 $transactionId = isset($_GET['id']) ? $_GET['id'] : null;
 
+// --- DIAGNOSTIC LOG START ---
+file_put_contents(__DIR__ . '/../wompi_last_callback.json', json_encode([
+    'timestamp' => date('Y-m-d H:i:s'),
+    'get_params' => $_GET
+], JSON_PRETTY_PRINT));
+// --- DIAGNOSTIC LOG END ---
+
 if (!$transactionId) {
     header('Location: ../pricing.php?error=no_id');
     exit;
