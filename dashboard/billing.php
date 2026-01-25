@@ -57,7 +57,7 @@ require_once '../includes/controllers/billing_controller.php';
 
         <?php echo $cancelActionHtml; ?>
 
-        <div class="mt-2 text-center" style="display:flex; flex-direction:column; align-items:center; gap:0.5rem;">
+        <div class="d-flex justify-content-end mb-4" style="flex-direction:column; align-items:flex-end; gap:0.5rem;">
             <?php echo $cardDetailsHtml; ?>
         </div>
 
