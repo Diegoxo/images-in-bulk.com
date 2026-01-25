@@ -2442,6 +2442,7 @@ textarea::-webkit-scrollbar-thumb:hover,
     display: flex;
     align-items: center;
     gap: 1rem;
+    margin-right: 2rem;
 }
 
 .card-icon {
@@ -2470,7 +2471,7 @@ textarea::-webkit-scrollbar-thumb:hover,
 .card-actions {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 20px;
 }
 
 .success-text {
