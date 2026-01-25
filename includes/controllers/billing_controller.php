@@ -118,7 +118,7 @@ $subStatus = getUserSubscriptionStatus($userId);
 // Only show cancellation button if they are PRO AND currently 'active' (not already cancelled)
 if ($subStatus['isPro'] && ($subscription['status'] ?? '') === 'active') {
     $cancelActionHtml = '
-    <div class="d-flex justify-content-end mb-2">
+    <div style="display:flex; justify-content:flex-end; margin-bottom:0.5rem;">
         <button id="cancel-subscription-btn" class="cancel-link">Cancel subscription</button>
     </div>';
 }
