@@ -30,6 +30,9 @@ require_once '../includes/controllers/billing_controller.php';
             <p class="subtitle">Manage your payment methods and subscription billing.</p>
         </header>
 
+        <!-- Action Section (Add New Payment Method - Moved to Top) -->
+        <?php echo $paymentMethodActionHtml; ?>
+
         <!-- Subscription Summary Section -->
         <section class="glass animate-fade billing-section mb-2">
             <h3 class="billing-section-title">Your Subscription</h3>
@@ -56,7 +59,6 @@ require_once '../includes/controllers/billing_controller.php';
 
         <div class="mt-2 text-center" style="display:flex; flex-direction:column; align-items:center; gap:0.5rem;">
             <?php echo $cardDetailsHtml; ?>
-            <?php echo $paymentMethodActionHtml; ?>
         </div>
 
         <!-- Add/Replace Card Form Modal -->

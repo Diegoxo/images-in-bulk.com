@@ -89,11 +89,11 @@ try {
         }
 
         $paymentMethodActionHtml = '
-            <section class="animate-fade replace-card-section">
+            <div class="billing-header-actions mb-2 text-center">
                 <button onclick="toggleAddCard()" class="btn-auth btn-primary">
-                    Add New Payment Method
+                    Add Payment Method
                 </button>
-            </section>';
+            </div>';
     } else {
         $cardDetailsHtml = '
             <div class="billing-empty-state">
