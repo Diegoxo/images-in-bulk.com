@@ -27,10 +27,19 @@ $paymentMethodActionHtml = '';
 
 try {
     // 2. Fetch Subscription Info for status
-    $stmtSub = $db->prepare("SELECT status FROM subscriptions WHERE user_id = ? AND status IN ('active', 'cancelled')");
+    $stmtSub = $db->prepare("SELECT status, billing_cycle, updated_at FROM subscriptions WHERE user_id = ? AND status IN ('active', 'cancelled')");
     $stmtSub->execute([$userId]);
     $subscription = $stmtSub->fetch(PDO::FETCH_ASSOC);
     $subStatusText = $subscription['status'] ?? 'inactive';
+    $lastChargeDate = isset($subscription['updated_at']) ? date('M j, Y', strtotime($subscription['updated_at'])) : 'N/A';
+
+    // 2.1 Fetch Credits Info
+    $stmtCredits = $db->prepare("SELECT credits, extra_credits FROM users WHERE id = ?");
+    $stmtCredits->execute([$userId]);
+    $userCreditData = $stmtCredits->fetch(PDO::FETCH_ASSOC);
+    $usersCreditsPlan = $userCreditData['credits'] ?? 0;
+    $usersCreditsExtra = $userCreditData['extra_credits'] ?? 0;
+    $usersCreditsTotal = $usersCreditsPlan + $usersCreditsExtra;
 
     // 3. Fetch All Registered Cards
     $stmtCards = $db->prepare("SELECT * FROM payment_methods WHERE user_id = ? ORDER BY created_at DESC");
@@ -81,9 +90,7 @@ try {
                     </div>
                     <div class="card-actions">
                         ' . (!$isDefault ? '<button onclick="setDefaultCard(' . $row['id'] . ')" class="btn-text-action">Set as Primary</button>' : '') . '
-                        <button onclick="deleteCard(' . $row['id'] . ')" class="btn-auth btn-danger card-remove-btn">
-                            Remove
-                        </button>
+                        <button onclick="deleteCard(' . $row['id'] . ')" class="cancel-link fs-sm" style="color:var(--text-secondary);">Remove</button>
                     </div>
                 </div>';
         }

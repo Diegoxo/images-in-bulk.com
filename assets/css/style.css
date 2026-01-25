@@ -2414,6 +2414,33 @@ textarea::-webkit-scrollbar-thumb:hover,
     margin-bottom: 1.5rem;
 }
 
+/* Billing Summary */
+.subscription-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+}
+
+.summary-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.summary-item .label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+}
+
+.summary-item .value {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
 /* Billing & Card Management */
 .payment-method-card {
     background: rgba(255, 255, 255, 0.03);

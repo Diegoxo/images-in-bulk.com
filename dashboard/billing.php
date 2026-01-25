@@ -30,6 +30,28 @@ require_once '../includes/controllers/billing_controller.php';
             <p class="subtitle">Manage your payment methods and subscription billing.</p>
         </header>
 
+        <!-- Subscription Summary Section -->
+        <section class="glass animate-fade billing-section mb-2">
+            <h3 class="billing-section-title">Your Subscription</h3>
+            <div class="subscription-summary-grid">
+                <div class="summary-item">
+                    <span class="label">Current Plan</span>
+                    <span
+                        class="value gradient-text"><?php echo ($subStatus['isPro'] ? 'Pro Plan (' . ucfirst($subStatus['billing_cycle']) . ')' : 'Free Plan'); ?></span>
+                </div>
+                <div class="summary-item">
+                    <span class="label">Last Charge</span>
+                    <span class="value"><?php echo $lastChargeDate ?: 'N/A'; ?></span>
+                </div>
+                <div class="summary-item">
+                    <span class="label">Total Credits</span>
+                    <span class="value"><?php echo number_format($usersCreditsTotal); ?> <small
+                            class="text-muted">(<?php echo number_format($usersCreditsPlan); ?> Plan +
+                            <?php echo number_format($usersCreditsExtra); ?> Extra)</small></span>
+                </div>
+            </div>
+        </section>
+
         <!-- Card Info Section -->
         <section class="glass animate-fade billing-section">
             <h3 class="billing-section-title">Registered Payment Methods</h3>
