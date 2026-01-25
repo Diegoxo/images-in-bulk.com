@@ -52,16 +52,18 @@ require_once '../includes/controllers/billing_controller.php';
             </div>
         </section>
 
-        <!-- Card Info Section -->
-        <section class="glass animate-fade billing-section">
-            <h3 class="billing-section-title">Registered Payment Methods</h3>
+        <?php echo $cancelActionHtml; ?>
+
+        <!-- Card Info Section (Moved to Bottom) -->
+        <section class="glass animate-fade billing-section mt-3">
+            <h3 class="billing-section-title">Payment Methods</h3>
             <div class="card-management-wrapper">
                 <?php echo $cardDetailsHtml; ?>
             </div>
-        </section>
 
-        <!-- Action Section (Replace/Change Card) -->
-        <?php echo $paymentMethodActionHtml; ?>
+            <!-- Action Section (Replace/Change Card) -->
+            <?php echo $paymentMethodActionHtml; ?>
+        </section>
 
         <!-- Add/Replace Card Form Modal -->
         <div id="add-card-modal" class="custom-modal hidden">
@@ -116,8 +118,6 @@ require_once '../includes/controllers/billing_controller.php';
                 </div>
             </div>
         </div>
-
-        <?php echo $cancelActionHtml; ?>
     </main>
 
     <!-- Scripts -->
