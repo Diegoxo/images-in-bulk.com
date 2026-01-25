@@ -81,7 +81,7 @@ try {
 
             $cardDetailsHtml .= '
                 <div class="billing-action-row">
-                    <button onclick="deleteCard(' . $row['id'] . ')" class="cancel-link fs-sm" style="color:var(--text-secondary);">
+                    <button onclick="deleteCard(' . $row['id'] . ')" class="cancel-link fs-sm">
                         Remove ' . strtoupper($brand) . ' - ' . $last4 . '
                     </button>
                     ' . (!$isDefault ? '<span class="separator">|</span> <button onclick="setDefaultCard(' . $row['id'] . ')" class="cancel-link fs-sm text-primary">Set Primary</button>' : '') . '
