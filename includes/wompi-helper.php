@@ -79,6 +79,8 @@ class WompiHelper
         if (empty($this->privateKey))
             return null;
 
+        $acceptanceToken = $this->getAcceptanceToken();
+
         $url = $this->baseUrl . "/transactions";
         $payload = [
             'amount_in_cents' => (int) $amountInCents,
@@ -86,6 +88,7 @@ class WompiHelper
             'customer_email' => $customerEmail,
             'payment_source_id' => (int) $paymentSourceId,
             'reference' => $reference,
+            'acceptance_token' => $acceptanceToken,
             'payment_method' => [
                 'type' => 'CARD',
                 'installments' => 1
