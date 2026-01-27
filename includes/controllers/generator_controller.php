@@ -8,26 +8,22 @@ require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../utils/security_headers.php';
 require_once __DIR__ . '/../utils/subscription_helper.php';
 require_once __DIR__ . '/../utils/security.php';
-require_once __DIR__ . '/../utils/auth_guard.php';
 include __DIR__ . '/../pages-config/generator-config.php';
-
-// Auth & Verification Check
-AuthGuard::requireVerified();
 
 // Generate/Get CSRF Token
 $csrfToken = CSRF::generate();
 
-// Auth Check
+// Auth Check (We DON'T block visitors, we just identify them)
 $userId = $_SESSION['user_id'] ?? null;
 
 // Get Subscription/Usage Data
 $userStatus = getUserSubscriptionStatus($userId);
 
 // Extract variables for the view
-$isPro = $userStatus['isPro'];
+$isPro = $userStatus['isPro'] ?? false;
 $credits = $userStatus['credits'] ?? 0;
-$freeImagesCount = $userStatus['freeImagesCount'];
-$freeLimit = $userStatus['freeLimit'];
+$freeImagesCount = $userStatus['freeImagesCount'] ?? 0;
+$freeLimit = $userStatus['freeLimit'] ?? 3;
 
 // 1. Determine User State for UI
 if (!$userId) {
@@ -40,11 +36,10 @@ if (!$userId) {
     $generatorState = 'FREE_REACHED';
 }
 
-// 2. Common UI Helper Flags
+// 2. Common UI Helper Flags (Restored exactly for generator.php)
 $proDisabledAttr = !$isPro ? 'disabled' : '';
 $proLabelSuffix = !$isPro ? ' (PRO)' : '';
 
-// Model selection flags based on Plan
 $dalleSelected = $isPro ? 'selected' : '';
 $dalleDisabled = !$isPro ? 'disabled' : '';
 $dalleLabelSuffix = !$isPro ? ' (PRO)' : '';
@@ -53,7 +48,7 @@ $gpt15Disabled = !$isPro ? 'disabled' : '';
 $gpt15LabelSuffix = !$isPro ? ' (PRO)' : '';
 
 $gptMiniSelected = !$isPro ? 'selected' : '';
-$gptMiniDisabled = ''; // GPT Mini is the default for FREE
+$gptMiniDisabled = '';
 
 $freeTrialProgress = ($freeLimit > 0) ? ($freeImagesCount / $freeLimit) * 100 : 0;
 $freeTrialColorClass = ($freeImagesCount >= $freeLimit - 1) ? 'bg-danger' : 'bg-primary';
@@ -65,13 +60,13 @@ $showHistorySection = (bool) $userId;
 // 4. Page Metadata
 $viewTitle = $pageTitle ?? 'AI Image Generator';
 
-// 5. Client-side Config
+// 5. Client-side Config for JS
 $currentUserIdJs = $userId ? $userId : "'guest'";
 $isUserLoggedIn = (bool) $userId;
 $freeLimitJs = (int) $freeLimit;
 $freeCountJs = (int) $freeImagesCount;
 
-// 6. Pre-render Button Group HTML (To keep view logic-free)
+// 6. Pre-render Button Group HTML
 ob_start();
 ?>
 <div id="generator-actions-container">
@@ -172,4 +167,6 @@ if ($showResultsSection) {
     <?php
     $resultsSectionHtml = ob_get_clean();
 }
+
+$pageScripts = 'generator-scripts';
 ?>
