@@ -1,7 +1,7 @@
 <?php
 /**
  * Wompi Webhook Handler (v2 - Hardened)
- * Valida la integridad de la notificación y activa suscripciones.
+ * Validates the notification integrity and activates subscriptions.
  */
 require_once '../includes/config.php';
 require_once '../includes/wompi-helper.php';
@@ -9,7 +9,7 @@ require_once '../includes/wompi-helper.php';
 $payload = file_get_contents('php://input');
 $event = json_decode($payload, true);
 
-// 1. Verificación básica
+// 1. Basic verification
 if (!$event || !isset($event['event']) || $event['event'] !== 'transaction.updated') {
     exit;
 }
@@ -17,8 +17,8 @@ if (!$event || !isset($event['event']) || $event['event'] !== 'transaction.updat
 $signature = $event['signature'] ?? null;
 $timestamp = $event['timestamp'] ?? '';
 
-// 2. Validación de Integridad (Checksum)
-// Wompi recomienda validar que el evento venga realmente de ellos
+// 2. Integrity Validation (Checksum)
+// Wompi recommends validating that the event truly comes from them
 if ($signature && defined('WOMPI_EVENT_SECRET')) {
     $properties = $signature['properties']; // e.g. ["transaction.id", "transaction.status", "transaction.amount_in_cents"]
     $concatenated = "";
@@ -26,7 +26,7 @@ if ($signature && defined('WOMPI_EVENT_SECRET')) {
     foreach ($properties as $prop) {
         $path = explode('.', $prop);
         $val = $event['data'];
-        // Navegar dentro de data
+        // Navigate within data
         foreach ($path as $p) {
             if (isset($val[$p])) {
                 $val = $val[$p];
@@ -43,14 +43,14 @@ if ($signature && defined('WOMPI_EVENT_SECRET')) {
 
     $checksum = hash('sha256', $concatenated);
 
-    // NOTA: Si esto falla en producción, descomentar la validación estricta. 
-    // Por ahora solo logueamos para no bloquear pagos válidos durante el diagnóstico.
+    // NOTE: If this fails in production, uncomment the strict validation.
+    // For now, we only log it to avoid blocking valid payments during diagnosis.
     if ($checksum !== $signature['checksum']) {
         error_log("Wompi Webhook Warning: Invalid Checksum signature. Calc: $checksum vs Rec: " . $signature['checksum']);
     }
 }
 
-// 3. Procesar Transacción APROBADA
+// 3. Process APPROVED Transaction
 $transaction = $event['data']['transaction'] ?? null;
 
 if ($transaction && $transaction['status'] === 'APPROVED') {
@@ -61,12 +61,12 @@ if ($transaction && $transaction['status'] === 'APPROVED') {
     $isAddon = strpos($reference, 'ADDON') === 0;
     $isAnnual = strpos($reference, 'ANNUAL') === 0;
 
-    // Regex para extraer el ID del usuario de la referencia (e.g., BULK123-...)
+    // Regex to extract user ID from reference (e.g., BULK123-...)
     if (preg_match('/(?:BULK|ADDON|ANNUAL)(\d+)-/', $reference, $matches)) {
         $userId = $matches[1];
         $customerEmail = $transaction['customer_email'];
 
-        // Guardar fuente de pago para cobros recurrentes (Solo si es Tarjeta)
+        // Save payment source for recurring charges (Only if it's Card)
         $paymentSourceId = null;
         $brand = 'Card';
         $last4 = '****';
@@ -74,16 +74,16 @@ if ($transaction && $transaction['status'] === 'APPROVED') {
         $exp_year = null;
 
         if ($transaction['payment_method_type'] === 'CARD') {
-            // Extracción directa del JSON del Webhook
-            // INTENTO 1: Buscar 'token' en payment_method directo
+            // Direct extraction from Webhook JSON
+            // ATTEMPT 1: Look for 'token' in direct payment_method
             if (isset($transaction['payment_method']['token'])) {
                 $cardToken = $transaction['payment_method']['token'];
-                // Creamos la fuente de pago
+                // We create the payment source
                 $paymentSourceId = $wompi->createPaymentSource($cardToken, $customerEmail);
             }
 
-            // Extraer datos visuales si vienen en el payload (MÁS RÁPIDO QUE CONSULTAR API)
-            // INTENTO 1: Extraer de 'extra' dentro de 'payment_method'
+            // Extract visual data if present in payload (FASTER THAN API CONSULT)
+            // ATTEMPT 1: Extract from 'extra' within 'payment_method'
             if (isset($transaction['payment_method']['extra'])) {
                 $extra = $transaction['payment_method']['extra'];
                 $brand = $extra['brand'] ?? 'Card';
@@ -92,9 +92,9 @@ if ($transaction && $transaction['status'] === 'APPROVED') {
         }
 
         try {
-            // Guardar Tarjeta si existe y se obtuvo un ID de fuente
+            // Save card if it exists and a source ID was obtained
             if ($paymentSourceId) {
-                // Verificar si ya existe esta tarjeta
+                // Check if this card already exists
                 $stmtCheck = $db->prepare("SELECT id FROM payment_methods WHERE user_id = ? AND brand = ? AND last4 = ?");
                 $stmtCheck->execute([$userId, $brand, $last4]);
 
@@ -109,16 +109,16 @@ if ($transaction && $transaction['status'] === 'APPROVED') {
             }
 
             if ($isAddon) {
-                // ADD-ON logic: Crear un nuevo paquete con vencimiento de 1 mes
+                // ADD-ON logic: Create a new bundle with 1 month expiry
                 $stmt = $db->prepare("INSERT INTO credit_bundles (user_id, amount_original, amount_remaining, expires_at) 
                                       VALUES (?, 55000, 55000, DATE_ADD(NOW(), INTERVAL 1 MONTH))");
                 $stmt->execute([$userId]);
 
-                // Sincronizar columna extra_credits en tabla users
+                // Sync extra_credits column in users table
                 $db->prepare("UPDATE users SET extra_credits = (SELECT SUM(amount_remaining) FROM credit_bundles WHERE user_id = ? AND expires_at > NOW() AND amount_remaining > 0) WHERE id = ?")
                     ->execute([$userId, $userId]);
             } else {
-                // Lógica de Suscripción PRO
+                // PRO Subscription logic
                 $cycle = $isAnnual ? 'yearly' : 'monthly';
                 $interval = $isAnnual ? '1 YEAR' : '1 MONTH';
 
@@ -140,7 +140,7 @@ if ($transaction && $transaction['status'] === 'APPROVED') {
                         ->execute([$userId, $cycle, $paymentSourceId, $customerEmail]);
                 }
 
-                // Reset de créditos mensuales
+                // Reset monthly credits
                 $db->prepare("UPDATE users SET credits = 50000 WHERE id = ?")->execute([$userId]);
             }
         } catch (Exception $e) {

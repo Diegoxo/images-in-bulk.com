@@ -39,11 +39,20 @@ define('WOMPI_EVENT_SECRET', $_ENV['WOMPI_EVENT_SECRET'] ?? '');
 define('RECURRING_CHARGE_SECRET', $_ENV['RECURRING_CHARGE_SECRET'] ?? 'RECURRING_SECRET_123');
 define('AUTH_CALLBACK_URL', $_ENV['AUTH_CALLBACK_URL'] ?? 'http://localhost/images-in-bulk.com/auth/callback.php');
 
-// Determinar URL_BASE dinámicamente o desde .env
+// Determine URL_BASE dynamically or from .env
 $scriptName = str_replace('\\', '/', $_SERVER['SCRIPT_NAME']);
 $dirName = str_replace('\\', '/', dirname($scriptName));
 $base = ($dirName === '/' || $dirName === '\\') ? '' : $dirName;
 define('URL_BASE', $_ENV['URL_BASE'] ?? $base);
+
+// SMTP Configuration (Email Verification)
+define('SMTP_HOST', $_ENV['SMTP_HOST'] ?? '');
+define('SMTP_PORT', $_ENV['SMTP_PORT'] ?? '587');
+define('SMTP_USERNAME', $_ENV['SMTP_USERNAME'] ?? '');
+define('SMTP_PASSWORD', $_ENV['SMTP_PASSWORD'] ?? '');
+define('SMTP_FROM_EMAIL', $_ENV['SMTP_FROM_EMAIL'] ?? '');
+define('SMTP_FROM_NAME', $_ENV['SMTP_FROM_NAME'] ?? 'Images In Bulk');
+define('SITE_URL', $_ENV['SITE_URL'] ?? 'https://imagesinbulks.com');
 
 // Error reporting based on environment
 $appEnv = $_ENV['APP_ENV'] ?? 'local';

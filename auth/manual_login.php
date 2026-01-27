@@ -6,7 +6,9 @@ require_once '../includes/config.php';
 
 require_once '../includes/utils/csrf.php';
 
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: ../login');
@@ -32,7 +34,7 @@ try {
 
     if ($mode === 'signup') {
         // --- SIGN UP LOGIC ---
-        $initialName = filter_input(INPUT_POST, 'full_name', FILTER_SANITIZE_STRING);
+        $initialName = $_POST['full_name'] ?? '';
         // Clean name to allow only letters and spaces
         $fullName = preg_replace("/[^a-zA-Z\s]/", "", $initialName);
 
@@ -52,24 +54,34 @@ try {
         // 2. Hash Password
         $passwordHash = password_hash($password, PASSWORD_DEFAULT);
 
-        // 3. Create User
-        $stmt = $db->prepare("INSERT INTO users (email, full_name, password_hash, auth_provider) VALUES (?, ?, ?, 'local')");
+        // 3. Create User (unverified)
+        $stmt = $db->prepare("INSERT INTO users (email, full_name, password_hash, auth_provider, email_verified) VALUES (?, ?, ?, 'local', FALSE)");
         $stmt->execute([$email, $fullName, $passwordHash]);
         $userId = $db->lastInsertId();
 
-        // 4. Auto Login
-        $_SESSION['user_id'] = $userId;
-        $_SESSION['user_name'] = $fullName;
+        // 4. Verification Token
+        $token = bin2hex(random_bytes(32));
+        $expiresAt = date('Y-m-d H:i:s', strtotime('+24 hours'));
 
-        // Redirect to Generator
-        header('Location: ../generator');
+        $stmtToken = $db->prepare("INSERT INTO email_verifications (user_id, verification_token, expires_at) VALUES (?, ?, ?)");
+        $stmtToken->execute([$userId, $token, $expiresAt]);
+
+        // 5. Send Verification Email
+        require_once '../includes/utils/email_helper.php';
+        $sent = EmailHelper::sendVerification($email, $fullName, $token);
+
+        if ($sent) {
+            header('Location: ../login?success=Account created! Please check your email to verify your account.');
+        } else {
+            header('Location: ../login?warning=Account created but we could not send the verification email. Please contact support.');
+        }
         exit;
 
     } else {
         // --- LOGIN LOGIC ---
 
         // 1. Find User
-        $stmt = $db->prepare("SELECT id, full_name, password_hash, auth_provider FROM users WHERE email = ?");
+        $stmt = $db->prepare("SELECT id, full_name, password_hash, auth_provider, email_verified FROM users WHERE email = ?");
         $stmt->execute([$email]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -79,13 +91,18 @@ try {
         }
 
         // 2. Check Password
-        // If user registered via Google, they won't have a password hash
         if (empty($user['password_hash'])) {
             header('Location: ../login?error=Please login with ' . ucfirst($user['auth_provider']));
             exit;
         }
 
         if (password_verify($password, $user['password_hash'])) {
+            // Check Verification
+            if (!$user['email_verified']) {
+                header('Location: ../login?error=Please verify your email address first. Check your inbox.');
+                exit;
+            }
+
             // Success
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['user_name'] = $user['full_name'];
@@ -98,7 +115,7 @@ try {
     }
 
 } catch (Exception $e) {
-    // Log error securely in production, show simple msg here
+    error_log("Manual Auth Error: " . $e->getMessage());
     header('Location: ../login?mode=' . $mode . '&error=System error. Please try again.');
     exit;
 }

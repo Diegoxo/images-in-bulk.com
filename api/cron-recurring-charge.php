@@ -1,14 +1,14 @@
 <?php
 /**
- * CRON Script: Ejecutar cobros recurrentes de Wompi
- * Se recomienda correr este script una vez al día.
+ * CRON Script: Execute Wompi recurring charges
+ * It is recommended to run this script once a day.
  */
 require_once __DIR__ . '/../includes/config.php';
 require_once __DIR__ . '/../includes/wompi-helper.php';
 
-// Seguridad básica: Solo permitir ejecución si hay una llave secreta o desde CLI
+// Basic security: Only allow execution if a secret key is provided or from CLI
 if (php_sapi_name() !== 'cli' && (!isset($_GET['key']) || $_GET['key'] !== RECURRING_CHARGE_SECRET)) {
-    die("Acceso no autorizado");
+    die("Unauthorized access");
 }
 
 try {
@@ -44,7 +44,7 @@ try {
     $stmt->execute();
     $subsToCharge = $stmt->fetchAll();
 
-    echo "Procesando " . count($subsToCharge) . " renovaciones...\n";
+    echo "Processing " . count($subsToCharge) . " renewals...\n";
 
     foreach ($subsToCharge as $sub) {
         $isAnnual = ($sub['billing_cycle'] === 'yearly');
@@ -52,7 +52,7 @@ try {
         $interval = $isAnnual ? '1 YEAR' : '1 MONTH';
         $reference = 'RECURRING-' . ($isAnnual ? 'ANNUAL-' : '') . $sub['user_id'] . '-' . date('Ymd-Hi');
 
-        echo "Cobrando a usuario {$sub['user_id']} (" . ($isAnnual ? 'Anual' : 'Mensual') . ")... ";
+        echo "Charging user {$sub['user_id']} (" . ($isAnnual ? 'Annual' : 'Monthly') . ")... ";
 
         $res = $wompi->createRecurringTransaction(
             $sub['wompi_payment_source_id'],
@@ -75,17 +75,17 @@ try {
             $stmtCredits = $db->prepare("UPDATE users SET credits = 50000 WHERE id = ?");
             $stmtCredits->execute([$sub['user_id']]);
 
-            echo "¡Éxito! Nueva fecha de vencimiento: " . date('Y-m-d', strtotime('+' . $interval, strtotime($sub['current_period_end']))) . "\n";
+            echo "Success! New expiry date: " . date('Y-m-d', strtotime('+' . $interval, strtotime($sub['current_period_end']))) . "\n";
         } else {
-            $error = $res['error']['message'] ?? ($res['data']['status_message'] ?? 'Fallido');
-            echo "FALLÓ: $error\n";
+            $error = $res['error']['message'] ?? ($res['data']['status_message'] ?? 'Failed');
+            echo "FAILED: $error\n";
 
             // Note: In production, you'd fail several times before inactivating
             // For now, let's keep it active but log it.
         }
     }
 
-    echo "Proceso terminado.\n";
+    echo "Process finished.\n";
 
 } catch (Exception $e) {
     echo "ERROR: " . $e->getMessage() . "\n";

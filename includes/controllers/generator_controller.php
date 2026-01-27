@@ -8,7 +8,11 @@ require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../utils/security_headers.php';
 require_once __DIR__ . '/../utils/subscription_helper.php';
 require_once __DIR__ . '/../utils/security.php';
+require_once __DIR__ . '/../utils/auth_guard.php';
 include __DIR__ . '/../pages-config/generator-config.php';
+
+// Auth & Verification Check
+AuthGuard::requireVerified();
 
 // Generate/Get CSRF Token
 $csrfToken = CSRF::generate();

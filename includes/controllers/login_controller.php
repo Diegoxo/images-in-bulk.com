@@ -27,10 +27,14 @@ $footerText = $isSignUp ? "Already have an account?" : "Don't have an account?";
 $footerLink = $isSignUp ? "login" : "login?mode=signup";
 $footerAction = $isSignUp ? "Login here" : "Sign up here";
 
-// 3. Handle Errors (Pre-render HTML to keep view clean)
+// 3. Handle Messages (Pre-render HTML to keep view clean)
 $errorHtml = '';
 if (isset($_GET['error'])) {
     $errorHtml = '<div class="auth-error-alert">' . htmlspecialchars($_GET['error']) . '</div>';
+} elseif (isset($_GET['success'])) {
+    $errorHtml = '<div class="auth-success-alert">' . htmlspecialchars($_GET['success']) . '</div>';
+} elseif (isset($_GET['warning'])) {
+    $errorHtml = '<div class="auth-warning-alert">' . htmlspecialchars($_GET['warning']) . '</div>';
 }
 
 // 4. View Flags

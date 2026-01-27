@@ -217,5 +217,5 @@ if (isset($response['data'][0]['url'])) {
         'image_url' => $imageUrl
     ]);
 } else {
-    echo json_encode(['success' => false, 'error' => 'No se recibió una imagen válida de la API']);
+    echo json_encode(['success' => false, 'error' => 'No valid image was received from the API']);
 }

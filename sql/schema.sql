@@ -14,9 +14,20 @@ CREATE TABLE IF NOT EXISTS users (
     auth_provider VARCHAR(50) DEFAULT 'local',
     provider_id VARCHAR(255) NULL,
     avatar_url TEXT,
+    email_verified BOOLEAN DEFAULT FALSE,
     credits INT DEFAULT 0, -- User's available credits (resets monthly)
     extra_credits INT DEFAULT 0, -- Total sum of active extra credit bundles
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Email Verifications Table
+CREATE TABLE IF NOT EXISTS email_verifications (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    verification_token VARCHAR(255) NOT NULL,
+    expires_at DATETIME NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 -- Credit Bundles Table (Add-ons with expiry)

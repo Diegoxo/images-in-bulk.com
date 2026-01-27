@@ -1,7 +1,7 @@
 <?php
 /**
  * Wompi Callback Handler
- * Recibe al usuario, verifica el pago y guarda la fuente para cobros recurrentes.
+ * Receives the user, verifies the payment, and saves the source for recurring charges.
  */
 require_once '../includes/config.php';
 require_once '../includes/wompi-helper.php';
@@ -22,7 +22,7 @@ try {
     $db = getDB();
     $wompi = new WompiHelper();
 
-    // 1. Verificar estado real de la transacción en Wompi
+    // 1. Verify the actual status of the transaction in Wompi
     $res = $wompi->getTransaction($transactionId);
     $transaction = $res['data'] ?? null;
 
@@ -42,14 +42,14 @@ try {
     $interval = $isAnnual ? '1 YEAR' : '1 MONTH';
     $cycle = $isAnnual ? 'yearly' : 'monthly';
 
-    // 2. Si el pago fue con tarjeta, crear/guardar la Fuente de Pago para el futuro
+    // 2. If the payment was with a card, create/save the Payment Source for the future
     if ($transaction['payment_method_type'] === 'CARD') {
         $cardToken = $transaction['payment_method']['token'] ?? null;
         if ($cardToken) {
             $paymentSourceId = $wompi->createPaymentSource($cardToken, $customerEmail);
 
             if ($paymentSourceId) {
-                // Obtener detalles de la tarjeta para guardarlos localmente
+                // Get card details to save local copies
                 $sourceRes = $wompi->getPaymentSource($paymentSourceId);
                 $brand = 'Card';
                 $last4 = '****';
@@ -64,7 +64,7 @@ try {
                     $exp_year = $pd['exp_year'] ?? null;
                 }
 
-                // Verificar si ya existe esta tarjeta o si es la primera para ponerla por defecto
+                // Check if this card already exists or if it's the first one to set as default
                 $stmtCheck = $db->prepare("SELECT id FROM payment_methods WHERE user_id = ? AND brand = ? AND last4 = ?");
                 $stmtCheck->execute([$userId, $brand, $last4]);
 
@@ -80,17 +80,17 @@ try {
         }
     }
 
-    // 3. Activar o actualizar (Solo si NO es un Addon)
+    // 3. Activate or update (Only if NOT an Addon)
     if ($isAddon) {
-        // Lógica de créditos extra: Crear paquete con vencimiento de 1 mes
+        // Extra credits logic: Create bundle with 1 month expiry
         $db->prepare("INSERT INTO credit_bundles (user_id, amount_original, amount_remaining, expires_at) 
                       VALUES (?, 55000, 55000, DATE_ADD(NOW(), INTERVAL 1 MONTH))")->execute([$userId]);
 
-        // Sincronizar columna extra_credits en tabla users
+        // Sync extra_credits column in users table
         $db->prepare("UPDATE users SET extra_credits = (SELECT SUM(amount_remaining) FROM credit_bundles WHERE user_id = ? AND expires_at > NOW() AND amount_remaining > 0) WHERE id = ?")
             ->execute([$userId, $userId]);
     } else {
-        // Lógica de Suscripción PRO
+        // PRO Subscription logic
         $stmt = $db->prepare("SELECT id FROM subscriptions WHERE user_id = ?");
         $stmt->execute([$userId]);
         $subscription = $stmt->fetch();
@@ -112,7 +112,7 @@ try {
             $stmt->execute([$userId, $cycle, $paymentSourceId, $customerEmail]);
         }
 
-        // Reset de créditos mensuales CORRESPONDIENTE al plan (Solo para nuevas subs o renewals)
+        // Reset monthly credits according to the plan (Only for new subs or renewals)
         $db->prepare("UPDATE users SET credits = 50000 WHERE id = ?")->execute([$userId]);
     }
 
@@ -120,7 +120,7 @@ try {
     exit;
 
 } catch (Exception $e) {
-    error_log("Error en Wompi Callback: " . $e->getMessage());
+    error_log("Error in Wompi Callback: " . $e->getMessage());
     header('Location: ../pricing.php?error=system_error');
     exit;
 }

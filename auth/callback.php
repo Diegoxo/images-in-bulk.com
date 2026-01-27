@@ -7,7 +7,7 @@ require_once '../includes/config.php';
 use Hybridauth\Hybridauth;
 use Hybridauth\HttpClient;
 
-// Detectar proveedor: Si viene por GET, es el inicio. Si no, recuperar de sesión (retorno).
+// Detect provider: If set via GET, it's the start. Otherwise, retrieve from session (return).
 if (isset($_GET['provider'])) {
     $provider = $_GET['provider'];
     $_SESSION['auth_provider_flow'] = $provider;
@@ -79,5 +79,5 @@ try {
     }
 
 } catch (\Exception $e) {
-    echo "¡Error de autenticación!: " . $e->getMessage();
+    echo "Authentication Error: " . $e->getMessage();
 }

@@ -8,6 +8,10 @@ require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../utils/security_headers.php';
 require_once __DIR__ . '/../wompi-helper.php';
 require_once __DIR__ . '/../utils/security.php';
+require_once __DIR__ . '/../utils/auth_guard.php';
+
+// Auth & Verification Check
+AuthGuard::requireVerified();
 
 // Generate/Get CSRF Token
 $csrfToken = CSRF::generate();

@@ -14,14 +14,14 @@ class WompiHelper
         $this->publicKey = defined('WOMPI_PUBLIC_KEY') ? WOMPI_PUBLIC_KEY : '';
         $this->privateKey = defined('WOMPI_PRIVATE_KEY') ? WOMPI_PRIVATE_KEY : '';
 
-        // Determinar ambiente basado en la llave pública
+        // Determine environment based on public key
         $this->baseUrl = (strpos($this->publicKey, 'pub_test') !== false)
             ? 'https://sandbox.wompi.co/v1'
             : 'https://production.wompi.co/v1';
     }
 
     /**
-     * Obtener el Acceptance Token necesario para crear fuentes de pago
+     * Get the Acceptance Token required to create payment sources
      */
     public function getAcceptanceToken()
     {
@@ -36,12 +36,12 @@ class WompiHelper
     }
 
     /**
-     * Crear una Fuente de Pago (Card Token -> Payment Source)
+     * Create a Payment Source (Card Token -> Payment Source)
      */
     public function createPaymentSource($token, $customerEmail)
     {
         if (empty($this->privateKey)) {
-            error_log("Wompi Error: PRIVATE_KEY no configurada");
+            error_log("Wompi Error: PRIVATE_KEY not configured");
             return null;
         }
 
@@ -72,7 +72,7 @@ class WompiHelper
     }
 
     /**
-     * Realizar un cobro recurrente usando una fuente de pago
+     * Perform a recurring charge using a payment source
      */
     public function createRecurringTransaction($paymentSourceId, $amountInCents, $reference, $customerEmail)
     {
@@ -111,7 +111,7 @@ class WompiHelper
     }
 
     /**
-     * Consultar estado de una transacción
+     * Get transaction status
      */
     public function getTransaction($transactionId)
     {
@@ -125,7 +125,7 @@ class WompiHelper
     }
 
     /**
-     * Consultar detalles de una fuente de pago
+     * Get payment source details
      */
     public function getPaymentSource($sourceId)
     {

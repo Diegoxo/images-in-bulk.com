@@ -1425,6 +1425,34 @@ textarea::-webkit-scrollbar-thumb:hover,
     text-align: center;
 }
 
+.auth-error-alert,
+.auth-success-alert,
+.auth-warning-alert {
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+    font-size: 0.9rem;
+    text-align: left;
+}
+
+.auth-error-alert {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    color: #fca5a5;
+}
+
+.auth-success-alert {
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    color: #6ee7b7;
+}
+
+.auth-warning-alert {
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+    color: #fcd34d;
+}
+
 .auth-options {
     display: flex;
     flex-direction: column;
