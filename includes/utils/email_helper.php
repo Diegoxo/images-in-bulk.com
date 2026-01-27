@@ -95,6 +95,90 @@ class EmailHelper
     }
   }
 
+  /**
+   * Send a password reset email.
+   */
+  public static function sendPasswordReset($to, $name, $token)
+  {
+    $host = SMTP_HOST;
+    $port = SMTP_PORT;
+    $user = SMTP_USERNAME;
+    $pass = SMTP_PASSWORD;
+    $fromEmail = SMTP_FROM_EMAIL;
+    $fromName = SMTP_FROM_NAME;
+
+    $resetLink = SITE_URL . "/auth/reset-password.php?token=" . $token;
+    $htmlContent = self::getResetTemplate($name, $resetLink);
+
+    try {
+      $socket = @fsockopen(($port == 465 ? "ssl://" : "") . $host, $port, $errno, $errstr, 15);
+      if (!$socket)
+        throw new Exception("Could not connect to SMTP host: $errstr");
+
+      self::getResponse($socket, "220");
+      fwrite($socket, "EHLO " . $_SERVER['HTTP_HOST'] . "\r\n");
+      self::getResponse($socket, "250");
+
+      if ($port == 587) {
+        fwrite($socket, "STARTTLS\r\n");
+        self::getResponse($socket, "220");
+        stream_socket_enable_crypto($socket, true, STREAM_CRYPTO_METHOD_TLS_CLIENT);
+        fwrite($socket, "EHLO " . $_SERVER['HTTP_HOST'] . "\r\n");
+        self::getResponse($socket, "250");
+      }
+
+      fwrite($socket, "AUTH LOGIN\r\n");
+      self::getResponse($socket, "334");
+      fwrite($socket, base64_encode($user) . "\r\n");
+      self::getResponse($socket, "334");
+      fwrite($socket, base64_encode($pass) . "\r\n");
+      self::getResponse($socket, "235");
+
+      fwrite($socket, "MAIL FROM: <$fromEmail>\r\n");
+      self::getResponse($socket, "250");
+      fwrite($socket, "RCPT TO: <$to>\r\n");
+      self::getResponse($socket, "250");
+
+      fwrite($socket, "DATA\r\n");
+      self::getResponse($socket, "354");
+
+      $headers = [
+        "Subject: =?UTF-8?B?" . base64_encode("Reset your password - Images in Bulk") . "?=",
+        "To: $name <$to>",
+        "From: $fromName <$fromEmail>",
+        "MIME-Version: 1.0",
+        "Content-Type: text/html; charset=UTF-8",
+        "Date: " . date("r")
+      ];
+
+      fwrite($socket, implode("\r\n", $headers) . "\r\n\r\n");
+      fwrite($socket, $htmlContent . "\r\n.\r\n");
+      self::getResponse($socket, "250");
+
+      fwrite($socket, "QUIT\r\n");
+      fclose($socket);
+      return true;
+    } catch (Exception $e) {
+      error_log("Elite SMTP Reset Error: " . $e->getMessage());
+      return false;
+    }
+  }
+
+  private static function getResetTemplate($name, $link)
+  {
+    return '
+        <div style="background-color: #0f172a; color: #f8fafc; font-family: sans-serif; padding: 40px; text-align: center;">
+            <div style="max-width: 600px; margin: 0 auto; background: #1e293b; border-radius: 20px; padding: 40px;">
+                <h1 style="color: #a855f7;">Password Reset Request</h1>
+                <p style="color: #cbd5e1;">Hi ' . htmlspecialchars($name) . ', we received a request to reset your password. Click the button below to continue.</p>
+                <div style="margin: 30px 0;">
+                    <a href="' . $link . '" style="display: inline-block; padding: 14px 32px; background: #9333ea; color: white; text-decoration: none; border-radius: 12px; font-weight: bold;">Reset Password</a>
+                </div>
+                <p style="font-size: 12px; color: #64748b;">If you didn\'t request this, you can safely ignore this email. This link will expire in 1 hour.</p>
+            </div>
+        </div>';
+  }
+
   private static function getResponse($socket, $expectedCode)
   {
     $response = "";
