@@ -2257,6 +2257,33 @@ textarea::-webkit-scrollbar-thumb:hover,
 
 .auth-card label {
     font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.label-group {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.label-group label {
+    margin-bottom: 0 !important;
+}
+
+.forgot-link {
+    font-size: 0.8rem;
+    color: var(--primary);
+    text-decoration: none;
+    transition: var(--transition-base);
+    opacity: 0.8;
+}
+
+.forgot-link:hover {
+    opacity: 1;
+    text-decoration: underline;
+    transform: translateX(-2px);
 }
 
 .auth-footer {
