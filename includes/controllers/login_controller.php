@@ -39,4 +39,11 @@ if (isset($_GET['error'])) {
 
 // 4. View Flags
 $showNameField = $isSignUp;
+$isVerifyState = isset($_GET['verify_email']);
 $pageTitle = $isSignUp ? "Sign Up" : "Sign In";
+
+if ($isVerifyState) {
+    $pageTitle = "Verify Email";
+    $authTitle = "Check your email";
+    $authSubtitle = "We have sent a verification link to <br><strong>" . htmlspecialchars($_GET['verify_email']) . "</strong>";
+}

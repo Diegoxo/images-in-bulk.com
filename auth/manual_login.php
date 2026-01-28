@@ -85,7 +85,7 @@ try {
         $sent = EmailHelper::sendVerification($email, $fullName, $token);
 
         if ($sent) {
-            header('Location: ../login?success=Account created! Please check your email to verify your account.');
+            header('Location: ../login?success=Account created! Please check your email to verify your account.&verify_email=' . urlencode($email));
         } else {
             header('Location: ../login?warning=Account created but we could not send the verification email. Please contact support.');
         }
