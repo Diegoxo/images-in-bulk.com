@@ -80,6 +80,14 @@
                     };
                 }
 
+                const successCloseBtn = document.getElementById('success-close-btn');
+                if (successCloseBtn) {
+                    successCloseBtn.onclick = function (e) {
+                        e.preventDefault();
+                        closeCustomModal('email-change-modal');
+                    };
+                }
+
                 // Generic close handler for any close button inside modal (including success state)
                 const allCloseBtns = emailModal.querySelectorAll('.close-modal');
                 allCloseBtns.forEach(btn => {

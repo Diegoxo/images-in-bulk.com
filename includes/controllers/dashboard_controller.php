@@ -183,7 +183,7 @@ try {
                 <div class="mb-2" style="font-size: 3rem;">✉️</div>
                 <h3 class="mb-1 text-white">Check your inbox</h3>
                 <p class="fs-sm text-secondary mb-2">We have sent a verification link to your new email address.</p>
-                <button type="button" class="btn-auth btn-primary full-width close-modal">Close</button>
+                <button type="button" id="success-close-btn" class="btn-auth btn-primary full-width">Close</button>
             </div>
         </div>
     </div>
