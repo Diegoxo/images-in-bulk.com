@@ -1,9 +1,30 @@
 <script>
     (function () {
+        // --- Modal Helper Functions (Standardized) ---
+        function openCustomModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.classList.add('d-flex');
+                setTimeout(() => modal.classList.add('active'), 10);
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        function closeCustomModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.remove('active');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('d-flex');
+                }, 300);
+                document.body.style.overflow = '';
+            }
+        }
+
         // --- Initialization ---
         function init() {
-            console.log("Profile Logic: Initializing...");
-
             const emailModal = document.getElementById('email-change-modal');
             const emailTrigger = document.getElementById('edit-email-trigger');
             const nameDisplay = document.getElementById('name-display-container');
@@ -14,39 +35,34 @@
             const nameInput = document.getElementById('new-name-input');
             const currentNameSpan = document.getElementById('current-name');
 
-            // --- Modal Logic ---
+            // --- Email Modal Toggle Logic ---
             if (emailTrigger && emailModal) {
-                // Clear and Re-bind for maximum reliability
                 emailTrigger.onclick = function (e) {
-                    console.log("Email trigger clicked");
                     e.preventDefault();
                     e.stopPropagation();
-                    
-                    emailModal.classList.remove('d-none');
-                    emailModal.style.setProperty('display', 'flex', 'important');
-
+                    openCustomModal('email-change-modal');
                     const firstInput = emailModal.querySelector('input');
-                    if (firstInput) setTimeout(() => firstInput.focus(), 100);
+                    if (firstInput) setTimeout(() => firstInput.focus(), 350); // After animation
                 };
 
                 const closeButtons = emailModal.querySelectorAll('.close-modal');
                 closeButtons.forEach(btn => {
                     btn.onclick = function (e) {
                         e.preventDefault();
-                        emailModal.classList.add('d-none');
-                        emailModal.style.setProperty('display', 'none', 'important');
+                        closeCustomModal('email-change-modal');
                     };
                 });
 
-                emailModal.onclick = function (e) {
-                    if (e.target === emailModal) {
-                        emailModal.classList.add('d-none');
-                        emailModal.style.setProperty('display', 'none', 'important');
-                    }
-                };
+                // Overlay click closure
+                const overlay = emailModal.querySelector('.modal-overlay');
+                if (overlay) {
+                    overlay.onclick = function() {
+                        closeCustomModal('email-change-modal');
+                    };
+                }
             }
 
-            // --- Name Logic ---
+            // --- Name Toggle Logic ---
             if (nameTrigger) {
                 nameTrigger.onclick = function(e) {
                     e.preventDefault();
@@ -84,11 +100,13 @@
                         const data = await response.json();
                         if (data.success) {
                             currentNameSpan.textContent = data.new_name;
-                            if (window.showNotification) showNotification('Updated!', 'success');
+                            if (window.Toast) Toast.success('Name updated!');
                             cancelNameBtn.click();
+                        } else {
+                            if (window.Toast) Toast.error(data.message || 'Error updating name');
                         }
                     } catch (err) {
-                        console.error(err);
+                        if (window.Toast) Toast.error('Connection error');
                     } finally {
                         saveNameBtn.disabled = false;
                         saveNameBtn.innerHTML = '✓';
@@ -97,13 +115,11 @@
             }
         }
 
-        // Run as soon as possible and on multiple events
+        // Initialize
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', init);
         } else {
             init();
         }
-        window.addEventListener('load', init);
-
     })();
 </script>

@@ -142,13 +142,14 @@ try {
 
     // --- Email Change Modal Component ---
     ob_start(); ?>
-    <div id="email-change-modal" class="modal-overlay d-none">
-        <div class="glass modal-content animate-pop">
+    <div id="email-change-modal" class="custom-modal hidden">
+        <div class="modal-overlay"></div>
+        <div class="modal-content animate-pop">
             <div class="modal-header">
                 <h2 class="section-title fs-15">Change Email Address</h2>
                 <button class="close-modal">&times;</button>
             </div>
-            <div class="modal-body mt-1">
+            <div class="modal-body modal-body-left">
                 <p class="fs-sm text-secondary mb-15">
                     To change your email, please enter your new address and your current password for security.
                 </p>
