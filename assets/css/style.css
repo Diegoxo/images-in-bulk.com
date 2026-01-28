@@ -1419,6 +1419,13 @@ textarea::-webkit-scrollbar-thumb:hover,
     z-index: 10000;
     padding: 20px;
     animation: authFadeIn 0.3s ease;
+    pointer-events: none;
+    /* Block clicks when hidden */
+}
+
+.modal-overlay:not(.d-none) {
+    pointer-events: all;
+    /* Allow clicks when visible */
 }
 
 .modal-content {
