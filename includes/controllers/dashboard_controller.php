@@ -111,6 +111,65 @@ try {
         ? '<button class="btn-auth glass full-width opacity-7 cursor-default" disabled>Active</button>'
         : '<a href="pricing" class="btn-auth btn-primary full-width">Upgrade to Pro</a>';
 
+    // --- Profile Info Component ---
+    ob_start(); ?>
+    <div id="name-display-container">
+        <h1>
+            <span id="current-name"><?php echo htmlspecialchars($user['full_name']); ?></span>
+            <?php echo $profileBadgeHtml; ?>
+            <button id="edit-name-trigger" class="edit-btn-icon" title="Edit Full Name">✏️</button>
+        </h1>
+    </div>
+
+    <!-- Name Edit Form -->
+    <div id="name-edit-container" class="name-edit-form d-none">
+        <input type="text" id="new-name-input" class="edit-input-field"
+            value="<?php echo htmlspecialchars($user['full_name']); ?>" maxlength="50">
+        <div class="edit-actions">
+            <button id="save-name-btn" class="btn-icon-action save" title="Save Changes">✓</button>
+            <button id="cancel-name-btn" class="btn-icon-action cancel" title="Cancel">✕</button>
+        </div>
+    </div>
+
+    <div class="d-flex align-items-center gap-1">
+        <p class="m-0"><?php echo htmlspecialchars($user['email']); ?></p>
+        <?php if ($user['auth_provider'] === 'local'): ?>
+            <button id="edit-email-trigger" class="edit-btn-icon" title="Change Email">✏️</button>
+        <?php endif; ?>
+    </div>
+    <?php
+    $profileInfoHtml = ob_get_clean();
+
+    // --- Email Change Modal Component ---
+    ob_start(); ?>
+    <div id="email-change-modal" class="modal-overlay d-none">
+        <div class="glass modal-content animate-pop">
+            <div class="modal-header">
+                <h2 class="section-title fs-15">Change Email Address</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body mt-1">
+                <p class="fs-sm text-secondary mb-15">
+                    To change your email, please enter your new address and your current password for security.
+                </p>
+                <div class="form-group mb-1">
+                    <label class="fs-xs">New Email Address</label>
+                    <input type="email" id="modal-new-email" class="auth-input" placeholder="new-email@example.com">
+                </div>
+                <div class="form-group">
+                    <label class="fs-xs">Current Password</label>
+                    <input type="password" id="modal-current-password" class="auth-input" placeholder="••••••••">
+                </div>
+            </div>
+            <div class="modal-footer d-flex gap-1">
+                <button id="confirm-email-change-btn" class="btn-auth btn-primary flex-1">Update Email</button>
+                <button class="btn-auth glass close-modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+    <?php
+    $emailChangeModalHtml = ob_get_clean();
+
     // --- Credits Tip Component ---
     $creditsTipHtml = $isPro
         ? 'Your monthly balance for high-quality images.'
