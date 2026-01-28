@@ -37,6 +37,13 @@
         function init() {
             const emailModal = document.getElementById('email-change-modal');
             const emailTrigger = document.getElementById('edit-email-trigger');
+            
+            // Modal Elements
+            const modalBody = emailModal ? emailModal.querySelector('.modal-body') : null;
+            const modalFooter = emailModal ? emailModal.querySelector('.modal-footer') : null;
+            const successState = document.getElementById('email-change-success-state');
+            const modalHeader = emailModal ? emailModal.querySelector('.modal-header') : null;
+
             const nameDisplay = document.getElementById('name-display-container');
             const nameEdit = document.getElementById('name-edit-container');
             const nameTrigger = document.getElementById('edit-name-trigger');
@@ -45,15 +52,24 @@
             const nameInput = document.getElementById('new-name-input');
             const currentNameSpan = document.getElementById('current-name');
 
+            // Help reset view to default form
+            function resetViewToForm() {
+                if (modalBody) modalBody.classList.remove('d-none');
+                if (modalFooter) modalFooter.classList.remove('d-none');
+                if (modalHeader) modalHeader.classList.remove('d-none');
+                if (successState) successState.classList.add('d-none');
+                resetEmailModalFields();
+            }
+
             // --- Email Modal Toggle Logic ---
             if (emailTrigger && emailModal) {
                 emailTrigger.onclick = function (e) {
                     e.preventDefault();
                     e.stopPropagation();
-                    resetEmailModalFields(); // Clear before opening just in case
+                    resetViewToForm(); // Reset view and fields
                     openCustomModal('email-change-modal');
                     const firstInput = emailModal.querySelector('input[type="email"]');
-                    if (firstInput) setTimeout(() => firstInput.focus(), 350); // After animation
+                    if (firstInput) setTimeout(() => firstInput.focus(), 350); 
                 };
 
                 const cancelEmailBtn = document.getElementById('cancel-email-change-btn');
@@ -64,7 +80,15 @@
                     };
                 }
 
-                // Overlay click closure
+                // Generic close handler for any close button inside modal (including success state)
+                const allCloseBtns = emailModal.querySelectorAll('.close-modal');
+                allCloseBtns.forEach(btn => {
+                    btn.onclick = function(e) {
+                        e.preventDefault();
+                        closeCustomModal('email-change-modal');
+                    };
+                });
+
                 const overlay = emailModal.querySelector('.modal-overlay');
                 if (overlay) {
                     overlay.onclick = function() {
@@ -174,9 +198,11 @@
                         const data = await response.json();
 
                         if (data.success) {
-                            if (window.Toast) Toast.success(data.message);
-                            closeCustomModal('email-change-modal');
-                            // Reset is handled by closeCustomModal
+                            // SWITCH VIEW TO SUCCESS STATE
+                            if (modalBody) modalBody.classList.add('d-none');
+                            if (modalFooter) modalFooter.classList.add('d-none');
+                            if (modalHeader) modalHeader.classList.add('d-none');
+                            if (successState) successState.classList.remove('d-none');
                         } else {
                             if (window.Toast) Toast.error(data.message);
                         }

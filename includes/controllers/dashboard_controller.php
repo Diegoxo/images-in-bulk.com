@@ -177,6 +177,14 @@ try {
                 <button id="confirm-email-change-btn" class="btn-auth btn-primary flex-1">Update Email</button>
                 <button type="button" id="cancel-email-change-btn" class="btn-auth glass flex-1">Cancel</button>
             </div>
+
+            <!-- Success State (Hidden by default) -->
+            <div id="email-change-success-state" class="d-none text-center">
+                <div class="mb-2" style="font-size: 3rem;">✉️</div>
+                <h3 class="mb-1 text-white">Check your inbox</h3>
+                <p class="fs-sm text-secondary mb-2">We have sent a verification link to your new email address.</p>
+                <button type="button" class="btn-auth btn-primary full-width close-modal">Close</button>
+            </div>
         </div>
     </div>
     <?php
