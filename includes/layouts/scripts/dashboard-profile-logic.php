@@ -84,15 +84,18 @@
             const modalCloseBtns = emailModal.querySelectorAll('.close-modal');
 
             if (emailTrigger) {
-                emailTrigger.addEventListener('click', () => {
+                emailTrigger.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
                     emailModal.classList.remove('d-none');
                     const firstInput = emailModal.querySelector('input');
-                    if (firstInput) firstInput.focus();
+                    if (firstInput) setTimeout(() => firstInput.focus(), 50);
                 });
             }
 
             modalCloseBtns.forEach(btn => {
-                btn.addEventListener('click', () => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
                     emailModal.classList.add('d-none');
                 });
             });
