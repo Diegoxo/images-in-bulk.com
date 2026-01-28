@@ -53,13 +53,21 @@ require_once 'includes/controllers/login_controller.php';
                 <div class="form-group">
                     <div class="label-group">
                         <label for="password">Password</label>
-                        <?php if (!$showNameField): ?>
+                            <?php if (!$showNameField): ?>
                             <a href="forgot-password" class="forgot-link">Forgot Password?</a>
-                        <?php endif; ?>
+                            <?php endif; ?>
                     </div>
                     <input type="password" id="password" name="password" placeholder="••••••••" required
                         class="auth-input">
                 </div>
+
+                <?php if ($showNameField): ?>
+                    <div class="form-group">
+                        <label for="confirm_password">Confirm Password</label>
+                        <input type="password" id="confirm_password" name="confirm_password" placeholder="••••••••" required
+                            class="auth-input">
+                    </div>
+                <?php endif; ?>
 
                 <button type="submit" class="btn-auth btn-primary full-width mt-05">
                     <?php echo $submitButtonText; ?>

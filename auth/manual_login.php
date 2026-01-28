@@ -43,6 +43,20 @@ try {
             exit;
         }
 
+        // --- NEW: Password Confirmation Validation ---
+        $confirmPassword = $_POST['confirm_password'] ?? '';
+
+        if (strlen($password) < 8) {
+            header('Location: ../login?mode=signup&error=Password must be at least 8 characters long');
+            exit;
+        }
+
+        if ($password !== $confirmPassword) {
+            header('Location: ../login?mode=signup&error=Passwords do not match');
+            exit;
+        }
+        // --- END ---
+
         // 1. Check if email exists
         $stmt = $db->prepare("SELECT id FROM users WHERE email = ?");
         $stmt->execute([$email]);
