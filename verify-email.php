@@ -141,6 +141,11 @@ if (empty($token)) {
 <body>
     <div class="verify-container">
         <section class="glass animate-fade verify-card">
+            <div class="verify-branding mb-2">
+                <img src="assets/img/bulk-image-generator-logo.avif" alt="Images In Bulks Logo" style="width: 60px; height: auto; margin-bottom: 0.5rem; filter: drop-shadow(0 0 10px rgba(147, 51, 234, 0.3));">
+                <div style="font-weight: 700; letter-spacing: 1px; color: var(--text-primary); font-size: 1.1rem; text-transform: uppercase;">Images In Bulks</div>
+            </div>
+
             <?php if ($success): ?>
                 <div class="icon-circle icon-success">✓</div>
                 <h1 class="section-title mb-1">Email Verified!</h1>
