@@ -27,10 +27,24 @@ require_once '../includes/controllers/dashboard_controller.php';
                 <?php echo $avatarHtml; ?>
 
                 <div class="profile-info">
-                    <h1>
-                        <?php echo htmlspecialchars($user['full_name']); ?>
-                        <?php echo $profileBadgeHtml; ?>
-                    </h1>
+                    <div id="name-display-container">
+                        <h1>
+                            <span id="current-name"><?php echo htmlspecialchars($user['full_name']); ?></span>
+                            <?php echo $profileBadgeHtml; ?>
+                            <button id="edit-name-trigger" class="edit-btn-icon" title="Edit Full Name">✏️</button>
+                        </h1>
+                    </div>
+
+                    <!-- Hidden Edit Form -->
+                    <div id="name-edit-container" class="name-edit-form d-none">
+                        <input type="text" id="new-name-input" class="edit-input-field"
+                            value="<?php echo htmlspecialchars($user['full_name']); ?>" maxlength="50">
+                        <div class="edit-actions">
+                            <button id="save-name-btn" class="btn-icon-action save" title="Save Changes">✓</button>
+                            <button id="cancel-name-btn" class="btn-icon-action cancel" title="Cancel">✕</button>
+                        </div>
+                    </div>
+
                     <p>
                         <?php echo htmlspecialchars($user['email']); ?>
                     </p>
@@ -145,6 +159,79 @@ require_once '../includes/controllers/dashboard_controller.php';
         <!-- Pass PHP environment to Global JS -->
         <script>
             const CURRENT_USER_ID = <?php echo $userId; ?>;
+
+            // --- Profile Name Editing Logic ---
+            const nameDisplay = document.getElementById('name-display-container');
+            const nameEdit = document.getElementById('name-edit-container');
+            const editTrigger = document.getElementById('edit-name-trigger');
+            const cancelBtn = document.getElementById('cancel-name-btn');
+            const saveBtn = document.getElementById('save-name-btn');
+            const nameInput = document.getElementById('new-name-input');
+            const currentNameSpan = document.getElementById('current-name');
+
+            // Toggle Edit View
+            editTrigger.addEventListener('click', () => {
+                nameDisplay.classList.add('d-none');
+                nameEdit.classList.remove('d-none');
+                nameInput.focus();
+            });
+
+            // Cancel Edit
+            cancelBtn.addEventListener('click', () => {
+                nameDisplay.classList.remove('d-none');
+                nameEdit.classList.add('d-none');
+                nameInput.value = currentNameSpan.textContent; // Reset input
+            });
+
+            // Save via API
+            saveBtn.addEventListener('click', async () => {
+                const newName = nameInput.value.trim();
+
+                if (newName === currentNameSpan.textContent) {
+                    cancelBtn.click();
+                    return;
+                }
+
+                if (newName.length < 3) {
+                    showNotification('Name is too short', 'error');
+                    return;
+                }
+
+                saveBtn.disabled = true;
+                saveBtn.innerHTML = '...';
+
+                try {
+                    const response = await fetch('../api/update-profile.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ full_name: newName })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        currentNameSpan.textContent = data.new_name;
+                        // Update header name if it exists
+                        const headerName = document.querySelector('.user-name');
+                        if (headerName) headerName.textContent = data.new_name;
+
+                        showNotification('Name updated successfully!', 'success');
+                        cancelBtn.click();
+                    } else {
+                        showNotification(data.message || 'Error updating name', 'error');
+                    }
+                } catch (error) {
+                    showNotification('Connection error', 'error');
+                } finally {
+                    saveBtn.disabled = false;
+                    saveBtn.innerHTML = '✓';
+                }
+            });
+
+            // Allow "Enter" to save
+            nameInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') saveBtn.click();
+            });
         </script>
 
         <!-- External Libraries & Dashboard Scripts -->
