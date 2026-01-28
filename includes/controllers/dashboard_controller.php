@@ -185,7 +185,8 @@ try {
                 <h3 class="mb-1 text-white">Check your inbox</h3>
                 <p class="fs-sm text-secondary mb-3">We have sent a verification link to your new email address.</p>
                 <div class="mt-4">
-                    <button type="button" id="success-close-btn" class="btn-auth btn-primary full-width">Close</button>
+                    <button type="button" id="success-close-btn" class="btn-auth btn-primary"
+                        style="min-width: 150px; width: auto; margin: 0 auto;">Close</button>
                 </div>
             </div>
         </div>

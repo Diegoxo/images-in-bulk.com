@@ -37,7 +37,7 @@
         function init() {
             const emailModal = document.getElementById('email-change-modal');
             const emailTrigger = document.getElementById('edit-email-trigger');
-            
+
             // Modal Elements
             const modalBody = emailModal ? emailModal.querySelector('.modal-body') : null;
             const modalFooter = emailModal ? emailModal.querySelector('.modal-footer') : null;
@@ -69,7 +69,7 @@
                     resetViewToForm(); // Reset view and fields
                     openCustomModal('email-change-modal');
                     const firstInput = emailModal.querySelector('input[type="email"]');
-                    if (firstInput) setTimeout(() => firstInput.focus(), 350); 
+                    if (firstInput) setTimeout(() => firstInput.focus(), 350);
                 };
 
                 const cancelEmailBtn = document.getElementById('cancel-email-change-btn');
@@ -91,7 +91,7 @@
                 // Generic close handler for any close button inside modal (including success state)
                 const allCloseBtns = emailModal.querySelectorAll('.close-modal');
                 allCloseBtns.forEach(btn => {
-                    btn.onclick = function(e) {
+                    btn.onclick = function (e) {
                         e.preventDefault();
                         closeCustomModal('email-change-modal');
                     };
@@ -99,7 +99,7 @@
 
                 const overlay = emailModal.querySelector('.modal-overlay');
                 if (overlay) {
-                    overlay.onclick = function() {
+                    overlay.onclick = function () {
                         closeCustomModal('email-change-modal');
                     };
                 }
@@ -107,7 +107,7 @@
 
             // --- Name Toggle Logic ---
             if (nameTrigger) {
-                nameTrigger.onclick = function(e) {
+                nameTrigger.onclick = function (e) {
                     e.preventDefault();
                     if (nameDisplay) nameDisplay.classList.add('d-none');
                     if (nameEdit) nameEdit.classList.remove('d-none');
@@ -116,7 +116,7 @@
             }
 
             if (cancelNameBtn) {
-                cancelNameBtn.onclick = function(e) {
+                cancelNameBtn.onclick = function (e) {
                     e.preventDefault();
                     if (nameDisplay) nameDisplay.classList.remove('d-none');
                     if (nameEdit) nameEdit.classList.add('d-none');
@@ -124,7 +124,7 @@
             }
 
             if (saveNameBtn) {
-                saveNameBtn.onclick = async function() {
+                saveNameBtn.onclick = async function () {
                     if (!nameInput) return;
                     const newName = nameInput.value.trim();
                     if (newName === currentNameSpan.textContent) {
@@ -161,7 +161,7 @@
             // --- Confirm Email Change Logic ---
             const updateEmailBtn = document.getElementById('confirm-email-change-btn');
             if (updateEmailBtn) {
-                updateEmailBtn.onclick = async function() {
+                updateEmailBtn.onclick = async function () {
                     const newEmailEl = document.getElementById('modal-new-email');
                     const confirmEmailEl = document.getElementById('modal-confirm-email');
                     const passwordEl = document.getElementById('modal-current-password');
@@ -196,8 +196,8 @@
                         const response = await fetch('../api/request-email-change.php', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ 
-                                new_email: newEmail, 
+                            body: JSON.stringify({
+                                new_email: newEmail,
                                 confirm_email: confirmEmail,
                                 current_password: password
                             })
@@ -229,6 +229,21 @@
             document.addEventListener('DOMContentLoaded', init);
         } else {
             init();
+        }
+
+        // --- Cross-Tab Communication ---
+        // Listen for successful verification from verify-email-change.php
+        if ('BroadcastChannel' in window) {
+            const authChannel = new BroadcastChannel('auth_verification');
+            authChannel.onmessage = (event) => {
+                if (event.data.status === 'success') {
+                    // Reload to show new email
+                    if (window.Toast) Toast.success('Email updated! Reloading...');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                }
+            };
         }
     })();
 </script>
