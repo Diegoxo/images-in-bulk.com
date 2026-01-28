@@ -113,6 +113,68 @@
                     }
                 };
             }
+
+            // --- Confirm Email Change Logic ---
+            const updateEmailBtn = document.getElementById('confirm-email-change-btn');
+            if (updateEmailBtn) {
+                updateEmailBtn.onclick = async function() {
+                    const newEmail = document.getElementById('modal-new-email').value.trim();
+                    const confirmEmail = document.getElementById('modal-confirm-email').value.trim();
+                    const password = document.getElementById('modal-current-password').value;
+
+                    // 1. Basic Frontend Validation
+                    if (!newEmail || !confirmEmail || !password) {
+                        if (window.Toast) Toast.error('Please fill all fields');
+                        return;
+                    }
+
+                    if (newEmail !== confirmEmail) {
+                        if (window.Toast) Toast.error('Emails do not match');
+                        return;
+                    }
+
+                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    if (!emailRegex.test(newEmail)) {
+                        if (window.Toast) Toast.error('Invalid email format');
+                        return;
+                    }
+
+                    // 2. Processing State
+                    updateEmailBtn.disabled = true;
+                    const originalText = updateEmailBtn.innerText;
+                    updateEmailBtn.innerText = 'Verifying...';
+
+                    try {
+                        const response = await fetch('../api/request-email-change.php', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ 
+                                new_email: newEmail, 
+                                confirm_email: confirmEmail,
+                                current_password: password
+                            })
+                        });
+
+                        const data = await response.json();
+
+                        if (data.success) {
+                            if (window.Toast) Toast.success(data.message);
+                            closeCustomModal('email-change-modal');
+                            // Clear fields
+                            document.getElementById('modal-new-email').value = '';
+                            document.getElementById('modal-confirm-email').value = '';
+                            document.getElementById('modal-current-password').value = '';
+                        } else {
+                            if (window.Toast) Toast.error(data.message);
+                        }
+                    } catch (err) {
+                        if (window.Toast) Toast.error('Connection error');
+                    } finally {
+                        updateEmailBtn.disabled = false;
+                        updateEmailBtn.innerText = originalText;
+                    }
+                };
+            }
         }
 
         // Initialize

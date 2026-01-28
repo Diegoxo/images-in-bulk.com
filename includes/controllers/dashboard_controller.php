@@ -147,7 +147,6 @@ try {
         <div class="modal-content animate-pop">
             <div class="modal-header">
                 <h2 class="section-title fs-15">Change Email Address</h2>
-                <button class="close-modal">&times;</button>
             </div>
             <div class="modal-body modal-body-left">
                 <p class="fs-sm text-secondary mb-15">
