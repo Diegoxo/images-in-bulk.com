@@ -2,15 +2,15 @@
 /**
  * Reset Password Processor
  */
-require_once '../includes/config.php';
-require_once '../includes/utils/csrf.php';
+require_once 'includes/config.php';
+require_once 'includes/utils/csrf.php';
 
 $token = $_GET['token'] ?? $_POST['token'] ?? '';
 $error = '';
 $success = false;
 
 if (empty($token)) {
-    header('Location: ../login');
+    header('Location: login');
     exit;
 }
 
@@ -57,19 +57,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $reset) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>New Password | Images In Bulk</title>
-    <link rel="icon" type="image/x-icon" href="../assets/img/favicon.ico">
-    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="icon" type="image/x-icon" href="assets/img/favicon.ico">
+    <link rel="stylesheet" href="assets/css/style.css">
 </head>
 
 <body>
-    <?php include '../includes/layouts/header.php'; ?>
+    <?php
+    include 'includes/layouts/header.php';
+    ?>
     <main class="container auth-page-main">
         <section class="glass animate-fade section-card auth-card">
             <h1 class="section-title">New Password</h1>
 
             <?php if ($success): ?>
                 <div class="auth-success-alert">Password updated successfully! You can now log in.</div>
-                <a href="../login" class="btn-auth btn-primary full-width">Go to Login</a>
+                <a href="login" class="btn-auth btn-primary full-width">Go to Login</a>
             <?php else: ?>
                 <p class="subtitle">Set a strong password for your account.</p>
                 <?php if ($error): ?>
@@ -97,7 +99,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $reset) {
             <?php endif; ?>
         </section>
     </main>
-    <?php include '../includes/layouts/footer.php'; ?>
+    <?php include 'includes/layouts/footer.php'; ?>
 </body>
 
 </html>

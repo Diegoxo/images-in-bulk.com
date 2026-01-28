@@ -2,9 +2,9 @@
 /**
  * Forgot Password Handler
  */
-require_once '../includes/config.php';
-require_once '../includes/utils/csrf.php';
-require_once '../includes/utils/email_helper.php';
+require_once 'includes/config.php';
+require_once 'includes/utils/csrf.php';
+require_once 'includes/utils/email_helper.php';
 
 $message = '';
 $error = '';
@@ -50,12 +50,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Forgot Password | Images In Bulk</title>
-    <link rel="icon" type="image/x-icon" href="../assets/img/favicon.ico">
-    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="icon" type="image/x-icon" href="assets/img/favicon.ico">
+    <link rel="stylesheet" href="assets/css/style.css">
 </head>
 
 <body>
-    <?php include '../includes/layouts/header.php'; ?>
+    <?php
+    include 'includes/layouts/header.php';
+    ?>
     <main class="container auth-page-main">
         <section class="glass animate-fade section-card auth-card">
             <h1 class="section-title">Reset Password</h1>
@@ -82,11 +84,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <button type="submit" class="btn-auth btn-primary full-width">Send recovery link</button>
             </form>
             <p class="auth-footer">
-                Wait, I remember! <a href="../login"><strong>Back to Login</strong></a>
+                Wait, I remember! <a href="login"><strong>Back to Login</strong></a>
             </p>
         </section>
     </main>
-    <?php include '../includes/layouts/footer.php'; ?>
+    <?php include 'includes/layouts/footer.php'; ?>
 </body>
 
 </html>

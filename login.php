@@ -54,7 +54,7 @@ require_once 'includes/controllers/login_controller.php';
                     <div class="label-group">
                         <label for="password">Password</label>
                         <?php if (!$showNameField): ?>
-                            <a href="auth/forgot-password.php" class="forgot-link">Forgot Password?</a>
+                            <a href="forgot-password" class="forgot-link">Forgot Password?</a>
                         <?php endif; ?>
                     </div>
                     <input type="password" id="password" name="password" placeholder="••••••••" required

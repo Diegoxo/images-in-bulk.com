@@ -22,7 +22,7 @@ class EmailHelper
     $fromName = SMTP_FROM_NAME;
 
     // 2. Build Verification link
-    $verifyLink = SITE_URL . "/auth/verify-email.php?token=" . $token;
+    $verifyLink = SITE_URL . "/verify-email?token=" . $token;
 
     // 3. HTML Content (Premium Design)
     $htmlContent = self::getTemplate($name, $verifyLink);
@@ -107,7 +107,7 @@ class EmailHelper
     $fromEmail = SMTP_FROM_EMAIL;
     $fromName = SMTP_FROM_NAME;
 
-    $resetLink = SITE_URL . "/auth/reset-password.php?token=" . $token;
+    $resetLink = SITE_URL . "/reset-password?token=" . $token;
     $htmlContent = self::getResetTemplate($name, $resetLink);
 
     try {

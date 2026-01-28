@@ -3,7 +3,7 @@
  * Email Verification Processor
  * Handles the user clicking the link in their email.
  */
-require_once '../includes/config.php';
+require_once 'includes/config.php';
 
 $token = $_GET['token'] ?? '';
 $error = '';
@@ -65,7 +65,7 @@ if (empty($token)) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Email Verification | Images In Bulks</title>
-    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/style.css">
 </head>
 
 <body>
@@ -81,7 +81,7 @@ if (empty($token)) {
                 </div>
                 <p class="subtitle">Redirecting you to the generator in 3 seconds...</p>
                 <script>
-                    setTimeout(() => { window.location.href = '../generator'; }, 3000);
+                    setTimeout(() => { window.location.href = 'generator'; }, 3000);
                 </script>
             <?php else: ?>
                 <div class="alert-danger p-1 mb-2">
@@ -89,7 +89,7 @@ if (empty($token)) {
                         <?php echo $error; ?>
                     </p>
                 </div>
-                <a href="../login" class="btn-auth btn-primary full-width">Back to Login</a>
+                <a href="login" class="btn-auth btn-primary full-width">Back to Login</a>
             <?php endif; ?>
         </div>
     </div>
