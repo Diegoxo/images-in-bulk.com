@@ -206,6 +206,12 @@
                         const data = await response.json();
 
                         if (data.success) {
+                            // Update Success Message with Email
+                            const successEmailDisplay = document.getElementById('success-email-display');
+                            if (successEmailDisplay) {
+                                successEmailDisplay.textContent = newEmail;
+                            }
+
                             // SWITCH VIEW TO SUCCESS STATE
                             if (modalBody) modalBody.classList.add('d-none');
                             if (modalFooter) modalFooter.classList.add('d-none');

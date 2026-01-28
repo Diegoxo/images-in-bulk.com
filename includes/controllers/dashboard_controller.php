@@ -180,10 +180,13 @@ try {
 
             <!-- Success State (Hidden by default) -->
             <!-- Success State (Hidden by default) -->
-            <div id="email-change-success-state" class="d-none text-center">
+            <div id="email-change-success-state" class="d-none text-center" style="padding: 3rem 2rem;">
                 <div class="mb-2" style="font-size: 3rem;">✉️</div>
                 <h3 class="mb-1 text-white">Check your inbox</h3>
-                <p class="fs-sm text-secondary mb-3">We have sent a verification link to your new email address.</p>
+                <p class="fs-sm text-secondary mb-3">
+                    We have sent a verification link to <br>
+                    <strong class="text-white" id="success-email-display">your new email</strong>
+                </p>
                 <div class="mt-4">
                     <button type="button" id="success-close-btn" class="btn-auth btn-primary"
                         style="min-width: 150px; width: auto; margin: 0 auto;">Close</button>
