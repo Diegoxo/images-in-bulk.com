@@ -155,24 +155,28 @@ try {
                 </p>
                 <div class="form-group mb-1">
                     <label class="fs-xs">Current Email</label>
-                    <input type="text" class="auth-input opacity-7" readonly value="<?php echo htmlspecialchars($user['email']); ?>">
+                    <input type="text" class="auth-input opacity-7" readonly
+                        value="<?php echo htmlspecialchars($user['email']); ?>">
                 </div>
                 <div class="form-group mb-1">
                     <label class="fs-xs">New Email Address</label>
-                    <input type="email" id="modal-new-email" class="auth-input" placeholder="new-email@example.com" required>
+                    <input type="email" id="modal-new-email" class="auth-input" placeholder="new-email@example.com"
+                        required>
                 </div>
                 <div class="form-group mb-1">
                     <label class="fs-xs">Confirm New Email</label>
-                    <input type="email" id="modal-confirm-email" class="auth-input" placeholder="repeat-email@example.com" required>
+                    <input type="email" id="modal-confirm-email" class="auth-input" placeholder="repeat-email@example.com"
+                        required>
                 </div>
                 <div class="form-group">
                     <label class="fs-xs">Current Password</label>
-                    <input type="password" id="modal-current-password" class="auth-input" placeholder="••••••••" required autocomplete="current-password">
+                    <input type="password" id="modal-current-password" class="auth-input" placeholder="••••••••" required
+                        autocomplete="current-password">
                 </div>
             </div>
             <div class="modal-footer d-flex gap-1">
                 <button id="confirm-email-change-btn" class="btn-auth btn-primary flex-1">Update Email</button>
-                <button class="btn-auth glass flex-1 close-modal">Cancel</button>
+                <button type="button" id="cancel-email-change-btn" class="btn-auth glass flex-1">Cancel</button>
             </div>
         </div>
     </div>

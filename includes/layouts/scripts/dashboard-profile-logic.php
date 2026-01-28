@@ -45,13 +45,13 @@
                     if (firstInput) setTimeout(() => firstInput.focus(), 350); // After animation
                 };
 
-                const closeButtons = emailModal.querySelectorAll('.close-modal');
-                closeButtons.forEach(btn => {
-                    btn.onclick = function (e) {
+                const cancelEmailBtn = document.getElementById('cancel-email-change-btn');
+                if (cancelEmailBtn) {
+                    cancelEmailBtn.onclick = function (e) {
                         e.preventDefault();
                         closeCustomModal('email-change-modal');
                     };
-                });
+                }
 
                 // Overlay click closure
                 const overlay = emailModal.querySelector('.modal-overlay');
