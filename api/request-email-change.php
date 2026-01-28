@@ -43,7 +43,7 @@ if (!filter_var($newEmail, FILTER_VALIDATE_EMAIL)) {
 
 try {
     // 4. Verify Identity (Current Password)
-    $stmtUser = $db->prepare("SELECT email, password, full_name, auth_provider FROM users WHERE id = ?");
+    $stmtUser = $db->prepare("SELECT email, password_hash, full_name, auth_provider FROM users WHERE id = ?");
     $stmtUser->execute([$userId]);
     $user = $stmtUser->fetch();
 
@@ -58,7 +58,7 @@ try {
         exit;
     }
 
-    if (!password_verify($password, $user['password'])) {
+    if (!password_verify($password, $user['password_hash'])) {
         echo json_encode(['success' => false, 'message' => 'Incorrect current password.']);
         exit;
     }
