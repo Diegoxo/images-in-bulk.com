@@ -18,9 +18,19 @@
                 setTimeout(() => {
                     modal.classList.add('hidden');
                     modal.classList.remove('d-flex');
+                    // Reset fields after closing animation
+                    resetEmailModalFields();
                 }, 300);
                 document.body.style.overflow = '';
             }
+        }
+
+        function resetEmailModalFields() {
+            const fields = ['modal-new-email', 'modal-confirm-email', 'modal-current-password'];
+            fields.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
         }
 
         // --- Initialization ---
@@ -40,8 +50,9 @@
                 emailTrigger.onclick = function (e) {
                     e.preventDefault();
                     e.stopPropagation();
+                    resetEmailModalFields(); // Clear before opening just in case
                     openCustomModal('email-change-modal');
-                    const firstInput = emailModal.querySelector('input');
+                    const firstInput = emailModal.querySelector('input[type="email"]');
                     if (firstInput) setTimeout(() => firstInput.focus(), 350); // After animation
                 };
 
@@ -82,6 +93,7 @@
 
             if (saveNameBtn) {
                 saveNameBtn.onclick = async function() {
+                    if (!nameInput) return;
                     const newName = nameInput.value.trim();
                     if (newName === currentNameSpan.textContent) {
                         cancelNameBtn.click();
@@ -118,9 +130,13 @@
             const updateEmailBtn = document.getElementById('confirm-email-change-btn');
             if (updateEmailBtn) {
                 updateEmailBtn.onclick = async function() {
-                    const newEmail = document.getElementById('modal-new-email').value.trim();
-                    const confirmEmail = document.getElementById('modal-confirm-email').value.trim();
-                    const password = document.getElementById('modal-current-password').value;
+                    const newEmailEl = document.getElementById('modal-new-email');
+                    const confirmEmailEl = document.getElementById('modal-confirm-email');
+                    const passwordEl = document.getElementById('modal-current-password');
+
+                    const newEmail = newEmailEl.value.trim();
+                    const confirmEmail = confirmEmailEl.value.trim();
+                    const password = passwordEl.value;
 
                     // 1. Basic Frontend Validation
                     if (!newEmail || !confirmEmail || !password) {
@@ -160,10 +176,7 @@
                         if (data.success) {
                             if (window.Toast) Toast.success(data.message);
                             closeCustomModal('email-change-modal');
-                            // Clear fields
-                            document.getElementById('modal-new-email').value = '';
-                            document.getElementById('modal-confirm-email').value = '';
-                            document.getElementById('modal-current-password').value = '';
+                            // Reset is handled by closeCustomModal
                         } else {
                             if (window.Toast) Toast.error(data.message);
                         }
