@@ -179,11 +179,14 @@ try {
             </div>
 
             <!-- Success State (Hidden by default) -->
+            <!-- Success State (Hidden by default) -->
             <div id="email-change-success-state" class="d-none text-center">
                 <div class="mb-2" style="font-size: 3rem;">✉️</div>
                 <h3 class="mb-1 text-white">Check your inbox</h3>
-                <p class="fs-sm text-secondary mb-2">We have sent a verification link to your new email address.</p>
-                <button type="button" id="success-close-btn" class="btn-auth btn-primary full-width">Close</button>
+                <p class="fs-sm text-secondary mb-3">We have sent a verification link to your new email address.</p>
+                <div class="mt-4">
+                    <button type="button" id="success-close-btn" class="btn-auth btn-primary full-width">Close</button>
+                </div>
             </div>
         </div>
     </div>

@@ -158,12 +158,29 @@ if (empty($token)) {
                 <p class="subtitle mb-2"><?php echo $success; ?></p>
 
                 <div class="alert-success-glass mb-2">
-                    Process complete. You can now close this tab, or click below to return to your dashboard.
+                    Process complete. You can now close this tab and return to your dashboard, or click below to jump
+                    straight in.
                 </div>
 
-                <a href="dashboard/" class="btn-verify-action">
-                    Return to Dashboard
-                </a>
+                <button id="btn-goto-generator" class="btn-verify-action">
+                    Go to Generator & Close this Tab
+                </button>
+
+                <script>
+                    document.getElementById('btn-goto-generator').addEventListener('click', function () {
+                        // 1. Notify other tabs (optional, good practice)
+                        if ('BroadcastChannel' in window) {
+                            const authChannel = new BroadcastChannel('auth_verification');
+                            authChannel.postMessage({ status: 'success' });
+                        }
+
+                        // 2. Redirect fallback + Close attempt
+                        setTimeout(() => {
+                            window.location.href = 'dashboard/';
+                            window.close();
+                        }, 300);
+                    });
+                </script>
 
             <?php else: ?>
                 <div class="icon-circle icon-error">✕</div>
