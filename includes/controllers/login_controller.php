@@ -58,23 +58,29 @@ if ($isVerifyState): ?>
     </div>
 
     <script>
-        // Polling logic: Check every 3 seconds if the user is verified
-        (function () {
+        // 1. Polling (Backup): Check every 5 seconds if verified
+        (function() {
             const email = "<?php echo addslashes($_GET['verify_email']); ?>";
             const checkStatus = setInterval(async () => {
                 try {
                     const response = await fetch(`api/check-verification-status.php?email=${encodeURIComponent(email)}`);
                     const data = await response.json();
-
                     if (data.verified) {
                         clearInterval(checkStatus);
-                        // Redirect to login with success message so they can auto-login or see the status
-                        window.location.href = "login?success=Email verified! You can now sign in.";
+                        window.location.href = "generator";
                     }
-                } catch (error) {
-                    console.error("Verification check failed", error);
-                }
-            }, 3000);
+                } catch (error) {}
+            }, 5000);
+
+            // 2. Cross-tab Communication (Primary): Listen for 'auth_verification' channel
+            if ('BroadcastChannel' in window) {
+                const authChannel = new BroadcastChannel('auth_verification');
+                authChannel.onmessage = (event) => {
+                    if (event.data.status === 'success') {
+                        window.location.href = "generator";
+                    }
+                };
+            }
         })();
     </script>
 <?php else: ?>

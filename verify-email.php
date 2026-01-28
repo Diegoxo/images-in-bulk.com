@@ -89,10 +89,6 @@ if (empty($token)) {
             overflow: hidden;
         }
 
-        .status-header {
-            margin-bottom: 2rem;
-        }
-
         .icon-circle {
             width: 80px;
             height: 80px;
@@ -104,102 +100,40 @@ if (empty($token)) {
             font-size: 2.5rem;
             background: rgba(255, 255, 255, 0.03);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
         }
 
         .icon-success {
             color: #10b981;
             border-color: rgba(16, 185, 129, 0.3);
             background: rgba(16, 185, 129, 0.05);
-            animation: scaleIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
         .icon-error {
             color: #ef4444;
             border-color: rgba(239, 68, 68, 0.3);
             background: rgba(239, 68, 68, 0.05);
-            animation: shake 0.5s ease-in-out;
         }
 
-        @keyframes scaleIn {
-            from {
-                transform: scale(0);
-                opacity: 0;
-            }
-
-            to {
-                transform: scale(1);
-                opacity: 1;
-            }
-        }
-
-        @keyframes shake {
-
-            0%,
-            100% {
-                transform: translateX(0);
-            }
-
-            10%,
-            30%,
-            50%,
-            70%,
-            90% {
-                transform: translateX(-5px);
-            }
-
-            20%,
-            40%,
-            60%,
-            80% {
-                transform: translateX(5px);
-            }
-        }
-
-        .redirect-timer {
-            margin-top: 2rem;
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-            display: flex;
+        .btn-verify-action {
+            display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
-        }
-
-        .timer-dot {
-            width: 8px;
-            height: 8px;
+            padding: 14px 28px;
             background: var(--primary);
-            border-radius: 50%;
-            animation: pulse 1s infinite;
+            color: white;
+            border-radius: 12px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 1rem;
         }
 
-        @keyframes pulse {
-            0% {
-                transform: scale(1);
-                opacity: 1;
-            }
-
-            50% {
-                transform: scale(1.5);
-                opacity: 0.5;
-            }
-
-            100% {
-                transform: scale(1);
-                opacity: 1;
-            }
-        }
-
-        .card-bg-glow {
-            position: absolute;
-            top: -20%;
-            left: -20%;
-            width: 140%;
-            height: 140%;
-            background: radial-gradient(circle, rgba(147, 51, 234, 0.08) 0%, transparent 60%);
-            z-index: -1;
-            pointer-events: none;
+        .btn-verify-action:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -5px rgba(147, 51, 234, 0.4);
         }
     </style>
 </head>
@@ -207,41 +141,41 @@ if (empty($token)) {
 <body>
     <div class="verify-container">
         <section class="glass animate-fade verify-card">
-            <div class="card-bg-glow"></div>
-
             <?php if ($success): ?>
-                <div class="status-header">
-                    <div class="icon-circle icon-success">✓</div>
-                    <h1 class="section-title mb-1">Account Verified</h1>
-                    <p class="subtitle"><?php echo $success; ?></p>
-                </div>
+                <div class="icon-circle icon-success">✓</div>
+                <h1 class="section-title mb-1">Email Verified!</h1>
+                <p class="subtitle mb-2"><?php echo $success; ?></p>
 
                 <div class="alert-success-glass mb-2">
-                    Success! You can now start generating high-quality images.
+                    System ready. You can now close this tab and return to your original page, or click below to jump
+                    straight in.
                 </div>
 
-                <p class="fs-sm opacity-75">You will be redirected to your dashboard in a few seconds.</p>
-
-                <div class="redirect-timer">
-                    <span class="timer-dot"></span>
-                    <span>Redirecting to Generator...</span>
-                </div>
+                <button id="btn-goto-generator" class="btn-verify-action">
+                    Go to Generator & Close this Tab
+                </button>
 
                 <script>
-                        setTimeout(() => { window.location.href = 'generator'; }, 4000);
+                    document.getElementById('btn-goto-generator').addEventListener('click', function () {
+                        // 1. Notify the original tab (Tab A)
+                        if ('BroadcastChannel' in window) {
+                            const authChannel = new BroadcastChannel('auth_verification');
+                            authChannel.postMessage({ status: 'success' });
+                        }
+
+                        // 2. Try to redirect this tab too as a fallback
+                        setTimeout(() => {
+                            window.location.href = 'generator';
+                            // 3. Try to close (Browsers might block this, but we try)
+                            window.close();
+                        }, 500);
+                    });
                 </script>
 
             <?php else: ?>
-                <div class="status-header">
-                    <div class="icon-circle icon-error">✕</div>
-                    <h1 class="section-title mb-1">Verification Failed</h1>
-                    <p class="subtitle"><?php echo $error; ?></p>
-                </div>
-
-                <div class="alert-danger-glass mb-3">
-                    Don't worry, you can try requesting a new link from your login page.
-                </div>
-
+                <div class="icon-circle icon-error">✕</div>
+                <h1 class="section-title mb-1">Verification Error</h1>
+                <p class="subtitle mb-3"><?php echo $error; ?></p>
                 <a href="login" class="btn-auth btn-primary full-width">Back to Login</a>
             <?php endif; ?>
         </section>
