@@ -33,6 +33,7 @@ require_once '../includes/controllers/dashboard_controller.php';
 
         <!-- Email Change Modal Component -->
         <?php echo $emailChangeModalHtml; ?>
+        <?php echo $passwordChangeModalHtml; ?>
 
         <!-- Dashboard Grid -->
         <div class="dashboard-grid animate-fade">

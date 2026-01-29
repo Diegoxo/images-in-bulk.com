@@ -207,6 +207,53 @@ try {
     <?php
     $emailChangeModalHtml = ob_get_clean();
 
+    // --- Password Change Modal Component ---
+    ob_start(); ?>
+    <div id="password-change-modal" class="custom-modal hidden">
+        <div class="modal-overlay"></div>
+        <div class="modal-content animate-pop">
+            <div class="modal-header">
+                <h2 class="section-title fs-15">Change Password</h2>
+            </div>
+            <div class="modal-body modal-body-left">
+                <p class="fs-sm text-secondary mb-15">
+                    Choose a strong password with at least 8 characters.
+                </p>
+                <div class="form-group mb-1">
+                    <label class="fs-xs">Current Password</label>
+                    <input type="password" id="pwd-current" class="auth-input" placeholder="••••••••" required>
+                </div>
+                <div class="form-group mb-1">
+                    <label class="fs-xs">New Password</label>
+                    <input type="password" id="pwd-new" class="auth-input" placeholder="Min. 8 characters" required>
+                </div>
+                <div class="form-group">
+                    <label class="fs-xs">Confirm New Password</label>
+                    <input type="password" id="pwd-confirm" class="auth-input" placeholder="Repeat new password" required>
+                </div>
+            </div>
+            <div class="modal-footer d-flex gap-1">
+                <button id="confirm-pwd-change-btn" class="btn-auth btn-primary flex-1">Update Password</button>
+                <button type="button" id="cancel-pwd-change-btn" class="btn-auth glass flex-1">Cancel</button>
+            </div>
+
+            <!-- Success State (Hidden by default) -->
+            <div id="pwd-change-success-state" class="d-none text-center" style="padding: 3rem 2rem;">
+                <div class="mb-2" style="font-size: 3rem;">🔒</div>
+                <h3 class="mb-1 text-white">Password Updated</h3>
+                <p class="fs-sm text-secondary mb-3">
+                    Your password has been changed successfully.
+                </p>
+                <div class="mt-4">
+                    <button type="button" id="pwd-success-close-btn" class="btn-auth btn-primary"
+                        style="min-width: 150px; width: auto; margin: 0 auto;">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <?php
+    $passwordChangeModalHtml = ob_get_clean();
+
     // --- Credits Tip Component ---
     $creditsTipHtml = $isPro
         ? 'Your monthly balance for high-quality images.'
