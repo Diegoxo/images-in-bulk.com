@@ -3,12 +3,17 @@
  * API: Update Password
  * Handles secure password updates for logged-in users.
  */
+// Start output buffering immediately to catch any BOMs or unwanted text included files might emit
+ob_start();
+
 require_once '../includes/config.php';
 
+// Prepare header but don't send output yet
 header('Content-Type: application/json');
 
 // 1. Auth Check
 if (!isset($_SESSION['user_id'])) {
+    ob_clean(); // Discard any prior output
     http_response_code(401);
     echo json_encode(['success' => false, 'message' => 'Unauthorized']);
     exit;
@@ -63,8 +68,12 @@ try {
     $stmtUpdate = $db->prepare("UPDATE users SET password_hash = ? WHERE id = ?");
     $stmtUpdate->execute([$newHash, $userId]);
 
+    // SUCCESS: Clean the buffer of any previous noise (BOMs, warnings) and output pure JSON
+    ob_clean();
     echo json_encode(['success' => true]);
 
 } catch (Exception $e) {
+    // ERROR: Clean buffer and output error JSON
+    ob_clean();
     echo json_encode(['success' => false, 'message' => $e->getMessage()]);
 }

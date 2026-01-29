@@ -346,27 +346,7 @@
                             })
                         });
                         
-                        // DEBUG: Read as text first to see what comes back
-                        const rawText = await response.text();
-                        
-                        // PRINT TO DEBUG DASHBOARD
-                        const debugOutput = document.getElementById('debug-output');
-                        if (debugOutput) {
-                            debugOutput.innerHTML = "<strong>RAW SERVER RESPONSE:</strong>\n--------------------------\n" + 
-                                                    rawText.replace(/</g, "&lt;").replace(/>/g, "&gt;") + 
-                                                    "\n--------------------------";
-                        }
-
-                        let data;
-                        try {
-                            data = JSON.parse(rawText);
-                        } catch (e) {
-                            if (debugOutput) {
-                                debugOutput.innerHTML += "\n\n❌ JSON PARSE ERROR: " + e.message;
-                                debugOutput.parentElement.style.borderColor = "red";
-                            }
-                            throw new Error("Invalid JSON response");
-                        }
+                        const data = await response.json();
 
                         if (data.success) {
                             // SWITCH VIEW TO SUCCESS STATE
@@ -379,8 +359,7 @@
                         }
 
                     } catch (err) {
-                        console.error(err);
-                        if (window.Toast) Toast.error('Connection/Parse Error. Check Console.');
+                        if (window.Toast) Toast.error('Connection error');
                     } finally {
                         updatePwdBtn.disabled = false;
                         updatePwdBtn.innerText = originalText;
