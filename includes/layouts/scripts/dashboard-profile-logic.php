@@ -88,19 +88,70 @@
                     };
                 }
 
-                // Generic close handler for any close button inside modal (including success state)
-                const allCloseBtns = emailModal.querySelectorAll('.close-modal');
-                allCloseBtns.forEach(btn => {
-                    btn.onclick = function (e) {
-                        e.preventDefault();
-                        closeCustomModal('email-change-modal');
-                    };
-                });
-
+                // Overlay close for email
                 const overlay = emailModal.querySelector('.modal-overlay');
                 if (overlay) {
                     overlay.onclick = function () {
                         closeCustomModal('email-change-modal');
+                    };
+                }
+            }
+
+            // --- Password Modal Toggle Logic ---
+            const pwdModal = document.getElementById('password-change-modal');
+            const pwdTrigger = document.getElementById('params-change-password-btn');
+
+            // Password Modal Elements
+            const pwdBody = pwdModal ? pwdModal.querySelector('.modal-body') : null;
+            const pwdFooter = pwdModal ? pwdModal.querySelector('.modal-footer') : null;
+            const pwdHeader = pwdModal ? pwdModal.querySelector('.modal-header') : null;
+            const pwdSuccessState = document.getElementById('pwd-change-success-state');
+
+            function resetPwdViewToForm() {
+                if (pwdBody) pwdBody.classList.remove('d-none');
+                if (pwdFooter) pwdFooter.classList.remove('d-none');
+                if (pwdHeader) pwdHeader.classList.remove('d-none');
+                if (pwdSuccessState) pwdSuccessState.classList.add('d-none');
+
+                // Clear fields
+                ['pwd-current', 'pwd-new', 'pwd-confirm'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.value = '';
+                });
+            }
+
+            if (pwdTrigger && pwdModal) {
+                pwdTrigger.onclick = function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    resetPwdViewToForm();
+                    openCustomModal('password-change-modal');
+                    setTimeout(() => document.getElementById('pwd-current')?.focus(), 350);
+                };
+
+                // Cancel Button
+                const cancelPwdBtn = document.getElementById('cancel-pwd-change-btn');
+                if (cancelPwdBtn) {
+                    cancelPwdBtn.onclick = function (e) {
+                        e.preventDefault();
+                        closeCustomModal('password-change-modal');
+                    };
+                }
+
+                // Success Close Button
+                const pwdSuccessCloseBtn = document.getElementById('pwd-success-close-btn');
+                if (pwdSuccessCloseBtn) {
+                    pwdSuccessCloseBtn.onclick = function (e) {
+                        e.preventDefault();
+                        closeCustomModal('password-change-modal');
+                    };
+                }
+
+                // Overlay close
+                const overlay = pwdModal.querySelector('.modal-overlay');
+                if (overlay) {
+                    overlay.onclick = function () {
+                        closeCustomModal('password-change-modal');
                     };
                 }
             }
