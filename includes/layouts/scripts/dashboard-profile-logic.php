@@ -302,5 +302,70 @@
                 }
             };
         }
+            // --- Submit Password Change Logic ---
+            const updatePwdBtn = document.getElementById('confirm-pwd-change-btn');
+            if (updatePwdBtn) {
+                updatePwdBtn.onclick = async function() {
+                    const currentPwdInput = document.getElementById('pwd-current');
+                    const newPwdInput = document.getElementById('pwd-new');
+                    const confirmPwdInput = document.getElementById('pwd-confirm');
+                    
+                    const currentPwd = currentPwdInput.value;
+                    const newPwd = newPwdInput.value;
+                    const confirmPwd = confirmPwdInput.value;
+
+                    // 1. Validation
+                    if (!currentPwd || !newPwd || !confirmPwd) {
+                         if (window.Toast) Toast.error('Please fill all fields');
+                         return;
+                    }
+
+                    if (newPwd !== confirmPwd) {
+                         if (window.Toast) Toast.error('New passwords do not match');
+                         return;
+                    }
+
+                    if (newPwd.length < 8) {
+                         if (window.Toast) Toast.error('Password must be at least 8 chars');
+                         return;
+                    }
+
+                    // 2. Loading State
+                    updatePwdBtn.disabled = true;
+                    const originalText = updatePwdBtn.innerText;
+                    updatePwdBtn.innerText = 'Updating...';
+
+                    try {
+                        const response = await fetch('../api/update-password.php', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                current_password: currentPwd,
+                                new_password: newPwd,
+                                confirm_password: confirmPwd
+                            })
+                        });
+                        
+                        const data = await response.json();
+
+                        if (data.success) {
+                            // SWITCH VIEW TO SUCCESS STATE
+                            if (pwdBody) pwdBody.classList.add('d-none');
+                            if (pwdFooter) pwdFooter.classList.add('d-none');
+                            if (pwdHeader) pwdHeader.classList.add('d-none');
+                            if (pwdSuccessState) pwdSuccessState.classList.remove('d-none');
+                        } else {
+                            if (window.Toast) Toast.error(data.message || 'Error updating password');
+                        }
+
+                    } catch (err) {
+                        if (window.Toast) Toast.error('Connection error');
+                    } finally {
+                        updatePwdBtn.disabled = false;
+                        updatePwdBtn.innerText = originalText;
+                    }
+                };
+            }
+        
     })();
 </script>
