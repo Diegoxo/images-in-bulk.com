@@ -140,6 +140,16 @@ try {
     <?php
     $profileInfoHtml = ob_get_clean();
 
+    // --- Dashboard Specific Scripts Component ---
+    ob_start(); ?>
+    <script>
+        const CURRENT_USER_ID = <?php echo $userId; ?>;
+    </script>
+    <?php
+    // Include the profile logic script directly here to be part of the buffered output or separate
+    include __DIR__ . '/../layouts/scripts/dashboard-profile-logic.php';
+    $dashboardSpecificJs = ob_get_clean();
+
     // --- Email Change Modal Component ---
     ob_start(); ?>
     <div id="email-change-modal" class="custom-modal hidden">

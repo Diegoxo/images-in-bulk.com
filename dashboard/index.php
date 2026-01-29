@@ -144,16 +144,8 @@ require_once '../includes/controllers/dashboard_controller.php';
             </div>
         <?php endif; ?>
 
-        <!-- Pass PHP environment to Global JS -->
-        <script>
-            const CURRENT_USER_ID = <?php echo $userId; ?>;
-        </script>
-
-        <!-- Script configuration (Moved to separate file for cleaner index.php) -->
-        <?php
-        // In a real scenario, we'd include a JS file, for now we keep the logic separation
-        include '../includes/layouts/scripts/dashboard-profile-logic.php';
-        ?>
+        <!-- Pass PHP environment to Global JS & Profile Logic -->
+        <?php echo $dashboardSpecificJs; ?>
 
         <!-- External Libraries & Dashboard Scripts -->
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
