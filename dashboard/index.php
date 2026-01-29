@@ -71,10 +71,10 @@ require_once '../includes/controllers/dashboard_controller.php';
                     <p class="mt-2 fs-sm text-muted">
                         Plan credits are used first and reset monthly.
                         <?php if ($extraCredits > 0 && $nextExpiry): ?>
-                                <br><span class="text-accent">⏳ Next bundle expires:
-                                    <strong><?php echo date('d M, Y', strtotime($nextExpiry)); ?></strong></span>
+                            <br><span class="text-accent">⏳ Next bundle expires:
+                                <strong><?php echo date('d M, Y', strtotime($nextExpiry)); ?></strong></span>
                         <?php else: ?>
-                                Extra credits are used after plan credits.
+                            Extra credits are used after plan credits.
                         <?php endif; ?>
                     </p>
                 </div>
@@ -137,6 +137,12 @@ require_once '../includes/controllers/dashboard_controller.php';
                 </button>
             </div>
         </section>
+
+        <?php if (isset($user['auth_provider']) && $user['auth_provider'] === 'local'): ?>
+            <div style="display:flex; justify-content:flex-end; margin-bottom:2rem; margin-top:-1rem; padding-right: 1rem;">
+                <button id="params-change-password-btn" class="cancel-link">Change Password 🔒</button>
+            </div>
+        <?php endif; ?>
 
         <!-- Pass PHP environment to Global JS -->
         <script>
