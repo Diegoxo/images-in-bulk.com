@@ -346,7 +346,18 @@
                             })
                         });
                         
-                        const data = await response.json();
+                        // DEBUG: Read as text first to see what comes back
+                        const rawText = await response.text();
+                        console.log("DEBUG RAW RESPONSE:", rawText);
+
+                        let data;
+                        try {
+                            data = JSON.parse(rawText);
+                        } catch (e) {
+                            console.error("JSON PARSE ERROR:", e);
+                            alert("DEBUG ERROR: Server returned raw text instead of JSON:\n\n" + rawText.substring(0, 500));
+                            throw new Error("Invalid JSON response from server");
+                        }
 
                         if (data.success) {
                             // SWITCH VIEW TO SUCCESS STATE
@@ -359,7 +370,8 @@
                         }
 
                     } catch (err) {
-                        if (window.Toast) Toast.error('Connection error');
+                        console.error(err);
+                        if (window.Toast) Toast.error('Connection/Parse Error. Check Console.');
                     } finally {
                         updatePwdBtn.disabled = false;
                         updatePwdBtn.innerText = originalText;
