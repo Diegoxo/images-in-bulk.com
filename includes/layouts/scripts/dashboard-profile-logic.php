@@ -279,29 +279,6 @@
                     }
                 };
             }
-        }
-
-        // Initialize
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', init);
-        } else {
-            init();
-        }
-
-        // --- Cross-Tab Communication ---
-        // Listen for successful verification from verify-email-change.php
-        if ('BroadcastChannel' in window) {
-            const authChannel = new BroadcastChannel('auth_verification');
-            authChannel.onmessage = (event) => {
-                if (event.data.status === 'success') {
-                    // Reload to show new email
-                    if (window.Toast) Toast.success('Email updated! Reloading...');
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 1500);
-                }
-            };
-        }
             // --- Submit Password Change Logic ---
             const updatePwdBtn = document.getElementById('confirm-pwd-change-btn');
             if (updatePwdBtn) {
@@ -366,6 +343,28 @@
                     }
                 };
             }
-        
+        } // End of init()
+
+        // Initialize
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+
+        // --- Cross-Tab Communication ---
+        // Listen for successful verification from verify-email-change.php
+        if ('BroadcastChannel' in window) {
+            const authChannel = new BroadcastChannel('auth_verification');
+            authChannel.onmessage = (event) => {
+                if (event.data.status === 'success') {
+                    // Reload to show new email
+                    if (window.Toast) Toast.success('Email updated! Reloading...');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                }
+            };
+        }
     })();
 </script>
