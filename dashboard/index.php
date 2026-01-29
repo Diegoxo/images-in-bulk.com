@@ -148,6 +148,14 @@ require_once '../includes/controllers/dashboard_controller.php';
         <!-- Pass PHP environment to Global JS & Profile Logic -->
         <?php echo $dashboardSpecificJs; ?>
 
+        <!-- IMPROVISED DEBUG DASHBOARD -->
+        <div id="debug-dashboard"
+            style="background: #000; color: #0f0; padding: 20px; margin-top: 30px; border-radius: 10px; font-family: monospace; overflow-x: auto; border: 2px solid #0f0;">
+            <h3>🛠️ DEBUG CONSOLE</h3>
+            <p>Waiting for actions...</p>
+            <pre id="debug-output" style="white-space: pre-wrap; word-break: break-all;">No data yet.</pre>
+        </div>
+
         <!-- External Libraries & Dashboard Scripts -->
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
         <script src="../assets/js/storage.js?v=<?php echo time(); ?>"></script>

@@ -348,15 +348,24 @@
                         
                         // DEBUG: Read as text first to see what comes back
                         const rawText = await response.text();
-                        console.log("DEBUG RAW RESPONSE:", rawText);
+                        
+                        // PRINT TO DEBUG DASHBOARD
+                        const debugOutput = document.getElementById('debug-output');
+                        if (debugOutput) {
+                            debugOutput.innerHTML = "<strong>RAW SERVER RESPONSE:</strong>\n--------------------------\n" + 
+                                                    rawText.replace(/</g, "&lt;").replace(/>/g, "&gt;") + 
+                                                    "\n--------------------------";
+                        }
 
                         let data;
                         try {
                             data = JSON.parse(rawText);
                         } catch (e) {
-                            console.error("JSON PARSE ERROR:", e);
-                            alert("DEBUG ERROR: Server returned raw text instead of JSON:\n\n" + rawText.substring(0, 500));
-                            throw new Error("Invalid JSON response from server");
+                            if (debugOutput) {
+                                debugOutput.innerHTML += "\n\n❌ JSON PARSE ERROR: " + e.message;
+                                debugOutput.parentElement.style.borderColor = "red";
+                            }
+                            throw new Error("Invalid JSON response");
                         }
 
                         if (data.success) {
