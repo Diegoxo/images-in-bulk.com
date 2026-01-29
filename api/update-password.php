@@ -68,12 +68,22 @@ try {
     $stmtUpdate = $db->prepare("UPDATE users SET password_hash = ? WHERE id = ?");
     $stmtUpdate->execute([$newHash, $userId]);
 
-    // SUCCESS: Clean the buffer of any previous noise (BOMs, warnings) and output pure JSON
-    ob_clean();
+    // SUCCESS: Nuclear Option - recursively clear all output buffers
+    while (ob_get_level()) {
+        ob_end_clean();
+    }
+
+    // Re-assert header just in case
+    header('Content-Type: application/json');
     echo json_encode(['success' => true]);
+    exit;
 
 } catch (Exception $e) {
-    // ERROR: Clean buffer and output error JSON
-    ob_clean();
+    // ERROR: Nuclear Option for errors too
+    while (ob_get_level()) {
+        ob_end_clean();
+    }
+    header('Content-Type: application/json');
     echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+    exit;
 }
