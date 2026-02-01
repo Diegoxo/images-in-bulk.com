@@ -1,19 +1,30 @@
+# 1. Seguridad Global: No permitir ver lista de archivos en carpetas
+Options -Indexes
+
 RewriteEngine On
 
-# 1. Si es un directorio, intentar cargar index.php automáticamente (estándar)
+# 2. Si es un directorio, intentar cargar index.php automáticamente (estándar)
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteCond %{REQUEST_FILENAME}\.php -f
 RewriteRule ^(.*)$ $1.php [L]
 
-# 2. Forzar HTTPS si estamos en producción (opcional, bueno tenerlo listo)
+# 3. Forzar HTTPS si estamos en producción (descomentar en servidor real)
 # RewriteCond %{HTTPS} off
 # RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
-# 3. Proteger archivos sensibles (config, includes, git, etc)
+# 4. PROTECCIÓN DE ARCHIVOS SENSIBLES (Blindaje)
+# Proteger carpetas completas
 RewriteRule ^includes/ - [F,L]
+RewriteRule ^sql/ - [F,L]
 RewriteRule ^\.git/ - [F,L]
-RewriteRule ^\.env - [F,L]
+RewriteRule ^vendor/ - [F,L]
+
+# Proteger archivos por extensión o nombre
+RewriteRule ^\.env.* - [F,L]
+RewriteRule ^.*\.sql$ - [F,L]
+RewriteRule ^.*\.log$ - [F,L]
 RewriteRule ^composer\.(json|lock) - [F,L]
+RewriteRule ^SITEMAP\.md - [F,L]
 
 # 4. Caché para imágenes y CSS (mejora velocidad)
 <IfModule mod_expires.c>
