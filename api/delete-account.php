@@ -60,7 +60,6 @@ try {
     } else {
         // --- GOOGLE USER LOGIC ---
         // For Google users, we initiate a re-auth flow with a specific action
-        // We'll return a special status to tell the frontend to redirect
         echo json_encode([
             'success' => true,
             'reauth' => true,
@@ -74,31 +73,25 @@ try {
 }
 
 /**
- * Helper to perform the actual DB deletion and cleanup
+ * Helper to perform the actual DB deletion and cleanup.
+ * Note: Database schema uses ON DELETE CASCADE for all related tables:
+ * (email_verifications, credit_bundles, payment_methods, subscriptions, 
+ * password_resets, usage_log, generations, email_change_requests).
  */
 function performDeletion($db, $userId)
 {
-    $db->beginTransaction();
     try {
-        // 1. Delete associated data (adjust table names as per your schema)
-        // Note: If you have ON DELETE CASCADE in DB, some of these might be redundant
+        // Delete the user record. Thanks to "ON DELETE CASCADE", 
+        // all related data in other tables will be deleted automatically by MariaDB.
+        $stmt = $db->prepare("DELETE FROM users WHERE id = ?");
+        $stmt->execute([$userId]);
 
-        // Delete email change requests
-        $db->prepare("DELETE FROM email_change_requests WHERE user_id = ?")->execute([$userId]);
-
-        // Delete generated images (Record in DB, file system refers to indexedDB/LocalStorage as per rules)
-        $db->prepare("DELETE FROM generated_images WHERE user_id = ?")->execute([$userId]);
-
-        // 2. Delete the user
-        $db->prepare("DELETE FROM users WHERE id = ?")->execute([$userId]);
-
-        $db->commit();
-
-        // 3. Cleanup session
-        session_destroy();
+        // Cleanup session
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_destroy();
+        }
 
     } catch (Exception $e) {
-        $db->rollBack();
-        throw $e;
+        throw new Exception("Error during account deletion: " . $e->getMessage());
     }
 }

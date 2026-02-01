@@ -76,16 +76,11 @@ try {
 
             // Re-verify that the authenticated social ID belongs to the current user
             if ($currentUserId && (int) $userId === (int) $currentUserId) {
-                // PERFORM DELETION
-                $db->beginTransaction();
                 try {
-                    // Cleanup related data
-                    $db->prepare("DELETE FROM email_change_requests WHERE user_id = ?")->execute([$currentUserId]);
-                    $db->prepare("DELETE FROM generated_images WHERE user_id = ?")->execute([$currentUserId]);
-
-                    // Final blow
+                    // PERFORM DELETION
+                    // The 'users' table has ON DELETE CASCADE for all related tables 
+                    // (generations, payment_methods, subscriptions, etc.) so we only need to delete the user.
                     $db->prepare("DELETE FROM users WHERE id = ?")->execute([$currentUserId]);
-                    $db->commit();
 
                     // Cleanup
                     unset($_SESSION['auth_action']);
@@ -93,7 +88,6 @@ try {
                     header('Location: ../?delete=success');
                     exit;
                 } catch (\Exception $e) {
-                    $db->rollBack();
                     echo "Deletion Error: " . $e->getMessage();
                     exit;
                 }
