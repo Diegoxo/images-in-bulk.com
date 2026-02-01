@@ -68,10 +68,46 @@ try {
             $stmt->execute([$userName, $userAvatar, $userId]);
         }
 
-        // 2. Set session
+        // Detect if this is a re-authentication for deletion
+        $action = isset($_SESSION['auth_action']) ? $_SESSION['auth_action'] : 'login';
+
+        if ($action === 'delete_account') {
+            $currentUserId = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null;
+
+            // Re-verify that the authenticated social ID belongs to the current user
+            if ($currentUserId && (int) $userId === (int) $currentUserId) {
+                // PERFORM DELETION
+                $db->beginTransaction();
+                try {
+                    // Cleanup related data
+                    $db->prepare("DELETE FROM email_change_requests WHERE user_id = ?")->execute([$currentUserId]);
+                    $db->prepare("DELETE FROM generated_images WHERE user_id = ?")->execute([$currentUserId]);
+
+                    // Final blow
+                    $db->prepare("DELETE FROM users WHERE id = ?")->execute([$currentUserId]);
+                    $db->commit();
+
+                    // Cleanup
+                    unset($_SESSION['auth_action']);
+                    session_destroy();
+                    header('Location: ../?delete=success');
+                    exit;
+                } catch (\Exception $e) {
+                    $db->rollBack();
+                    echo "Deletion Error: " . $e->getMessage();
+                    exit;
+                }
+            } else {
+                echo "Verification failed: You authenticated with a different account or session lost.";
+                exit;
+            }
+        }
+
+        // 2. Set session for normal login
         $_SESSION['user_id'] = $userId;
         $_SESSION['user_name'] = $userName;
         $_SESSION['user_avatar'] = $userAvatar;
+        unset($_SESSION['auth_action']); // Ensure action is cleared
 
         // 3. Redirect back to home or generator
         header('Location: ../generator?login=success');

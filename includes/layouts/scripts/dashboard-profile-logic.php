@@ -291,19 +291,9 @@
             const deleteTrigger = document.getElementById('params-delete-account-btn');
 
             // Delete Modal Elements
-            const deleteBody = deleteModal ? deleteModal.querySelector('.modal-body') : null;
             const deleteInput = document.getElementById('delete-confirm-input');
             const deletePwdInput = document.getElementById('delete-confirm-pwd');
-
-            function resetDeleteView() {
-                if (deleteModal) {
-                    deleteModal.classList.remove('active');
-                    deleteModal.classList.add('hidden');
-                    deleteModal.classList.remove('d-flex');
-                }
-                if (deleteInput) deleteInput.value = '';
-                if (deletePwdInput) deletePwdInput.value = '';
-            }
+            const confirmDeleteBtn = document.getElementById('confirm-delete-account-btn');
 
             if (deleteTrigger && deleteModal) {
                 deleteTrigger.onclick = function (e) {
@@ -312,6 +302,8 @@
                     // Reset fields
                     if (deleteInput) deleteInput.value = '';
                     if (deletePwdInput) deletePwdInput.value = '';
+                    const repeatPwd = document.getElementById('delete-confirm-pwd-repeat');
+                    if (repeatPwd) repeatPwd.value = '';
 
                     openCustomModal('delete-account-modal');
                     setTimeout(() => deleteInput?.focus(), 350);
@@ -331,6 +323,63 @@
                 if (overlay) {
                     overlay.onclick = function () {
                         closeCustomModal('delete-account-modal');
+                    };
+                }
+
+                // Confirm Delete Action
+                if (confirmDeleteBtn) {
+                    confirmDeleteBtn.onclick = async function () {
+                        const confirmText = deleteInput.value.trim();
+                        const password = deletePwdInput ? deletePwdInput.value : '';
+                        const passwordRepeat = document.getElementById('delete-confirm-pwd-repeat')?.value || '';
+
+                        // 1. Basic validation
+                        if (confirmText.toUpperCase() !== 'DELETE') {
+                            if (window.Toast) Toast.error('Please type DELETE to confirm');
+                            return;
+                        }
+
+                        // Password match check (for locals)
+                        if (deletePwdInput && password !== passwordRepeat) {
+                            if (window.Toast) Toast.error('Passwords do not match');
+                            return;
+                        }
+
+                        // 2. Loading state
+                        confirmDeleteBtn.disabled = true;
+                        const originalText = confirmDeleteBtn.innerText;
+                        confirmDeleteBtn.innerText = 'Deleting account...';
+
+                        try {
+                            const response = await fetch('../api/delete-account.php', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    confirm_text: confirmText,
+                                    password: password,
+                                    password_repeat: passwordRepeat
+                                })
+                            });
+
+                            const data = await response.json();
+
+                            if (data.success) {
+                                if (data.reauth) {
+                                    window.location.href = data.auth_url;
+                                    return;
+                                }
+                                if (window.Toast) Toast.success('Account deleted. Redirecting...');
+                                setTimeout(() => window.location.href = data.redirect, 1500);
+                            } else {
+                                if (window.Toast) Toast.error(data.message || 'Error deleting account');
+                                confirmDeleteBtn.disabled = false;
+                                confirmDeleteBtn.innerText = originalText;
+                            }
+                        } catch (err) {
+                            if (window.Toast) Toast.error('Connection error');
+                            confirmDeleteBtn.disabled = false;
+                            confirmDeleteBtn.innerText = originalText;
+                        }
                     };
                 }
             }
