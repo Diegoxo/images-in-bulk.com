@@ -254,6 +254,52 @@ try {
     <?php
     $passwordChangeModalHtml = ob_get_clean();
 
+    // --- Delete Account Modal Component ---
+    ob_start(); ?>
+    <div id="delete-account-modal" class="custom-modal hidden">
+        <div class="modal-overlay"></div>
+        <div class="modal-content animate-pop" style="border: 1px solid rgba(239, 68, 68, 0.3);">
+            <div class="modal-header">
+                <h2 class="section-title fs-15 text-danger" style="color: #ef4444;">⚠ Delete Account</h2>
+            </div>
+            <div class="modal-body modal-body-left">
+                <p class="fs-sm text-secondary mb-15">
+                    This action is <strong class="text-white">irreversible</strong>. All your data, images, and subscription
+                    will be permanently lost.
+                </p>
+                <div class="alert-danger mb-3" style="text-align: left; font-size: 0.85rem;">
+                    Please type <strong>DELETE</strong> to confirm.
+                </div>
+                <div class="form-group mb-1">
+                    <label class="fs-xs">Confirmation</label>
+                    <input type="text" id="delete-confirm-input" class="auth-input" placeholder="DELETE" required>
+                </div>
+                <?php if ($user['auth_provider'] === 'local'): ?>
+                    <div class="form-group mb-1">
+                        <label class="fs-xs">Account Password</label>
+                        <input type="password" id="delete-confirm-pwd" class="auth-input" placeholder="••••••••" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="fs-xs">Confirm Password</label>
+                        <input type="password" id="delete-confirm-pwd-repeat" class="auth-input" placeholder="••••••••"
+                            required>
+                    </div>
+                <?php else: ?>
+                    <div class="alert-warning mb-3" style="text-align: left; font-size: 0.85rem;">
+                        As a Google user, you will be asked to re-authenticate to confirm deletion.
+                    </div>
+                <?php endif; ?>
+            </div>
+            <div class="modal-footer d-flex gap-1">
+                <button id="confirm-delete-account-btn" class="btn-auth btn-primary flex-1"
+                    style="background: #ef4444; border-color: #ef4444;">Delete Permanently</button>
+                <button type="button" id="cancel-delete-account-btn" class="btn-auth glass flex-1">Cancel</button>
+            </div>
+        </div>
+    </div>
+    <?php
+    $deleteAccountModalHtml = ob_get_clean();
+
     // --- Credits Tip Component ---
     $creditsTipHtml = $isPro
         ? 'Your monthly balance for high-quality images.'

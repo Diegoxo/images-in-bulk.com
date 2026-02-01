@@ -34,6 +34,7 @@ require_once '../includes/controllers/dashboard_controller.php';
         <!-- Email Change Modal Component -->
         <?php echo $emailChangeModalHtml; ?>
         <?php echo $passwordChangeModalHtml; ?>
+        <?php echo $deleteAccountModalHtml; ?>
 
         <!-- Dashboard Grid -->
         <div class="dashboard-grid animate-fade">
@@ -71,11 +72,11 @@ require_once '../includes/controllers/dashboard_controller.php';
 
                     <p class="mt-2 fs-sm text-muted">
                         Plan credits are used first and reset monthly.
-                        <?php if ($extraCredits > 0 && $nextExpiry): ?>
+                    <?php if ($extraCredits > 0 && $nextExpiry): ?>
                             <br><span class="text-accent">⏳ Next bundle expires:
-                                <strong><?php echo date('d M, Y', strtotime($nextExpiry)); ?></strong></span>
-                        <?php else: ?>
-                            Extra credits are used after plan credits.
+                                    <strong><?php echo date('d M, Y', strtotime($nextExpiry)); ?></strong></span>
+                    <?php else: ?>
+                                Extra credits are used after plan credits.
                         <?php endif; ?>
                     </p>
                 </div>
@@ -139,11 +140,17 @@ require_once '../includes/controllers/dashboard_controller.php';
             </div>
         </section>
 
-        <?php if (isset($user['auth_provider']) && $user['auth_provider'] === 'local'): ?>
-            <div style="display:flex; justify-content:flex-end; margin-bottom:2rem; margin-top:-1rem; padding-right: 1rem;">
+    <?php if (isset($user['auth_provider']) && $user['auth_provider'] === 'local'): ?>
+            <div
+                style="display:flex; justify-content:flex-end; margin-bottom:0.5rem; margin-top:-1rem; padding-right: 1rem;">
                 <button id="params-change-password-btn" class="cancel-link">Change Password 🔒</button>
-            </div>
+                </div>
         <?php endif; ?>
+
+        <div style="display:flex; justify-content:flex-end; margin-bottom:2rem; padding-right: 1rem;">
+            <button id="params-delete-account-btn" class="cancel-link" style="color: #ef4444; opacity: 0.7;">Delete
+                Account ⚠</button>
+        </div>
 
         <!-- Pass PHP environment to Global JS & Profile Logic -->
         <?php echo $dashboardSpecificJs; ?>
