@@ -4,6 +4,9 @@
  * Loads environment variables from .env and defines system constants.
  */
 
+// Set default timezone (Matches GMT-5)
+date_default_timezone_set('America/Bogota');
+
 // Load Composer Autoloader
 require_once dirname(__DIR__) . '/vendor/autoload.php';
 
@@ -101,8 +104,9 @@ function getDB()
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                 PDO::ATTR_EMULATE_PREPARES => false,
-                // Optional: PDO::ATTR_PERSISTENT => true, // Potentially useful but auto-recon is better
             ]);
+            // Sync DB timezone with PHP (America/Bogota is -05:00)
+            $pdo->exec("SET time_zone = '-05:00'");
         } catch (PDOException $e) {
             die("Database connection failed: " . $e->getMessage());
         }
