@@ -115,3 +115,17 @@ CREATE TABLE IF NOT EXISTS email_change_requests (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
+-- Payments/Transactions History Table
+CREATE TABLE IF NOT EXISTS payments (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    wompi_transaction_id VARCHAR(255) NOT NULL UNIQUE,
+    reference VARCHAR(255) NOT NULL,
+    amount INT NOT NULL, -- Amount in cents
+    currency VARCHAR(10) DEFAULT 'COP',
+    payment_method VARCHAR(50),
+    status VARCHAR(50),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);

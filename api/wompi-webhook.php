@@ -143,6 +143,18 @@ if ($transaction && $transaction['status'] === 'APPROVED') {
                 // Reset monthly credits
                 $db->prepare("UPDATE users SET credits = 50000 WHERE id = ?")->execute([$userId]);
             }
+
+            // --- RECORD PAYMENT RECORD (LAST STEP) ---
+            $stmtPay = $db->prepare("INSERT IGNORE INTO payments (user_id, wompi_transaction_id, reference, amount, currency, payment_method, status) VALUES (?, ?, ?, ?, ?, ?, ?)");
+            $stmtPay->execute([
+                $userId,
+                $transaction['id'] ?? 'EVENT-' . time(),
+                $transaction['reference'],
+                $transaction['amount_in_cents'],
+                $transaction['currency'] ?? 'COP',
+                $transaction['payment_method_type'] ?? 'WEBHOOK',
+                $transaction['status']
+            ]);
         } catch (Exception $e) {
             error_log("Webhook DB Error: " . $e->getMessage());
         }

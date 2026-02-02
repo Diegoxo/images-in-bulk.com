@@ -80,7 +80,19 @@ try {
         }
     }
 
-    // 3. Activate or update (Only if NOT an Addon)
+    // 3. Record the transaction in the history table
+    $stmtPay = $db->prepare("INSERT IGNORE INTO payments (user_id, wompi_transaction_id, reference, amount, currency, payment_method, status) VALUES (?, ?, ?, ?, ?, ?, ?)");
+    $stmtPay->execute([
+        $userId,
+        $transaction['id'],
+        $transaction['reference'],
+        $transaction['amount_in_cents'],
+        $transaction['currency'],
+        $transaction['payment_method_type'],
+        $transaction['status']
+    ]);
+
+    // 4. Activate or update (Only if NOT an Addon)
     if ($isAddon) {
         // Extra credits logic: Create bundle with 1 month expiry
         $db->prepare("INSERT INTO credit_bundles (user_id, amount_original, amount_remaining, expires_at) 
