@@ -84,13 +84,25 @@ include 'includes/pages-config/reports-config.php';
                     const data = await res.json();
 
                     if (data.success) {
-                        alert(data.message);
+                        if (window.Toast) {
+                            Toast.success(data.message);
+                        } else {
+                            alert(data.message);
+                        }
                         form.reset();
                     } else {
-                        alert('Error: ' + data.error);
+                        if (window.Toast) {
+                            Toast.error(data.error || 'Failed to send message');
+                        } else {
+                            alert('Error: ' + data.error);
+                        }
                     }
                 } catch (err) {
-                    alert('Network error. Please try again.');
+                    if (window.Toast) {
+                        Toast.error('Network error. Please try again.');
+                    } else {
+                        alert('Network error. Please try again.');
+                    }
                 } finally {
                     btn.disabled = false;
                     btn.innerText = 'Send Message';
