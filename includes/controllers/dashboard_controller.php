@@ -32,6 +32,13 @@ try {
     $stmtData->execute([$userId]);
     $user = $stmtData->fetch(PDO::FETCH_ASSOC);
 
+    // 1.1 Integrity Check: If user not found (e.g. deleted), logout force
+    if (!$user) {
+        session_destroy();
+        header('Location: login.php');
+        exit;
+    }
+
     // 2. Statistics
     $stmtStats = $db->prepare("SELECT COUNT(*) as total_images FROM generations WHERE user_id = ?");
     $stmtStats->execute([$userId]);

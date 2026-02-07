@@ -4,7 +4,6 @@
  */
 require_once '../includes/config.php';
 
-require_once '../includes/utils/csrf.php';
 require_once '../includes/utils/security.php';
 
 if (session_status() === PHP_SESSION_NONE) {
