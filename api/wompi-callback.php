@@ -32,8 +32,17 @@ try {
     }
 
     $userId = $_SESSION['user_id'];
-    $customerEmail = $transaction['customer_email'];
-    $paymentMethod = $transaction['payment_method'];
+    // Fallback for customer_email if missing from transaction data
+    $customerEmail = $transaction['customer_email'] ?? $_SESSION['user_email'] ?? null;
+
+    // If still null, fetch from DB
+    if (!$customerEmail) {
+        $stmtEmail = $db->prepare("SELECT email FROM users WHERE id = ?");
+        $stmtEmail->execute([$userId]);
+        $customerEmail = $stmtEmail->fetchColumn();
+    }
+
+    $paymentMethod = $transaction['payment_method'] ?? null;
     $paymentSourceId = null;
     $reference = $transaction['reference'];
 

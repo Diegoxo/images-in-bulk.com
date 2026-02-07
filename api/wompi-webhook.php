@@ -64,7 +64,14 @@ if ($transaction && $transaction['status'] === 'APPROVED') {
     // Regex to extract user ID from reference (e.g., BULK123-...)
     if (preg_match('/(?:BULK|ADDON|ANNUAL)(\d+)-/', $reference, $matches)) {
         $userId = $matches[1];
-        $customerEmail = $transaction['customer_email'];
+        $customerEmail = $transaction['customer_email'] ?? null;
+
+        // If email is missing, fetch from user record
+        if (!$customerEmail) {
+            $stmtEmail = $db->prepare("SELECT email FROM users WHERE id = ?");
+            $stmtEmail->execute([$userId]);
+            $customerEmail = $stmtEmail->fetchColumn();
+        }
 
         // Save payment source for recurring charges (Only if it's Card)
         $paymentSourceId = null;
