@@ -13,7 +13,49 @@ class EmailHelper
    */
   public static function sendVerification($to, $name, $token)
   {
-    // 1. Fetch Configuration from .env/Constants
+    $verifyLink = SITE_URL . "/verify-email?token=" . $token;
+    $htmlContent = self::getTemplate($name, $verifyLink);
+    $subject = "Verify your email - Images In Bulks";
+    return self::send($to, $name, $subject, $htmlContent);
+  }
+
+  /**
+   * Send a password reset email.
+   */
+  public static function sendPasswordReset($to, $name, $token)
+  {
+    $resetLink = SITE_URL . "/reset-password?token=" . $token;
+    $htmlContent = self::getResetTemplate($name, $resetLink);
+    $subject = "Reset your password - Images In Bulks";
+    return self::send($to, $name, $subject, $htmlContent);
+  }
+
+  /**
+   * Send an email change verification email.
+   */
+  public static function sendEmailChangeVerification($to, $name, $token)
+  {
+    $verifyLink = SITE_URL . "/verify-email-change.php?token=" . $token;
+    $htmlContent = self::getEmailChangeTemplate($name, $verifyLink);
+    $subject = "Verify your new email - Images In Bulks";
+    return self::send($to, $name, $subject, $htmlContent);
+  }
+
+  /**
+   * Send a payment confirmation email.
+   */
+  public static function sendPaymentSuccess($to, $name, $planName, $amount, $currency, $reference)
+  {
+    $htmlContent = self::getPaymentTemplate($name, $planName, $amount, $currency, $reference);
+    $subject = "Payment Confirmed - Images In Bulks";
+    return self::send($to, $name, $subject, $htmlContent);
+  }
+
+  /**
+   * Internal SMTP sender core
+   */
+  private static function send($to, $name, $subject, $htmlContent)
+  {
     $host = SMTP_HOST;
     $port = SMTP_PORT;
     $user = SMTP_USERNAME;
@@ -21,37 +63,25 @@ class EmailHelper
     $fromEmail = SMTP_FROM_EMAIL;
     $fromName = SMTP_FROM_NAME;
 
-    // 2. Build Verification link
-    $verifyLink = SITE_URL . "/verify-email?token=" . $token;
-
-    // 3. HTML Content (Premium Design)
-    $htmlContent = self::getTemplate($name, $verifyLink);
-
-    // 4. SMTP Protocol Logic
     try {
       $socket = @fsockopen(($port == 465 ? "ssl://" : "") . $host, $port, $errno, $errstr, 15);
       if (!$socket)
         throw new Exception("Could not connect to SMTP host: $errstr");
 
       self::getResponse($socket, "220");
-
-      // HELLO
-      fwrite($socket, "EHLO " . $_SERVER['HTTP_HOST'] . "\r\n");
+      fwrite($socket, "EHLO " . ($_SERVER['HTTP_HOST'] ?? 'localhost') . "\r\n");
       self::getResponse($socket, "250");
 
-      // STARTTLS if port is 587
       if ($port == 587) {
         fwrite($socket, "STARTTLS\r\n");
         self::getResponse($socket, "220");
         if (!stream_socket_enable_crypto($socket, true, STREAM_CRYPTO_METHOD_TLS_CLIENT)) {
           throw new Exception("Failed to enable crypto");
         }
-        // Resend EHLO after TLS
-        fwrite($socket, "EHLO " . $_SERVER['HTTP_HOST'] . "\r\n");
+        fwrite($socket, "EHLO " . ($_SERVER['HTTP_HOST'] ?? 'localhost') . "\r\n");
         self::getResponse($socket, "250");
       }
 
-      // AUTH
       fwrite($socket, "AUTH LOGIN\r\n");
       self::getResponse($socket, "334");
       fwrite($socket, base64_encode($user) . "\r\n");
@@ -59,19 +89,16 @@ class EmailHelper
       fwrite($socket, base64_encode($pass) . "\r\n");
       self::getResponse($socket, "235");
 
-      // MAIL FROM / RCPT TO
       fwrite($socket, "MAIL FROM: <$fromEmail>\r\n");
       self::getResponse($socket, "250");
       fwrite($socket, "RCPT TO: <$to>\r\n");
       self::getResponse($socket, "250");
 
-      // DATA
       fwrite($socket, "DATA\r\n");
       self::getResponse($socket, "354");
 
-      // HEADERS & CONTENT
       $headers = [
-        "Subject: =?UTF-8?B?" . base64_encode("Verify your email - Images in Bulk") . "?=",
+        "Subject: =?UTF-8?B?" . base64_encode($subject) . "?=",
         "To: $name <$to>",
         "From: $fromName <$fromEmail>",
         "MIME-Version: 1.0",
@@ -84,85 +111,15 @@ class EmailHelper
       fwrite($socket, $htmlContent . "\r\n.\r\n");
       self::getResponse($socket, "250");
 
-      // QUIT
-      fwrite($socket, "QUIT\r\n");
-      fclose($socket);
-      return true;
-
-    } catch (Exception $e) {
-      error_log("Elite SMTP Error: " . $e->getMessage());
-      return false;
-    }
-  }
-
-  /**
-   * Send a password reset email.
-   */
-  public static function sendPasswordReset($to, $name, $token)
-  {
-    $host = SMTP_HOST;
-    $port = SMTP_PORT;
-    $user = SMTP_USERNAME;
-    $pass = SMTP_PASSWORD;
-    $fromEmail = SMTP_FROM_EMAIL;
-    $fromName = SMTP_FROM_NAME;
-
-    $resetLink = SITE_URL . "/reset-password?token=" . $token;
-    $htmlContent = self::getResetTemplate($name, $resetLink);
-
-    try {
-      $socket = @fsockopen(($port == 465 ? "ssl://" : "") . $host, $port, $errno, $errstr, 15);
-      if (!$socket)
-        throw new Exception("Could not connect to SMTP host: $errstr");
-
-      self::getResponse($socket, "220");
-      fwrite($socket, "EHLO " . $_SERVER['HTTP_HOST'] . "\r\n");
-      self::getResponse($socket, "250");
-
-      if ($port == 587) {
-        fwrite($socket, "STARTTLS\r\n");
-        self::getResponse($socket, "220");
-        stream_socket_enable_crypto($socket, true, STREAM_CRYPTO_METHOD_TLS_CLIENT);
-        fwrite($socket, "EHLO " . $_SERVER['HTTP_HOST'] . "\r\n");
-        self::getResponse($socket, "250");
-      }
-
-      fwrite($socket, "AUTH LOGIN\r\n");
-      self::getResponse($socket, "334");
-      fwrite($socket, base64_encode($user) . "\r\n");
-      self::getResponse($socket, "334");
-      fwrite($socket, base64_encode($pass) . "\r\n");
-      self::getResponse($socket, "235");
-
-      fwrite($socket, "MAIL FROM: <$fromEmail>\r\n");
-      self::getResponse($socket, "250");
-      fwrite($socket, "RCPT TO: <$to>\r\n");
-      self::getResponse($socket, "250");
-
-      fwrite($socket, "DATA\r\n");
-      self::getResponse($socket, "354");
-
-      $headers = [
-        "Subject: =?UTF-8?B?" . base64_encode("Reset your password - Images in Bulk") . "?=",
-        "To: $name <$to>",
-        "From: $fromName <$fromEmail>",
-        "MIME-Version: 1.0",
-        "Content-Type: text/html; charset=UTF-8",
-        "Date: " . date("r")
-      ];
-
-      fwrite($socket, implode("\r\n", $headers) . "\r\n\r\n");
-      fwrite($socket, $htmlContent . "\r\n.\r\n");
-      self::getResponse($socket, "250");
-
       fwrite($socket, "QUIT\r\n");
       fclose($socket);
       return true;
     } catch (Exception $e) {
-      error_log("Elite SMTP Reset Error: " . $e->getMessage());
+      error_log("Elite SMTP Error sending to $to: " . $e->getMessage());
       return false;
     }
   }
+
 
   private static function getResetTemplate($name, $link)
   {
@@ -179,73 +136,40 @@ class EmailHelper
         </div>';
   }
 
-  /**
-   * Send an email change verification email.
-   */
-  public static function sendEmailChangeVerification($to, $name, $token)
+  private static function getPaymentTemplate($name, $planName, $amount, $currency, $reference)
   {
-    $host = SMTP_HOST;
-    $port = SMTP_PORT;
-    $user = SMTP_USERNAME;
-    $pass = SMTP_PASSWORD;
-    $fromEmail = SMTP_FROM_EMAIL;
-    $fromName = SMTP_FROM_NAME;
+    $formattedAmount = number_format($amount / 100, 2, '.', ',');
+    return '
+        <div style="background-color: #0f172a; color: #f8fafc; font-family: sans-serif; padding: 40px; text-align: center;">
+            <div style="max-width: 600px; margin: 0 auto; background: #1e293b; border-radius: 24px; padding: 40px; border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);">
+                <div style="margin-bottom: 20px;">
+                    <span style="background: linear-gradient(135deg, #22c55e 0%, #10b981 100%); padding: 8px 16px; border-radius: 100px; color: white; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">Payment Successful</span>
+                </div>
+                <h1 style="color: white; font-size: 28px; margin-bottom: 10px;">Thank you for your purchase!</h1>
+                <p style="color: #94a3b8; font-size: 15px;">Hi ' . htmlspecialchars($name) . ', your payment has been processed successfully. Your account has been updated with your new credits.</p>
+                
+                <div style="background: rgba(15, 23, 42, 0.4); border-radius: 16px; padding: 24px; margin: 32px 0; text-align: left; border: 1px solid rgba(255,255,255,0.03);">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 12px;">
+                        <span style="color: #64748b; font-size: 14px;">Plan / Item</span>
+                        <span style="color: #f8fafc; font-weight: bold; font-size: 14px;">' . htmlspecialchars($planName) . '</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 12px;">
+                        <span style="color: #64748b; font-size: 14px;">Amount Paid</span>
+                        <span style="color: #f8fafc; font-weight: bold; font-size: 14px;">' . $currency . ' ' . $formattedAmount . '</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: #64748b; font-size: 14px;">Reference</span>
+                        <span style="color: #94a3b8; font-family: monospace; font-size: 13px;">' . htmlspecialchars($reference) . '</span>
+                    </div>
+                </div>
 
-    $verifyLink = SITE_URL . "/verify-email-change.php?token=" . $token;
-    $htmlContent = self::getEmailChangeTemplate($name, $verifyLink);
-
-    try {
-      $socket = @fsockopen(($port == 465 ? "ssl://" : "") . $host, $port, $errno, $errstr, 15);
-      if (!$socket)
-        throw new Exception("Could not connect to SMTP host: $errstr");
-
-      self::getResponse($socket, "220");
-      fwrite($socket, "EHLO " . $_SERVER['HTTP_HOST'] . "\r\n");
-      self::getResponse($socket, "250");
-
-      if ($port == 587) {
-        fwrite($socket, "STARTTLS\r\n");
-        self::getResponse($socket, "220");
-        stream_socket_enable_crypto($socket, true, STREAM_CRYPTO_METHOD_TLS_CLIENT);
-        fwrite($socket, "EHLO " . $_SERVER['HTTP_HOST'] . "\r\n");
-        self::getResponse($socket, "250");
-      }
-
-      fwrite($socket, "AUTH LOGIN\r\n");
-      self::getResponse($socket, "334");
-      fwrite($socket, base64_encode($user) . "\r\n");
-      self::getResponse($socket, "334");
-      fwrite($socket, base64_encode($pass) . "\r\n");
-      self::getResponse($socket, "235");
-
-      fwrite($socket, "MAIL FROM: <$fromEmail>\r\n");
-      self::getResponse($socket, "250");
-      fwrite($socket, "RCPT TO: <$to>\r\n");
-      self::getResponse($socket, "250");
-
-      fwrite($socket, "DATA\r\n");
-      self::getResponse($socket, "354");
-
-      $headers = [
-        "Subject: =?UTF-8?B?" . base64_encode("Verify your new email - Images in Bulk") . "?=",
-        "To: $name <$to>",
-        "From: $fromName <$fromEmail>",
-        "MIME-Version: 1.0",
-        "Content-Type: text/html; charset=UTF-8",
-        "Date: " . date("r")
-      ];
-
-      fwrite($socket, implode("\r\n", $headers) . "\r\n\r\n");
-      fwrite($socket, $htmlContent . "\r\n.\r\n");
-      self::getResponse($socket, "250");
-
-      fwrite($socket, "QUIT\r\n");
-      fclose($socket);
-      return true;
-    } catch (Exception $e) {
-      error_log("Email Change Verification SMTP Error: " . $e->getMessage());
-      return false;
-    }
+                <div style="margin-top: 32px;">
+                    <a href="' . SITE_URL . '/generator" style="display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #9333ea 0%, #4f46e5 100%); color: white; text-decoration: none; border-radius: 14px; font-weight: bold; font-size: 16px; box-shadow: 0 10px 15px -3px rgba(147, 51, 234, 0.3);">Start Generating</a>
+                </div>
+                
+                <p style="margin-top: 40px; font-size: 11px; color: #475569;">If you have any questions, please contact our support team.<br>&copy; ' . date('Y') . ' Images In Bulks. All rights reserved.</p>
+            </div>
+        </div>';
   }
 
   private static function getEmailChangeTemplate($name, $link)

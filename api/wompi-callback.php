@@ -137,6 +137,29 @@ try {
         $db->prepare("UPDATE users SET credits = 50000 WHERE id = ?")->execute([$userId]);
     }
 
+    // 5. Send Confirmation Email (Only if this is the first time we record the payment)
+    if ($stmtPay->rowCount() > 0) {
+        try {
+            require_once '../includes/utils/email_helper.php';
+            $stmtName = $db->prepare("SELECT full_name FROM users WHERE id = ?");
+            $stmtName->execute([$userId]);
+            $userName = $stmtName->fetchColumn() ?: 'User';
+
+            $planName = $isAddon ? 'Extra Credits Bundle' : 'PRO Subscription (' . ucfirst($cycle) . ')';
+
+            EmailHelper::sendPaymentSuccess(
+                $customerEmail,
+                $userName,
+                $planName,
+                $transaction['amount_in_cents'],
+                $transaction['currency'],
+                $transaction['reference']
+            );
+        } catch (Exception $e) {
+            error_log("Email Sending Error in Callback: " . $e->getMessage());
+        }
+    }
+
     header('Location: ../pricing.php?payment=success');
     exit;
 

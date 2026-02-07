@@ -162,6 +162,29 @@ if ($transaction && $transaction['status'] === 'APPROVED') {
                 $transaction['payment_method_type'] ?? 'WEBHOOK',
                 $transaction['status']
             ]);
+
+            // Only send email if this is the FIRST time we record this payment (prevents double emails)
+            if ($stmtPay->rowCount() > 0) {
+                try {
+                    require_once '../includes/utils/email_helper.php';
+                    $stmtName = $db->prepare("SELECT full_name FROM users WHERE id = ?");
+                    $stmtName->execute([$userId]);
+                    $userName = $stmtName->fetchColumn() ?: 'Customer';
+
+                    $pName = $isAddon ? 'Extra Credits Bundle' : 'PRO Subscription (' . ucfirst($cycle) . ')';
+
+                    EmailHelper::sendPaymentSuccess(
+                        $customerEmail,
+                        $userName,
+                        $pName,
+                        $transaction['amount_in_cents'],
+                        $transaction['currency'] ?? 'COP',
+                        $transaction['reference']
+                    );
+                } catch (Exception $mailEx) {
+                    error_log("Webhook Email Error: " . $mailEx->getMessage());
+                }
+            }
         } catch (Exception $e) {
             error_log("Webhook DB Error: " . $e->getMessage());
         }
