@@ -70,8 +70,17 @@ if ($appEnv === 'production') {
     ini_set('display_errors', 1);
 }
 
-// Start session
+// Start session with secure settings
 if (session_status() === PHP_SESSION_NONE) {
+    // Session Hardening
+    ini_set('session.cookie_httponly', 1); // Prevent JS access to session cookie
+    ini_set('session.use_only_cookies', 1); // Force cookies, no URL propagation
+    ini_set('session.cookie_samesite', 'Strict'); // Protect against CSRF
+
+    if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') {
+        ini_set('session.cookie_secure', 1); // Only send over HTTPS
+    }
+
     session_start();
 }
 

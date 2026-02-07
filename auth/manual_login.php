@@ -5,6 +5,7 @@
 require_once '../includes/config.php';
 
 require_once '../includes/utils/csrf.php';
+require_once '../includes/utils/security.php';
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -12,6 +13,12 @@ if (session_status() === PHP_SESSION_NONE) {
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: ../login');
+    exit;
+}
+
+// Rate Limiting (Prevent Brute Force)
+if (!RateLimiter::check('login_attempt', 2)) {
+    header('Location: ../login?error=Too many requests. Please wait a moment.');
     exit;
 }
 
