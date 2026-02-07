@@ -99,9 +99,62 @@ if ($transaction && $transaction['status'] === 'APPROVED') {
         }
 
         try {
-            // Save card if it exists and a source ID was obtained
+            $db->beginTransaction();
+
+            // 1. RECORD PAYMENT RECORD FIRST (Atomic Check)
+            $stmtPay = $db->prepare("INSERT IGNORE INTO payments (user_id, wompi_transaction_id, reference, amount, currency, payment_method, status) VALUES (?, ?, ?, ?, ?, ?, ?)");
+            $stmtPay->execute([
+                $userId,
+                $transaction['id'] ?? 'EVENT-' . time(),
+                $transaction['reference'],
+                $transaction['amount_in_cents'],
+                $transaction['currency'] ?? 'COP',
+                $transaction['payment_method_type'] ?? 'WEBHOOK',
+                $transaction['status']
+            ]);
+
+            $isFirstTime = ($stmtPay->rowCount() > 0);
+
+            if ($isFirstTime) {
+                // 2. Grant Benefits ONLY IF it's the first time
+                if ($isAddon) {
+                    // ADD-ON logic: Create a new bundle with 1 month expiry
+                    $db->prepare("INSERT INTO credit_bundles (user_id, amount_original, amount_remaining, expires_at) 
+                                  VALUES (?, 55000, 55000, DATE_ADD(NOW(), INTERVAL 1 MONTH))")->execute([$userId]);
+
+                    // Sync extra_credits column
+                    $db->prepare("UPDATE users SET extra_credits = (SELECT SUM(amount_remaining) FROM credit_bundles WHERE user_id = ? AND expires_at > NOW() AND amount_remaining > 0) WHERE id = ?")
+                        ->execute([$userId, $userId]);
+                } else {
+                    // PRO Subscription logic
+                    $cycle = $isAnnual ? 'yearly' : 'monthly';
+                    $interval = $isAnnual ? '1 YEAR' : '1 MONTH';
+
+                    $stmt = $db->prepare("SELECT id FROM subscriptions WHERE user_id = ?");
+                    $stmt->execute([$userId]);
+                    $subscription = $stmt->fetch();
+
+                    if ($subscription) {
+                        $db->prepare("UPDATE subscriptions SET 
+                            plan_type = 'pro', status = 'active', billing_cycle = ?,
+                            last_credits_reset = NOW(), images_in_period = 0,
+                            wompi_payment_source_id = COALESCE(?, wompi_payment_source_id), 
+                            wompi_customer_email = ?,
+                            current_period_end = DATE_ADD(NOW(), INTERVAL $interval) 
+                            WHERE user_id = ?")->execute([$cycle, $paymentSourceId, $customerEmail, $userId]);
+                    } else {
+                        $db->prepare("INSERT INTO subscriptions (user_id, plan_type, status, billing_cycle, last_credits_reset, current_period_end, images_in_period, wompi_payment_source_id, wompi_customer_email) 
+                            VALUES (?, 'pro', 'active', ?, NOW(), DATE_ADD(NOW(), INTERVAL $interval), 0, ?, ?)")
+                            ->execute([$userId, $cycle, $paymentSourceId, $customerEmail]);
+                    }
+
+                    // Reset monthly credits
+                    $db->prepare("UPDATE users SET credits = 50000 WHERE id = ?")->execute([$userId]);
+                }
+            }
+
+            // Save card source
             if ($paymentSourceId) {
-                // Check if this card already exists
                 $stmtCheck = $db->prepare("SELECT id FROM payment_methods WHERE user_id = ? AND brand = ? AND last4 = ?");
                 $stmtCheck->execute([$userId, $brand, $last4]);
 
@@ -115,56 +168,10 @@ if ($transaction && $transaction['status'] === 'APPROVED') {
                 }
             }
 
-            if ($isAddon) {
-                // ADD-ON logic: Create a new bundle with 1 month expiry
-                $stmt = $db->prepare("INSERT INTO credit_bundles (user_id, amount_original, amount_remaining, expires_at) 
-                                      VALUES (?, 55000, 55000, DATE_ADD(NOW(), INTERVAL 1 MONTH))");
-                $stmt->execute([$userId]);
+            $db->commit();
 
-                // Sync extra_credits column in users table
-                $db->prepare("UPDATE users SET extra_credits = (SELECT SUM(amount_remaining) FROM credit_bundles WHERE user_id = ? AND expires_at > NOW() AND amount_remaining > 0) WHERE id = ?")
-                    ->execute([$userId, $userId]);
-            } else {
-                // PRO Subscription logic
-                $cycle = $isAnnual ? 'yearly' : 'monthly';
-                $interval = $isAnnual ? '1 YEAR' : '1 MONTH';
-
-                $stmt = $db->prepare("SELECT id FROM subscriptions WHERE user_id = ?");
-                $stmt->execute([$userId]);
-                $subscription = $stmt->fetch();
-
-                if ($subscription) {
-                    $db->prepare("UPDATE subscriptions SET 
-                        plan_type = 'pro', status = 'active', billing_cycle = ?,
-                        last_credits_reset = NOW(), images_in_period = 0,
-                        wompi_payment_source_id = COALESCE(?, wompi_payment_source_id), 
-                        wompi_customer_email = ?,
-                        current_period_end = DATE_ADD(NOW(), INTERVAL $interval) 
-                        WHERE user_id = ?")->execute([$cycle, $paymentSourceId, $customerEmail, $userId]);
-                } else {
-                    $db->prepare("INSERT INTO subscriptions (user_id, plan_type, status, billing_cycle, last_credits_reset, current_period_end, images_in_period, wompi_payment_source_id, wompi_customer_email) 
-                        VALUES (?, 'pro', 'active', ?, NOW(), DATE_ADD(NOW(), INTERVAL $interval), 0, ?, ?)")
-                        ->execute([$userId, $cycle, $paymentSourceId, $customerEmail]);
-                }
-
-                // Reset monthly credits
-                $db->prepare("UPDATE users SET credits = 50000 WHERE id = ?")->execute([$userId]);
-            }
-
-            // --- RECORD PAYMENT RECORD (LAST STEP) ---
-            $stmtPay = $db->prepare("INSERT IGNORE INTO payments (user_id, wompi_transaction_id, reference, amount, currency, payment_method, status) VALUES (?, ?, ?, ?, ?, ?, ?)");
-            $stmtPay->execute([
-                $userId,
-                $transaction['id'] ?? 'EVENT-' . time(),
-                $transaction['reference'],
-                $transaction['amount_in_cents'],
-                $transaction['currency'] ?? 'COP',
-                $transaction['payment_method_type'] ?? 'WEBHOOK',
-                $transaction['status']
-            ]);
-
-            // Only send email if this is the FIRST time we record this payment (prevents double emails)
-            if ($stmtPay->rowCount() > 0) {
+            // 3. Send Email (Only if first time)
+            if ($isFirstTime) {
                 try {
                     require_once '../includes/utils/email_helper.php';
                     $stmtName = $db->prepare("SELECT full_name FROM users WHERE id = ?");

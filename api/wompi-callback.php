@@ -89,75 +89,78 @@ try {
         }
     }
 
-    // 3. Record the transaction in the history table
-    $stmtPay = $db->prepare("INSERT IGNORE INTO payments (user_id, wompi_transaction_id, reference, amount, currency, payment_method, status) VALUES (?, ?, ?, ?, ?, ?, ?)");
-    $stmtPay->execute([
-        $userId,
-        $transaction['id'],
-        $transaction['reference'],
-        $transaction['amount_in_cents'],
-        $transaction['currency'],
-        $transaction['payment_method_type'],
-        $transaction['status']
-    ]);
+    // 3. SECURE TRANSACTION PROCESSING (Atomic)
+    $db->beginTransaction();
+    try {
+        // Record the transaction first to "lock" it
+        $stmtPay = $db->prepare("INSERT IGNORE INTO payments (user_id, wompi_transaction_id, reference, amount, currency, payment_method, status) VALUES (?, ?, ?, ?, ?, ?, ?)");
+        $stmtPay->execute([
+            $userId,
+            $transaction['id'],
+            $transaction['reference'],
+            $transaction['amount_in_cents'],
+            $transaction['currency'],
+            $transaction['payment_method_type'],
+            $transaction['status']
+        ]);
 
-    // 4. Activate or update (Only if NOT an Addon)
-    if ($isAddon) {
-        // Extra credits logic: Create bundle with 1 month expiry
-        $db->prepare("INSERT INTO credit_bundles (user_id, amount_original, amount_remaining, expires_at) 
-                      VALUES (?, 55000, 55000, DATE_ADD(NOW(), INTERVAL 1 MONTH))")->execute([$userId]);
+        $isFirstTime = ($stmtPay->rowCount() > 0);
 
-        // Sync extra_credits column in users table
-        $db->prepare("UPDATE users SET extra_credits = (SELECT SUM(amount_remaining) FROM credit_bundles WHERE user_id = ? AND expires_at > NOW() AND amount_remaining > 0) WHERE id = ?")
-            ->execute([$userId, $userId]);
-    } else {
-        // PRO Subscription logic
-        $stmt = $db->prepare("SELECT id FROM subscriptions WHERE user_id = ?");
-        $stmt->execute([$userId]);
-        $subscription = $stmt->fetch();
+        if ($isFirstTime) {
+            // 4. Activate or update benefits ONLY ONCE
+            if ($isAddon) {
+                // Extra credits logic: Create bundle with 1 month expiry
+                $db->prepare("INSERT INTO credit_bundles (user_id, amount_original, amount_remaining, expires_at) 
+                              VALUES (?, 55000, 55000, DATE_ADD(NOW(), INTERVAL 1 MONTH))")->execute([$userId]);
 
-        if ($subscription) {
-            $stmt = $db->prepare("UPDATE subscriptions SET 
-                plan_type = 'pro', 
-                status = 'active', 
-                billing_cycle = ?,
-                wompi_payment_source_id = COALESCE(?, wompi_payment_source_id), 
-                wompi_customer_email = ?,
-                current_period_start = NOW(),
-                current_period_end = DATE_ADD(NOW(), INTERVAL $interval) 
-                WHERE user_id = ?");
-            $stmt->execute([$cycle, $paymentSourceId, $customerEmail, $userId]);
-        } else {
-            $stmt = $db->prepare("INSERT INTO subscriptions (user_id, plan_type, status, billing_cycle, current_period_start, current_period_end, wompi_payment_source_id, wompi_customer_email) 
-                VALUES (?, 'pro', 'active', ?, NOW(), DATE_ADD(NOW(), INTERVAL $interval), ?, ?)");
-            $stmt->execute([$userId, $cycle, $paymentSourceId, $customerEmail]);
+                // Sync extra_credits column
+                $db->prepare("UPDATE users SET extra_credits = (SELECT SUM(amount_remaining) FROM credit_bundles WHERE user_id = ? AND expires_at > NOW() AND amount_remaining > 0) WHERE id = ?")
+                    ->execute([$userId, $userId]);
+            } else {
+                // PRO Subscription logic
+                $stmt = $db->prepare("SELECT id FROM subscriptions WHERE user_id = ?");
+                $stmt->execute([$userId]);
+                $subscription = $stmt->fetch();
+
+                if ($subscription) {
+                    $db->prepare("UPDATE subscriptions SET 
+                        plan_type = 'pro', status = 'active', billing_cycle = ?,
+                        wompi_payment_source_id = COALESCE(?, wompi_payment_source_id), 
+                        wompi_customer_email = ?, current_period_start = NOW(),
+                        current_period_end = DATE_ADD(NOW(), INTERVAL $interval) 
+                        WHERE user_id = ?")->execute([$cycle, $paymentSourceId, $customerEmail, $userId]);
+                } else {
+                    $db->prepare("INSERT INTO subscriptions (user_id, plan_type, status, billing_cycle, current_period_start, current_period_end, wompi_payment_source_id, wompi_customer_email) 
+                        VALUES (?, 'pro', 'active', ?, NOW(), DATE_ADD(NOW(), INTERVAL $interval), ?, ?)")
+                        ->execute([$userId, $cycle, $paymentSourceId, $customerEmail]);
+                }
+
+                // Reset monthly credits
+                $db->prepare("UPDATE users SET credits = 50000 WHERE id = ?")->execute([$userId]);
+            }
         }
 
-        // Reset monthly credits according to the plan (Only for new subs or renewals)
-        $db->prepare("UPDATE users SET credits = 50000 WHERE id = ?")->execute([$userId]);
-    }
+        $db->commit();
 
-    // 5. Send Confirmation Email (Only if this is the first time we record the payment)
-    if ($stmtPay->rowCount() > 0) {
-        try {
-            require_once '../includes/utils/email_helper.php';
-            $stmtName = $db->prepare("SELECT full_name FROM users WHERE id = ?");
-            $stmtName->execute([$userId]);
-            $userName = $stmtName->fetchColumn() ?: 'User';
+        // 5. Send Confirmation Email (Inside first-time check)
+        if ($isFirstTime) {
+            try {
+                require_once '../includes/utils/email_helper.php';
+                $stmtName = $db->prepare("SELECT full_name FROM users WHERE id = ?");
+                $stmtName->execute([$userId]);
+                $userName = $stmtName->fetchColumn() ?: 'User';
+                $planName = $isAddon ? 'Extra Credits Bundle' : 'PRO Subscription (' . ucfirst($cycle) . ')';
 
-            $planName = $isAddon ? 'Extra Credits Bundle' : 'PRO Subscription (' . ucfirst($cycle) . ')';
-
-            EmailHelper::sendPaymentSuccess(
-                $customerEmail,
-                $userName,
-                $planName,
-                $transaction['amount_in_cents'],
-                $transaction['currency'],
-                $transaction['reference']
-            );
-        } catch (Exception $e) {
-            error_log("Email Sending Error in Callback: " . $e->getMessage());
+                EmailHelper::sendPaymentSuccess($customerEmail, $userName, $planName, $transaction['amount_in_cents'], $transaction['currency'], $transaction['reference']);
+            } catch (Exception $e) {
+                error_log("Email Sending Error in Callback: " . $e->getMessage());
+            }
         }
+
+    } catch (Exception $e) {
+        if ($db->inTransaction())
+            $db->rollBack();
+        throw $e;
     }
 
     header('Location: ../pricing.php?payment=success');
