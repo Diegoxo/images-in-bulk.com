@@ -68,3 +68,17 @@ class RateLimiter
         return true;
     }
 }
+
+/**
+ * Helper functions for direct usage in views (Backward Compatibility)
+ */
+function renderCsrfField()
+{
+    $token = CSRF::getToken();
+    echo '<input type="hidden" name="csrf_token" value="' . htmlspecialchars($token) . '">';
+}
+
+function verifyCsrfToken($token)
+{
+    return CSRF::validate($token);
+}

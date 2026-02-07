@@ -9,7 +9,8 @@ $metaDescription = $metaDescription ?? "Generate stunning AI images in bulk with
 $metaKeywords = $metaKeywords ?? "AI, images, bulk, batch generator, OpenAI";
 $canonicalUrl = $canonicalUrl ?? (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
 $siteName = "Images In Bulks";
-$ogImage = SITE_URL . "/assets/img/og-image.webp"; // Default OG image
+$siteUrl = defined('SITE_URL') ? SITE_URL : (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]";
+$ogImage = $siteUrl . "/assets/img/og-image.webp"; // Default OG image
 ?>
 
 <meta name="description" content="<?php echo htmlspecialchars($metaDescription); ?>">

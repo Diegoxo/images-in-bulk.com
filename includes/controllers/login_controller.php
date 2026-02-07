@@ -5,7 +5,8 @@
  */
 require_once __DIR__ . '/../pages-config/login-config.php';
 require_once __DIR__ . '/../utils/security_headers.php';
-require_once __DIR__ . '/../utils/csrf.php';
+// require_once __DIR__ . '/../utils/csrf.php'; // Removed to avoid conflict if already included
+require_once __DIR__ . '/../utils/security.php'; // Use security.php instead which has CSRF
 
 // Ensure session is started for CSRF generation
 if (session_status() === PHP_SESSION_NONE) {
@@ -59,7 +60,7 @@ if ($isVerifyState): ?>
 
     <script>
         // 1. Polling (Backup): Check every 5 seconds if verified
-        (function() {
+        (function () {
             const email = "<?php echo addslashes($_GET['verify_email']); ?>";
             const checkStatus = setInterval(async () => {
                 try {
@@ -69,7 +70,7 @@ if ($isVerifyState): ?>
                         clearInterval(checkStatus);
                         window.location.href = "generator";
                     }
-                } catch (error) {}
+                } catch (error) { }
             }, 5000);
 
             // 2. Cross-tab Communication (Primary): Listen for 'auth_verification' channel
