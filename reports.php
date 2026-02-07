@@ -10,7 +10,7 @@ include 'includes/pages-config/reports-config.php';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $pageTitle; ?> | Images In Bulks</title>
-    <link rel="icon" type="image/x-icon" href="assets/img/favicon.ico">
+    <?php include 'includes/layouts/meta-head.php'; ?>
     <link rel="stylesheet" href="assets/css/style.css">
     <script>
         window.CSRF_TOKEN = '<?php echo CSRF::generate(); ?>';
