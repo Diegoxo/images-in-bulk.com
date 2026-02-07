@@ -1,11 +1,11 @@
 User-agent: *
 Allow: /
+Allow: /generator
 Disallow: /api/
 Disallow: /includes/
 Disallow: /vendor/
 Disallow: /auth/
 Disallow: /dashboard/
-Disallow: /generator
 Disallow: /account
 
 Sitemap: https://imagesinbulks.com/sitemap.xml
